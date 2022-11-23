@@ -1,0 +1,48 @@
+Part 3: Address Spaces
+
+In Section 2.6.1.1.2 (now 2.6.2), add the following after the first
+paragraph:
+
+    --------------------------------------------------------------------
+	Each of the target architecture specific address spaces has a
+	corresponding memory location storage that denotes the linear
+	addressable memory of that address space. The size of each memory
+	location storage corresponds to the range of the addresses in the
+	corresponding address space.
+
+	[non-normative] It is target architecture defined how address space
+	location storage maps to target architecture physical memory. For
+	example, they may be independent memory, or more than one location
+	storage may alias the same physical memory possibly at different
+	offsets and with different interleaving. The mapping may also be
+	dictated by the source language address classes.
+
+	A memory location description specifies a memory location storage.
+	The bit offset corresponds to a bit position within a byte of the
+	memory. Bits accessed using a memory location description, access
+	the corresponding target architecture memory starting at the bit
+	position within the byte specified by the bit offset.
+
+	A memory location description that has a bit offset that is a
+	multiple of 8 (the byte size) is defined to be a byte address memory
+	location description. It has a memory byte address A that is equal
+	to the bit offset divided by 8.
+
+	A memory location description that does not have a bit offset that
+	is a multiple of 8 (the byte size) is defined to be a bit field
+	memory location description. It has a bit position B equal to the
+	bit offset modulo 8, and a memory byte address A equal to the bit
+	offset minus B that is then divided by 8.
+
+	The address space AS of a memory location description is defined to
+	be the address space that corresponds to the memory location storage
+	associated with the memory location description.
+
+	A location description that is comprised of one byte address memory
+	location description SL is defined to be a memory byte address
+	location description. It has a byte address equal to A and an
+	address space equal to AS of the corresponding SL.
+
+	DW_ASPACE_none is defined as the target architecture default address
+	space.
+    --------------------------------------------------------------------

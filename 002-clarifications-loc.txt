@@ -1,0 +1,203 @@
+Part 2: Clarifications for Location Descriptions
+
+In Section 2.6 Location Descriptions, replace these paragraphs:
+
+    --------------------------------------------------------------------
+	Information about the location of program objects is provided by
+	location descriptions. Location descriptions can be either of two
+	forms:
+
+	1. Single location descriptions...
+
+	2. Location lists...
+    --------------------------------------------------------------------
+
+With the following:
+
+    --------------------------------------------------------------------
+	Information about the location of program objects is provided by
+	location descriptions.
+
+	Location descriptions can consist of one or more single location
+	descriptions.
+
+	A single location description specifies the location storage that
+	holds a program object and a position within the location storage
+	where the program object starts. The position within the location
+	storage is expressed as a bit offset relative to the start of the
+	location storage.
+
+	A location storage is a linear stream of bits that can hold values.
+	Each location storage has a size in bits and can be accessed using a
+	zero-based bit offset. The ordering of bits within a location
+	storage uses the bit numbering and direction conventions that are
+	appropriate to the current language on the target architecture.
+
+	There are five kinds of location storage:
+
+	 1. memory location storage
+
+		Corresponds to the target architecture memory address spaces.
+
+	 2. register location storage
+
+		Corresponds to the target architecture registers.
+
+	 3. implicit location storage
+
+		Corresponds to fixed values that can only be read.
+
+	 4. undefined location storage
+
+		Indicates no value is available and therefore cannot be read or
+		written.
+
+	 5. composite location storage
+
+		Allows a mixture of these where some bits come from one location
+		storage and some from another location storage, or from disjoint
+		parts of the same location storage.
+
+		> [For further discussion...]
+		> It may be better to add an implicit pointer location storage
+		> kind used by the DW_OP_implicit_pointer operation. It would
+		> specify the debugger information entry and byte offset
+		> provided by the operations.
+
+	[non-normative] Location descriptions are a language independent
+	representation of addressing rules.
+
+		They can be the result of evaluating a debugger information
+		entry attribute that specifies an operation expression of
+		arbitrary complexity. In this usage they can describe the
+		location of an object as long as its lifetime is either static
+		or the same as the lexical block (see 3.5 Lexical Block Entries)
+		that owns it, and it does not move during its lifetime.
+
+		They can be the result of evaluating a debugger information
+		entry attribute that specifies a location list expression. In
+		this usage they can describe the location of an object that has
+		a limited lifetime, changes its location during its lifetime, or
+		has multiple locations over part or all of its lifetime.
+
+	If a location description has more than one single location
+	description, the DWARF expression is ill-formed if the object value
+	held in each single location description’s position within the
+	associated location storage is not the same value, except for the
+	parts of the value that are uninitialized.
+
+	[non-normative] A location description that has more than one single
+	location description can only be created by a location list
+	expression that has overlapping program location ranges, or certain
+	expression operations that act on a location description that has
+	more than one single location description. There are no operation
+	expression operations that can directly create a location
+	description with more than one single location description.
+
+	[non-normative] A location description with more than one single
+	location description can be used to describe objects that reside in
+	more than one piece of storage at the same time. An object may have
+	more than one location as a result of optimization. For example, a
+	value that is only read may be promoted from memory to a register
+	for some region of code, but later code may revert to reading the
+	value from memory as the register may be used for other purposes.
+	For the code region where the value is in a register, any change to
+	the object value must be made in both the register and the memory so
+	both regions of code will read the updated value.
+
+	[non-normative] A consumer of a location description with more than
+	one single location description can read the object’s value from any
+	of the single location descriptions (since they all refer to
+	location storage that has the same value), but must write any
+	changed value to all the single location descriptions.
+
+	Updating a location description L by a bit offset B is defined as
+	adding the value of B to the bit offset of each single location
+	description SL of L. It is an evaluation error if the updated bit
+	offset of any SL is less than 0 or greater than or equal to the size
+	of the location storage specified by SL.
+
+	The evaluation of an expression may require context elements to
+	create a location description. If such a location description is
+	accessed, the storage it denotes is that associated with the context
+	element values specified when the location description was created,
+	which may differ from the context at the time it is accessed.
+
+	[non-normative] For example, creating a register location
+	description requires the thread context: the location storage is for
+	the specified register of that thread. Creating a memory location
+	description for an address space may required a thread context: the
+	location storage is the memory associated with that thread.
+
+	If any of the context elements required to create a location
+	description change, the location description becomes invalid and
+	accessing it is undefined.
+
+	[non-normative] Examples of context that can invalidate a location
+	description are:
+
+	  * The thread context is required and execution causes the thread
+		to terminate.
+
+	  * The call frame context is required and further execution causes
+		the call frame to return to the calling frame.
+
+	  * The program location is required and further execution of the
+		thread occurs. That could change the location list entry or call
+		frame information entry that applies.
+
+	  * An operation uses call frame information:
+
+		  * Any of the frames used in the virtual call frame unwinding
+			return.
+
+		  * The top call frame is used, the program location is used to
+			select the call frame information entry, and further
+			execution of the thread occurs.
+
+	[non-normative] A DWARF expression can be used to compute a location
+	description for an object. A subsequent DWARF expression evaluation
+	can be given the object location description as the object context
+	or initial stack context to compute a component of the object. The
+	final result is undefined if the object location description becomes
+	invalid between the two expression evaluations.
+
+	A change of a thread’s program location may not make a location
+	description invalid, yet may still render it as no longer
+	meaningful. Accessing such a location description, or using it as
+	the object context or initial stack context of an expression
+	evaluation, may produce an undefined result.
+
+	[non-normative] For example, a location description may specify a
+	register that no longer holds the intended program object after a
+	program location change. One way to avoid such problems is to
+	recompute location descriptions associated with threads when their
+	program locations change.
+    --------------------------------------------------------------------
+
+Remove the top-level Section 2.6.1 Single Location Descriptions and
+2.6.1.1 Simple Location Descriptions, and promote the subsections of
+2.6.1.1 to the level of 2.6.1 (i.e., 2.6.1.1.1 becomes 2.6.1).
+
+In Section 2.6.1.1.1 (now 2.6.1), change “Empty Location Descriptions”
+to “Undefined Location Description Operations,” and replace the single
+paragraph in that section with the following:
+
+    --------------------------------------------------------------------
+	[non-normative] The undefined location storage represents a piece or
+	all of an object that is present in the source but not in the object
+	code (perhaps due to optimization). Neither reading nor writing to
+	the undefined location storage is meaningful.
+
+	An undefined location description specifies the undefined location
+	storage. There is no concept of the size of the undefined location
+	storage, nor of a bit offset for an undefined location description.
+	The DW_OP_* piece operations can implicitly specify an undefined
+	location description, allowing any size and offset to be specified,
+	and results in a part with all undefined bits.
+    --------------------------------------------------------------------
+
+Promote Section 2.6.1.2 Composite Location Descriptions up one level, so
+that it becomes Section 2.6.5.
+
+Renumber Section 2.6.2 Location Lists to become 2.6.6.
