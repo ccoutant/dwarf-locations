@@ -5,12 +5,12 @@ deprecated, and add the following non-normative text at the end of the
 description of DW_OP_entry_value:
 
     --------------------------------------------------------------------
-	[non-normative] The DW_OP_entry_value operation is deprecated as its
-	main usage is provided by other means. DWARF Version 5 added the
-	DW_TAG_call_site_parameter debugger information entry for call sites
-	that has DW_AT_call_value, DW_AT_call_data_location, and
-	DW_AT_call_data_value attributes that provide DWARF expressions to
-	compute actual parameter values at the time of the call, and
-	requires the producer to ensure the expressions are valid to
-	evaluate even when virtually unwound.
+    [non-normative] The DW_OP_entry_value operation is deprecated as its
+    main usage is provided by other means. DWARF Version 5 added the
+    DW_TAG_call_site_parameter debugger information entry for call sites
+    that has DW_AT_call_value, DW_AT_call_data_location, and
+    DW_AT_call_data_value attributes that provide DWARF expressions to
+    compute actual parameter values at the time of the call, and
+    requires the producer to ensure the expressions are valid to
+    evaluate even when virtually unwound.
     --------------------------------------------------------------------
