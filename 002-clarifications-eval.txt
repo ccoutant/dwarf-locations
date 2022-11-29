@@ -408,7 +408,9 @@ DW_OP_regval_type with the following:
 
     > [For further discussion...]
     > Should DWARF allow the type T to be a larger size than the size of
-    > the register R? Restricting a larger bit size avoids any issue of
+    > the register R?
+    > [Ben: no - you are reading from a register. KISS]
+    > Restricting a larger bit size avoids any issue of
     > conversion as the, possibly truncated, bit contents of the
     > register is simply interpreted as a value of T. If a conversion is
     > wanted it can be done explicitly using a DW_OP_convert operation.
@@ -428,6 +430,11 @@ DW_OP_regval_type with the following:
     > an illegal hand written assembly test). If a target architecture
     > requires this behavior, these extensions allow a composite
     > location description to be used to combine multiple registers.
+    >
+    > The original text specifies that the type must be a DW_TAG_base_type
+    > entry but this would not allow vector registers which are array
+    > types. By just saying "type T of the register value", the issue is
+    > avoided.
     --------------------------------------------------------------------
 
 In Section 2.5.1.3 Stack Operations, replace the description of
@@ -510,10 +517,11 @@ Replace the description of DW_OP_deref_type with the following:
     value must have an integral type. A value V of TS bits is retrieved
     from that address and pushed on the stack with the type T.
 
-    The DWARF is ill-formed if D is not in the current compilation unit,
-    D is not a DW_TAG_base_type debugging information entry, or if TS
-    divided by 8 (the byte size) and rounded up to a whole number is not
-    equal to S.
+    The DWARF is ill-formed if D is not in the current compilation
+    unit, D is not a DW_TAG_base_type or a DW_TAG_array_type
+    containing DW_TAG_base_type with a DW_AT_vector attribute and a
+    subrange debugging information entry, or if TS divided by 8 (the
+    byte size) and rounded up to a whole number is not equal to S.
 
     It is an evaluation error if any bit of the value is retrieved from
     the undefined location storage or the offset of any bit exceeds the
