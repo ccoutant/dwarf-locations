@@ -1,0 +1,94 @@
+Vector registers
+
+It has been the long standing existing practice to treat hardware
+vector registers as arrays of a fundamental base type. To deliniate
+these hardware register arrays from arrays in the language source they
+have been given the DW_AT_GNU_vector attribute. This proposal simply
+standardizes the existing behavior.
+
+In Section 2.2 Attribute Types, DW_AT_vector shall be added to Table 2.2
+
+    --------------------------------------------------------------------
+    DW_AT_vector | A hardware vector register
+    --------------------------------------------------------------------
+
+The hyperlink in the "Identifies or Specifies" column shall point to
+the paragraph added to Section 5.5 below.
+
+In Section 2.5.1.2 Register values replace the description of
+DW_OP_regval_type with the following:
+
+    --------------------------------------------------------------------
+    The DW_OP_regval_type operation provides the contents of a given
+    register interpreted as a value of a given type. The first operand
+    is an unsigned LEB128 number, which identifies a register whose
+    contents is to be pushed onto the stack. The second operand is an
+    unsigned LEB128 number that represents the offset of a debugging
+    information entry in the current compilation unit, which must be a
+    DW_TAG_base_type entry that provides the type of the value
+    contained in the specified register or it must be an
+    DW_TAG_array_type with a DW_AT_vector attribute, a subrange, and a
+    type that points to a DW_TAG_base_type.
+
+    [non-normative] A DW_TAG_array_type with a DW_AT_vector attribute
+    is the way that a vector register is specified and can be
+    considered a base type for the architecture.
+    --------------------------------------------------------------------
+
+In Section 2.5.1.3 Stack Operations replace the description of
+DW_OP_deref_type with the following:
+
+    --------------------------------------------------------------------
+    The DW_OP_deref_type operation behaves like the DW_OP_deref_size
+    operation: it pops the top stack entry and treats it as an
+    address. The popped value must have an integral type. The value
+    retrieved from that address is pushed together with a type
+    identifier. In the DW_OP_deref_type operation, the size in bytes
+    of the data retrieved from the dereferenced address is specified
+    by the first operand. This operand is a 1-byte unsigned integral
+    constant whose value which is the same as the size of the type
+    referenced by the second operand. The second operand is an
+    unsigned LEB128 integer that represents the offset of a debugging
+    information entry in the current compilation unit, which must be a
+    DW_TAG_base_type entry or a DW_TAG_array_type with a DW_AT_vector
+    attribute, a subrange, and a type that points to a
+    DW_TAG_base_type that provides the type of the data pushed.
+    --------------------------------------------------------------------
+
+Replace the description of DW_OP_xderef_type with the following:
+
+    --------------------------------------------------------------------
+    The DW_OP_xderef_type operation behaves like the DW_OP_xderef_size
+    operation: it pops the top two stack entries, treats them as an
+    address and an address space identifier, and pushes the value
+    retrieved. In the DW_OP_xderef_type operation, the size in bytes
+    of the data retrieved from the dereferenced address is specified
+    by the first operand. This operand is a 1-byte unsigned integral
+    constant whose value value is the same as the size of the type
+    referenced by the second operand. The second operand is an
+    unsigned LEB128 integer that represents the offset of a debugging
+    information entry in the current compilation unit, which must be a
+    DW_TAG_base_type entry or a DW_TAG_array_type with a DW_AT_vector
+    attribute, a subrange, and a type that points to a
+    DW_TAG_base_type that provides the type of the data pushed.
+    --------------------------------------------------------------------
+
+In Section 5.5 Array Type Entries, replace first paragraph of
+non-normative text with:
+
+    --------------------------------------------------------------------
+    [non-normative] Many languages share the concept of an “array,”
+    which is a table of components of identical type. Furthermore,
+    many architectures contain vector registers which mirror the
+    language concept of an array.
+    --------------------------------------------------------------------
+
+Insert the following paragraph between the first paragraph of
+normative text describing DW_TAG_array_type and the second paragraph
+dealing with multidimensional ordering.
+
+    --------------------------------------------------------------------
+    An array type that refers to a hardware vector register, shall be
+    denoted with DW_AT_vector and the width of the register shall be
+    denoted with a subrange as defined in Section 5.13.
+    --------------------------------------------------------------------
