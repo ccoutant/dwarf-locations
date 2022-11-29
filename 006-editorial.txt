@@ -1,6 +1,0 @@
-Part 6: Editorial Reorganization
-
-In Section 2.5: DWARF Expressions (p. 26) and Section 2.6 Location
-Descriptions:
-
-Move DW_OP_nop to Control Flow Operations.
