@@ -820,3 +820,354 @@ consists of a sequence...”:
     code object relocations previously needed for location list
     expressions.
     --------------------------------------------------------------------
+
+In Section 3.3.5 Low Level Information, replace the first paragraph
+(re. DW_AT_return_addr) with the following:
+
+    --------------------------------------------------------------------
+    A DW_TAG_subprogram, DW_TAG_inlined_subroutine, or
+    DW_TAG_entry_point debugger information entry may have a
+    DW_AT_return_addr attribute, whose value is a DWARF expression E.
+
+    The result of the attribute is obtained by evaluating E with a
+    context that has a result kind of a location description, an
+    unspecified object, the compilation unit that contains E, an empty
+    initial stack, and other context elements corresponding to the
+    source language thread of execution upon which the user is focused,
+    if any. The result of the evaluation is the location description L
+    of the place where the return address for the current call frame’s
+    subprogram or entry point is stored.
+
+    The DWARF is ill-formed if L is not comprised of one memory location
+    description for one of the target architecture specific address
+    spaces.
+    --------------------------------------------------------------------
+
+    > [For further discussion...]
+    > NOTE: It is unclear why DW_TAG_inlined_subroutine has a
+    > DW_AT_return_addr attribute but not a DW_AT_frame_base or
+    > DW_AT_static_link attribute. Seems it would either have all of
+    > them or none. Since inlined subprograms do not have a call frame
+    > it seems they would have none of these attributes.
+
+Replace the second and third paragraphs (re. DW_AT_frame_base) with the
+following:
+
+    --------------------------------------------------------------------
+    A DW_TAG_subprogram or DW_TAG_entry_point debugger information entry
+    may have a DW_AT_frame_base attribute, whose value is a DWARF
+    expression E.
+
+    The result of the attribute is obtained by evaluating E with a
+    context that has a result kind of a location description, an
+    unspecified object, the compilation unit that contains E, an empty
+    initial stack, and other context elements corresponding to the
+    source language thread of execution upon which the user is focused,
+    if any.
+
+    The DWARF is ill-formed if E contains a DW_OP_fbreg operation, or
+    the resulting location description L is not comprised of one single
+    location description SL.
+
+    If SL is a register location description for register R, then L is
+    replaced with the result of evaluating a DW_OP_bregx R, 0 operation.
+    This computes the frame base memory location description in the
+    target architecture default address space.
+
+    This allows the more compact DW_OP_reg* to be used instead of
+    DW_OP_breg* 0.
+
+    > [For further discussion...]
+    > This rule could be removed and require the producer to create the
+    > required location description directly using DW_OP_call_frame_cfa
+    > or DW_OP_breg*. This would also then allow a target to implement
+    > the call frames within a large register.
+
+    Otherwise, the DWARF is ill-formed if SL is not a memory location
+    description in any of the target architecture specific address
+    spaces.
+
+    The resulting L is the frame base for the subprogram or entry point.
+
+    Typically, E will use the DW_OP_call_frame_cfa operation or be a
+    stack pointer register plus or minus some offset.
+    --------------------------------------------------------------------
+
+Replacce the paragraph beginning "If a subroutine or entry point is
+nested, ..." with the following:
+
+    --------------------------------------------------------------------
+    If a DW_TAG_subprogram or DW_TAG_entry_point debugger information
+    entry is lexically nested, it may have a DW_AT_static_link
+    attribute, whose value is a DWARF expression E.
+
+    The result of the attribute is obtained by evaluating E with a
+    context that has a result kind of a location description, an
+    unspecified object, the compilation unit that contains E, an empty
+    initial stack, and other context elements corresponding to the
+    source language thread of execution upon which the user is focused,
+    if any. The result of the evaluation is the location description L
+    of the canonical frame address (see 6.4 Call Frame Information) of
+    the relevant call frame of the subprogram instance that immediately
+    lexically encloses the current call frame’s subprogram or entry
+    point.
+
+    The DWARF is ill-formed if L is is not comprised of one memory
+    location description for one of the target architecture specific
+    address spaces.
+    --------------------------------------------------------------------
+
+
+In Section 3.4.2 Call Site Parameters, replace the entire contents of
+the section with the following...
+
+    > [For further discussion...]
+    > Keep first paragraph of 3.4.2?
+
+    --------------------------------------------------------------------
+    A DW_TAG_call_site_parameter debugger information entry may have a
+    DW_AT_call_value attribute, whose value is a DWARF operation
+    expression E1.
+
+    The result of the DW_AT_call_value attribute is obtained by
+    evaluating E1 with a context that has a result kind of a value, an
+    unspecified object, the compilation unit that contains E, an empty
+    initial stack, and other context elements corresponding to the
+    source language thread of execution upon which the user is focused,
+    if any. The resulting value V1 is the value of the parameter at the
+    time of the call made by the call site.
+
+    For parameters passed by reference, where the code passes a pointer
+    to a location which contains the parameter, or for reference type
+    parameters, the DW_TAG_call_site_parameter debugger information
+    entry may also have a DW_AT_call_data_location attribute whose value
+    is a DWARF operation expression E2, and a DW_AT_call_data_value
+    attribute whose value is a DWARF operation expression E3.
+
+    The value of the DW_AT_call_data_location attribute is obtained by
+    evaluating E2 with a context that has a result kind of a location
+    description, an unspecified object, the compilation unit that
+    contains E, an empty initial stack, and other context elements
+    corresponding to the source language thread of execution upon which
+    the user is focused, if any. The resulting location description L2
+    is the location where the referenced parameter lives during the call
+    made by the call site. If E2 would just be a
+    DW_OP_push_object_address, then the DW_AT_call_data_location
+    attribute may be omitted.
+
+    > [For further discussion...]
+    > The DWARF Version 5 implies that DW_OP_push_object_address may be
+    > used but does not state what object must be specified in the
+    > context. Either DW_OP_push_object_address cannot be used, or the
+    > object to be passed in the context must be defined.
+
+    The value of the DW_AT_call_data_value attribute is obtained by
+    evaluating E3 with a context that has a result kind of a value, an
+    unspecified object, the compilation unit that contains E, an empty
+    initial stack, and other context elements corresponding to the
+    source language thread of execution upon which the user is focused,
+    if any. The resulting value V3 is the value in L2 at the time of the
+    call made by the call site.
+
+    The result of these attributes is undefined if the current call
+    frame is not for the subprogram containing the
+    DW_TAG_call_site_parameter debugger information entry or the current
+    program location is not for the call site containing the
+    DW_TAG_call_site_parameter debugger information entry in the current
+    call frame.
+
+    [non-normative] The consumer may have to virtually unwind to the
+    call site (see 6.4 Call Frame Information) in order to evaluate
+    these attributes. This will ensure the source language thread of
+    execution upon which the user is focused corresponds to the call
+    site needed to evaluate the expression.
+
+    If it is not possible to avoid the expressions of these attributes
+    from accessing registers or memory locations that might be clobbered
+    by the subprogram being called by the call site, then the associated
+    attribute should not be provided.
+
+    [non-normative] The reason for the restriction is that the parameter
+    may need to be accessed during the execution of the callee. The
+    consumer may virtually unwind from the called subprogram back to the
+    caller and then evaluate the attribute expressions. The call frame
+    information (see 6.4 Call Frame Information) will not be able to
+    restore registers that have been clobbered, and clobbered memory
+    will no longer have the value at the time of the call.
+    --------------------------------------------------------------------
+
+In Section 4.1 Data Object Entries, replace item 4 (DW_AT_location) with
+the following:
+
+    --------------------------------------------------------------------
+    Any debugging information entry describing a data object (which
+    includes variables and parameters) or common blocks may have a
+    DW_AT_location attribute, whose value is a DWARF expression E.
+
+    The result of the attribute is obtained by evaluating E with a
+    context that has a result kind of a location description, an
+    unspecified object, the compilation unit that contains E, an empty
+    initial stack, and other context elements corresponding to the
+    source language thread of execution upon which the user is focused,
+    if any. The result of the evaluation is the location description of
+    the base of the data object.
+
+    See 2.5.4.2 Control Flow Operations for special evaluation rules
+    used by the DW_OP_call* operations.
+
+    > [For further discussion...]
+    > NOTE: Delete the description of how the DW_OP_call* operations
+    > evaluate a DW_AT_location attribute as that is now described in
+    > the operations.
+    >
+    > NOTE: See the discussion about the DW_AT_location attribute in the
+    > DW_OP_call* operation. Having each attribute only have a single
+    > purpose and single execution semantics seems desirable. It makes
+    > it easier for the consumer that no longer have to track the
+    > context. It makes it easier for the producer as it can rely on a
+    > single semantics for each attribute.
+    >
+    > For that reason, limiting the DW_AT_location attribute to only
+    > supporting evaluating the location description of an object, and
+    > using a different attribute and encoding class for the evaluation
+    > of DWARF expression procedures on the same operation expression
+    > stack seems desirable.
+    --------------------------------------------------------------------
+
+> [For further discussion]
+> With respect to item 10 (DW_AT_const_value): Could deprecate using the
+> DW_AT_const_value attribute for DW_TAG_variable or
+> DW_TAG_formal_parameter debugger information entries that have been
+> optimized to a constant. Instead, DW_AT_location could be used with a
+> DWARF expression that produces an implicit location description now
+> that any location description can be used within a DWARF expression.
+> This allows the DW_OP_call* operations to be used to push the location
+> description of any variable regardless of how it is optimized.
+
+In Section 5.7.3 Derived or Extended Structures, Classes and Interfaces,
+in the paragraph about DW_AT_data_member_location, replace the second sentence through the end of the paragraph with the following:
+
+    --------------------------------------------------------------------
+    For a DW_AT_data_member_location attribute there are two cases:
+
+     1. If the attribute is an integer constant B, it provides the
+        offset in bytes from the beginning of the containing entity.
+
+        The result of the attribute is obtained by updating the bit
+        offset of the location description of the beginning of the
+        containing entity by B scaled by 8 (the byte size). The result
+        is the location description of the base of the member entry.
+
+        [non-normative] If the beginning of the containing entity is not
+        byte aligned, then the beginning of the member entry has the
+        same bit displacement within a byte.
+
+     2. Otherwise, the attribute must be a DWARF expression E which is
+        evaluated with a context that has a result kind of a location
+        description, an unspecified object, the compilation unit that
+        contains E, an initial stack comprising the location description
+        of the beginning of the containing entity, and other context
+        elements corresponding to the source language thread of
+        execution upon which the user is focused, if any. The result of
+        the evaluation is the location description of the base of the
+        member entry.
+
+        > [For further discussion...]
+        > The beginning of the containing entity can now be any location
+        > description, including those with more than one single
+        > location description, and those with single location
+        > descriptions that are of any kind and have any bit offset.
+    --------------------------------------------------------------------
+
+In Section 5.7.8 Member Function Entries, replace the sixth paragraph,
+about DW_AT_vtable_elem_location, with the following:
+
+    --------------------------------------------------------------------
+    An entry for a virtual function also has a
+    DW_AT_vtable_elem_location attribute whose value is a DWARF
+    expression E.
+
+    The result of the attribute is obtained by evaluating E with a
+    context that has a result kind of a location description, an
+    unspecified object, the compilation unit that contains E, an initial
+    stack comprising the location description of the object of the
+    enclosing type, and other context elements corresponding to the
+    source language thread of execution upon which the user is focused,
+    if any. The result of the evaluation is the location description of
+    the slot for the function within the virtual function table for the
+    enclosing class.
+    --------------------------------------------------------------------
+
+In Section 5.14 Pointer to Member Type Entries, replace the sixth
+through eighth paragraphs, about DW_AT_use_location, with the following:
+
+    --------------------------------------------------------------------
+    The DW_TAG_ptr_to_member_type debugging information entry has a
+    DW_AT_use_location attribute whose value is a DWARF expression E. It
+    is used to compute the location description of the member of the
+    class to which the pointer to member entry points.
+
+    [non-normative] The method used to find the location description of
+    a given member of a class, structure, or union is common to any
+    instance of that class, structure, or union and to any instance of
+    the pointer to member type. The method is thus associated with the
+    pointer to member type, rather than with each object that has a
+    pointer to member type.
+
+    The DW_AT_use_location DWARF expression is used in conjunction with
+    the location description for a particular object of the given
+    pointer to member type and for a particular structure or class
+    instance.
+
+    The result of the attribute is obtained by evaluating E with a
+    context that has a result kind of a location description, an
+    unspecified object, the compilation unit that contains E, an initial
+    stack comprising two entries, and other context elements
+    corresponding to the source language thread of execution upon which
+    the user is focused, if any. The first stack entry is the value of
+    the pointer to member object itself. The second stack entry is the
+    location description of the base of the entire class, structure, or
+    union instance containing the member whose location is being
+    calculated. The result of the evaluation is the location description
+    of the member of the class to which the pointer to member entry points.
+    --------------------------------------------------------------------
+
+In Section 5.16 Dynamic Type Entries, append the following at the end:
+
+    --------------------------------------------------------------------
+    The DW_AT_data_location attribute may be used with any type that
+    provides one or more levels of hidden indirection and/or run-time
+    parameters in its representation. Its value is a DWARF operation
+    expression E which computes the location description of the data for
+    an object. When this attribute is omitted, the location description
+    of the data is the same as the location description of the object.
+
+    The result of the attribute is obtained by evaluating E with a
+    context that has a result kind of a location description, an object
+    that is the location description of the data descriptor, the
+    compilation unit that contains E, an empty initial stack, and other
+    context elements corresponding to the source language thread of
+    execution upon which the user is focused, if any. The result of the
+    evaluation is the location description of the base of the member
+    entry.
+
+    [non-normative] E will typically involve an operation expression
+    that begins with a DW_OP_push_object_address operation which loads
+    the location description of the object which can then serve as a
+    descriptor in subsequent calculation.
+
+    > [For further discussion...]
+    > NOTE: Since DW_AT_data_member_location, DW_AT_use_location, and
+    > DW_AT_vtable_elem_location allow both operation expressions and
+    > location list expressions, why does DW_AT_data_location not allow
+    > both? In all cases they apply to data objects so less likely that
+    > optimization would cause different operation expressions for
+    > different program location ranges. But if supporting for some then
+    > should be for all.
+    >
+    > It seems odd this attribute is not the same as
+    > DW_AT_data_member_location in having an initial stack with the
+    > location description of the object since the expression has to
+    > need it.
+    --------------------------------------------------------------------
+
