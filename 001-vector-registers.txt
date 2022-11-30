@@ -6,8 +6,8 @@ these hardware register arrays from arrays in the language source they
 have been given the DW_AT_GNU_vector attribute. This proposal simply
 standardizes the existing behavior.
 
-In Section 2.2 Attribute Types, DW_AT_vector and DW_AT_variable vector
-width shall be added to Table 2.2
+In Section 2.2 Attribute Types, DW_AT_vector and
+DW_AT_variable_vector_width shall be added to Table 2.2
 
     --------------------------------------------------------------------
     DW_AT_vector                | A hardware vector register
