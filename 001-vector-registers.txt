@@ -6,14 +6,20 @@ these hardware register arrays from arrays in the language source they
 have been given the DW_AT_GNU_vector attribute. This proposal simply
 standardizes the existing behavior.
 
-In Section 2.2 Attribute Types, DW_AT_vector shall be added to Table 2.2
+In Section 2.2 Attribute Types, DW_AT_vector and DW_AT_variable vector
+width shall be added to Table 2.2
 
     --------------------------------------------------------------------
-    DW_AT_vector | A hardware vector register
+    DW_AT_vector                | A hardware vector register
+    DW_AT_variable_vector_width | Array bound for hardware
+                                | implementation defined vector register
+				| width
     --------------------------------------------------------------------
 
 The hyperlink in the "Identifies or Specifies" column shall point to
-the paragraph added to Section 5.5 below.
+the paragraph added to Section 5.5 below for DW_AT_vector and the
+paragraph added to Section 5.13 below for
+DW_AT_variable_vector_width.
 
 In Section 2.5.1.2 Register values replace the description of
 DW_OP_regval_type with the following:
@@ -27,8 +33,7 @@ DW_OP_regval_type with the following:
     information entry in the current compilation unit, which must be a
     DW_TAG_base_type entry that provides the type of the value
     contained in the specified register or it must be an
-    DW_TAG_array_type with a DW_AT_vector attribute, a subrange, and a
-    type that points to a DW_TAG_base_type.
+    DW_TAG_array_type with a DW_AT_vector attribute.
 
     [non-normative] A DW_TAG_array_type with a DW_AT_vector attribute
     is the way that a vector register is specified and can be
@@ -51,8 +56,7 @@ DW_OP_deref_type with the following:
     unsigned LEB128 integer that represents the offset of a debugging
     information entry in the current compilation unit, which must be a
     DW_TAG_base_type entry or a DW_TAG_array_type with a DW_AT_vector
-    attribute, a subrange, and a type that points to a
-    DW_TAG_base_type that provides the type of the data pushed.
+    attribute that provides the type of the data pushed.
     --------------------------------------------------------------------
 
 Replace the description of DW_OP_xderef_type with the following:
@@ -69,8 +73,7 @@ Replace the description of DW_OP_xderef_type with the following:
     unsigned LEB128 integer that represents the offset of a debugging
     information entry in the current compilation unit, which must be a
     DW_TAG_base_type entry or a DW_TAG_array_type with a DW_AT_vector
-    attribute, a subrange, and a type that points to a
-    DW_TAG_base_type that provides the type of the data pushed.
+    attribute that provides the type of the data pushed.
     --------------------------------------------------------------------
 
 In Section 5.5 Array Type Entries, replace first paragraph of
@@ -89,6 +92,20 @@ dealing with multidimensional ordering.
 
     --------------------------------------------------------------------
     An array type that refers to a hardware vector register, shall be
-    denoted with DW_AT_vector and the width of the register shall be
-    denoted with a subrange as defined in Section 5.13.
+    denoted with DW_AT_vector. The the width of the register shall be
+    specified as an array dimension and the type contained within the
+    register must be a DW_TAG_base_type entry.
+    --------------------------------------------------------------------
+
+In Section 5.13 Subrange Type Entries insert the following paragraph
+between the paragraph defining DW_AT_threads_scaled and the one
+defining DW_AT_lower_bound and DW_AT_upper_bound.
+
+    --------------------------------------------------------------------
+    The subrange entry may have a DW_AT_variable_vector_width
+    attribute, which is a flag. If present, this attriburte indicates
+    that the width of a vector is defined by the hardware
+    implementation of the target. The actual width of the vector
+    registers can be determined at runtime but is unknown at compile
+    time.
     --------------------------------------------------------------------
