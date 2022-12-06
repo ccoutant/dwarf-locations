@@ -1,0 +1,70 @@
+Part 12: Generalize Creation of Composite Location Descriptions
+
+PROBLEM DESCRIPTION
+
+In DWARF 5, a composite location description is created by one or more
+DW_OP_*piece operations. The end of the composite creation is indicated by the
+end of the operation expression. This means a single operation expression can
+only create a single composite location description, and it must be created as
+the last step of the expression.
+
+After [Allow location description on the DWARF evaluation stack] proposal, a way
+is required to allow, possibly multiple, composite location descriptions to be
+created anywhere in an operation expression. This allows general composition of
+operations that create location descriptions, and allows operations to be
+defined that take multiple location descriptions (for example the [Operations to
+Create Vector Composite Location Descriptions] proposal).
+
+To support this, an explicit operation that indicates the end of the definition
+of a composite location description is required. This can also be implied if the
+end of a DWARF expression is reached, allowing DWARF 5 expressions to remain
+legal.
+
+PROPOSED SOLUTION
+
+This section changes [Allow location description on the DWARF evaluation stack]
+proposal's Section 2.5.4.4.6 "Composite Location Description Operations" (which
+in turn replaces DWARF Version 5 Section 2.6.1.2). The paragraph:
+
+    ----------------------------------------------------------------------------
+    To support incremental creation, a composite location storage can be in an
+    incomplete state. When an incremental operation operates on an incomplete
+    composite location storage, it adds a new part.
+    ----------------------------------------------------------------------------
+
+is changed to:
+
+    ----------------------------------------------------------------------------
+    To support incremental creation, a composite location storage can be in an
+    incomplete state. When an incremental operation operates on an incomplete
+    composite location storage, it adds a new part, otherwise it creates a new
+    composite location storage. The DW_OP_piece_end operation explicitly makes
+    an incomplete composite location storage complete.
+    ----------------------------------------------------------------------------
+
+The following item is added:
+
+    ----------------------------------------------------------------------------
+    3.  DW_OP_piece_end
+        If the top stack entry is not a location description L comprised of one
+        incomplete composite location description SL, then the DWARF expression
+        is ill-formed.
+
+        Otherwise, the incomplete composite location storage LS specified by SL
+        is updated to be a complete composite location description with the same
+        parts.
+    ----------------------------------------------------------------------------
+
+Add the following row to table 7.9 in Section "7.7.1 Operation Expressions":
+
+    ----------------------------------------------------------------------------
+
+    ------------------- ----- --------- ---------------------------
+                              No. of
+    Operation           Code  Operands  Notes
+    ------------------- ----- --------- ---------------------------
+    ...
+    DW_OP_piece_end     TBA      0
+    ------------------- ----- --------- ---------------------------
+
+    ----------------------------------------------------------------------------
