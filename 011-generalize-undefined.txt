@@ -1,0 +1,55 @@
+Part 11: Generalize Creation of Undefined Location Descriptions
+
+PROBLEM DESCRIPTION
+
+DWARF 5 uses an empty expression to indicate an undefined location description.
+Since [Allow location description on the DWARF evaluation stack] allows location
+descriptions to be created on the stack, it is necessary to have an explicit way
+to specify an undefined location description.
+
+For example, the DW_OP_select_bit_piece operation proposed in [Operations to
+Create Vector Composite Location Descriptions] takes more than one location
+description on the stack. Without this ability, it is not possible to specify
+that a particular one of the input location descriptions is undefined.
+
+PROPOSED SOLUTION
+
+This proposal depends on proposal [Allow location description on the DWARF
+evaluation stack].
+
+Replace section 2.5.4.4.2 "Undefined Location Description Operations" from
+[Allow location description on the DWARF evaluation stack] (which in turn
+replaces DWARF Version 5 Section 2.6.1.1.1 "Empty Location Descriptions") with:
+
+    ----------------------------------------------------------------------------
+    [non-normative] The undefined location storage represents a piece or all of
+    an object that is present in the source but not in the object code (perhaps
+    due to optimization). Neither reading nor writing to the undefined location
+    storage is meaningful.
+
+    An undefined location description specifies the undefined location storage.
+    There is no concept of the size of the undefined location storage, nor of a
+    bit offset for an undefined location description. The DW_OP_*offset
+    operations leave an undefined location description unchanged. The
+    DW_OP_*piece operations can explicitly or implicitly specify an undefined
+    location description, allowing any size and offset to be specified, and
+    results in a part with all undefined bits.
+
+    1.  DW_OP_undefined
+        DW_OP_undefined pushes a location description L that comprises one
+        undefined location description SL.
+    ----------------------------------------------------------------------------
+
+Add the following row to table 7.9 in Section "7.7.1 Operation Expressions":
+
+    ----------------------------------------------------------------------------
+
+    ------------------- ----- --------- ---------------------------
+                              No. of
+    Operation           Code  Operands  Notes
+    ------------------- ----- --------- ---------------------------
+    ...
+    DW_OP_undefined     TBA      0
+    ------------------- ----- --------- ---------------------------
+
+    ----------------------------------------------------------------------------
