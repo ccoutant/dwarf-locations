@@ -1,0 +1,339 @@
+In Section 6.4.1, in the "undefined" register rule, add the following
+after the first sentence:
+
+    --------------------------------------------------------------------
+    The previous value of this register is the undefined location
+    description (see 2.x.x Undefined Location Description Operations).
+    --------------------------------------------------------------------
+
+Change the parenthetical comment, "By convention, ...," to non-normative
+text.
+
+For the "same value" register rule, add the following after the first
+sentence:
+
+    --------------------------------------------------------------------
+    If the current frame is the top frame, then the previous value of
+    this register is the location description L that specifies one
+    register location description SL. SL specifies the register location
+    storage that corresponds to the register with a bit offset of 0 for
+    the current thread.
+
+    If the current frame is not the top frame, then the previous value
+    of this register is the location description obtained using the call
+    frame information for the callee frame and callee program location
+    invoked by the current caller frame for the same register.
+    --------------------------------------------------------------------
+
+Change the parenthetical comment, "By convention, ...," to non-normative
+text.
+
+For the "offset(N)" register rule, replace the description with the
+following:
+
+    --------------------------------------------------------------------
+    N is a signed byte offset. The previous value of this register is
+    saved at the location description L, where L is the location
+    description of the current CFA (see 2.x.x DWARF Operation
+    Expressions) updated with the bit offset N scaled by 8 (the byte size).
+    --------------------------------------------------------------------
+
+For the "val_offset(N)" register rule, replace the description with the
+following:
+
+    --------------------------------------------------------------------
+    N is a signed byte offset. The previous value of this register is
+    the memory byte address of the location description L, where L is
+    the location description of the current CFA (see 2.5.4 DWARF
+    Operation Expressions) updated with the bit offset N scaled by 8
+    (the byte size).
+
+    The DWARF is ill-formed if the CFA location description is not a
+    memory byte address location description, or if the register size
+    does not match the size of an address in the target architecture
+    default address space.
+
+    Since the CFA location description is required to be a memory byte
+    address location description, the value of val_offset(N) will also
+    be a memory byte address location description since it is offsetting
+    the CFA location description by N bytes. Furthermore, the value of
+    val_offset(N) will be a memory byte address in the target
+    architecture default address space.
+    --------------------------------------------------------------------
+
+    > [For further discussion...]
+    > Should DWARF allow the address size to be a different size to the
+    > size of the register? Requiring them to be the same bit size
+    > avoids any issue of conversion as the bit contents of the register
+    > is simply interpreted as a value of the address.
+    >
+    > GDB has a per register hook that allows a target specific
+    > conversion on a register by register basis. It defaults to
+    > truncation of bigger registers, and to actually reading bytes from
+    > the next register (or reads out of bounds for the last register)
+    > for smaller registers. There are no GDB tests that read a register
+    > out of bounds (except an illegal hand written assembly test).
+
+For the "register(R)" register rule, add the following:
+
+    --------------------------------------------------------------------
+    The previous value of this register is the location description
+    obtained using the call frame information for the current frame and
+    current program location for register R.
+
+    The DWARF is ill-formed if the size of this register does not match
+    the size of register R or if there is a cyclic dependency in the
+    call frame information.
+    --------------------------------------------------------------------
+
+    > [For further discussion...]
+    > Should this also allow R to be larger than this register? If so is
+    > the value stored in the low order bits and it is undefined what is
+    > stored in the extra upper bits?
+
+For the "expression(E)" register rule, change "executing" to
+"evaluating," and add the following:
+
+    --------------------------------------------------------------------
+    E is evaluated with the current context, except the result kind is a
+    location description, the compilation unit is unspecified, the
+    object is unspecified, and an initial stack comprising the location
+    description of the current CFA (see 2.5.4 DWARF Operation
+    Expressions).
+    --------------------------------------------------------------------
+
+For the "val_expression(E)" register rule, change "executing" to
+"evaluating," and add the following:
+
+    --------------------------------------------------------------------
+    E is evaluated with the current context, except the result kind is a
+    value, the compilation unit is unspecified, the object is
+    unspecified, and an initial stack comprising the location
+    description of the current CFA (see 2.5.4 DWARF Operation
+    Expressions).
+
+    The DWARF is ill-formed if the resulting value type size does not
+    match the register size.
+    --------------------------------------------------------------------
+
+    > [For further discussion...]
+    > This has limited usefulness as the DWARF expression E can only
+    > produce values up to the size of the generic type. This is due to
+    > not allowing any operations that specify a type in a CFI operation
+    > expression. This makes it unusable for registers that are larger
+    > than the generic type. However, expression(E) can be used to
+    > create an implicit location description of any size.
+
+In the subsection on CIE, in item 1 (length), change "...of the address
+size" to "...of the address size specified in the address_size field."
+
+In item 2 (CIE_id), add the following:
+
+    --------------------------------------------------------------------
+    In the 32-bit DWARF format, the value of the CIE id in the CIE
+    header is 0xffffffff; in the 64-bit DWARF format, the value is
+    0xffffffffffffffff.
+    --------------------------------------------------------------------
+
+In item 3 (version), add the following:
+
+    --------------------------------------------------------------------
+    The value of the CIE version number is 4.
+    --------------------------------------------------------------------
+
+    > [For further discussion...]
+    > Should this be increased to 5?
+
+In item 9 (return_address_register), add the following:
+
+    --------------------------------------------------------------------
+    The value of the return address register is used to determine the
+    program location of the caller frame. The program location of the
+    top frame is the target architecture program counter value of the
+    current thread.
+    --------------------------------------------------------------------
+
+In Section 6.4.2 Call Frame Instructions, in the second paragraph,
+change "...encoded as DWARF expressions" to "...encoded as DWARF
+operation expressions E." Change the following sentence to "The DWARF
+operations that can be used in E have the following restrictions:".
+
+In the first bullet item, add the following opcodes to the list:
+DW_OP_fbreg, DW_OP_implicit_pointer, DW_OP_xderef_type.
+
+Change the second bullet to:
+
+    --------------------------------------------------------------------
+    DW_OP_push_object_address is not allowed because there is no object
+    context to provide a value to push.
+    --------------------------------------------------------------------
+
+In the third bullet, add DW_OP_entry_value. Change "is not
+meaningful...because its use would be circular" to "are not allowed
+because their use would be circular."
+
+In Section 6.4.2.2 CFA Definition Instructions, in item 1,
+DW_CFA_def_cfa, replace "offset" with "byte displacement B." Change the
+second sentence to the following:
+
+    --------------------------------------------------------------------
+    The required action is to define the current CFA rule to be the
+    result of evaluating the DWARF operation expression DW_OP_bregx R, B
+    as a location description.
+    --------------------------------------------------------------------
+
+In item 2, DW_CFA_def_cfa_sf, replace "offset" with "byte displacement
+B." Change the second sentence to the following:
+
+    --------------------------------------------------------------------
+    The required action is to define the current CFA rule to be the
+    result of evaluating the DWARF operation expression DW_OP_bregx R,
+    B * data_alignment_factor as a location description.
+    --------------------------------------------------------------------
+
+    > [For further discussion...]
+    > (ccoutant) I don't see what was wrong with the original DWARF 5
+    > description, which simply defines the operation in terms of the
+    > preceding one.
+
+Replace the text of item 3, DW_CFA_def_cfa_register, with the following:
+
+    --------------------------------------------------------------------
+    The DW_CFA_def_cfa_register instruction takes a single unsigned
+    LEB128 operand representing a register number R. The required action
+    is to define the current CFA rule to be the result of evaluating the
+    DWARF operation expression DW_OP_bregx R, B as a location
+    description. B is the old CFA byte displacement.
+
+    If the subprogram has no current CFA rule, or the rule was defined
+    by a DW_CFA_def_cfa_expression instruction, then the DWARF is ill-formed.
+    --------------------------------------------------------------------
+
+Replace the text of item 4, DW_CFA_def_cfa_offset, with the following:
+
+    --------------------------------------------------------------------
+    The DW_CFA_def_cfa_offset instruction takes a single unsigned LEB128
+    operand representing a (non-factored) byte displacement B. The
+    required action is to define the current CFA rule to be the result
+    of evaluating the DWARF operation expression DW_OP_bregx R, B as a
+    location description. R is the old CFA register number.
+
+    If the subprogram has no current CFA rule, or the rule was defined
+    by a DW_CFA_def_cfa_expression instruction, then the DWARF is
+    ill-formed.
+    --------------------------------------------------------------------
+
+Replace the text of item 5, DW_CFA_def_cfa_offset_sf, with the
+following:
+
+    --------------------------------------------------------------------
+    The DW_CFA_def_cfa_offset_sf instruction takes a signed LEB128
+    operand representing a factored byte displacement B. The required
+    action is to define the current CFA rule to be the result of
+    evaluating the DWARF operation expression DW_OP_bregx R, B *
+    data_alignment_factor as a location description. R is the old CFA
+    register number.
+
+    If the subprogram has no current CFA rule, or the rule was defined
+    by a DW_CFA_def_cfa_expression instruction, then the DWARF is
+    ill-formed.
+
+    [non-normative] The action is the same as DW_CFA_def_cfa_offset,
+    except that the operand is signed and factored.
+    --------------------------------------------------------------------
+
+Replace the text of item 6, DW_CFA_def_cfa_expression, with the
+following:
+
+    --------------------------------------------------------------------
+    The DW_CFA_def_cfa_expression instruction takes a single operand
+    encoded as a DW_FORM_exprloc value representing a DWARF operation
+    expression E. The required action is to define the current CFA rule
+    to be the result of evaluating E with the current context, except
+    the result kind is a location description, the compilation unit is
+    unspecified, the object is unspecified, and an empty initial stack.
+
+    See 6.4.2 Call Frame Instructions regarding restrictions on the
+    DWARF expression operations that can be used in E.
+
+    The DWARF is ill-formed if the result of evaluating E is not a
+    memory byte address location description.
+    --------------------------------------------------------------------
+
+In Section 6.4.2.3 Register Rule Instructions, in item 1,
+DW_CFA_undefined, change "a register number" to "a register number R."
+Change "the specified register" to "the register specified by R."
+
+Make the same change in item 2, DW_CFA_same_value.
+
+Replace the text of item 3, DW_CFA_offset, with the following:
+
+    --------------------------------------------------------------------
+	The DW_CFA_offset instruction takes two operands: a register number
+	R (encoded with the opcode) and an unsigned LEB128 constant
+	representing a factored displacement B. The required action is to
+	change the rule for the register specified by R to be an offset(B *
+	data_alignment_factor) rule.
+    --------------------------------------------------------------------
+
+In item 4, DW_CFA_offset_extended, change "a register number and a
+factored offset" with "a register number R and a factored offset B."
+
+In item 5, DW_CFA_offset_extended_sf, change "a register number and a
+signed LEB128 factored offset" with "a register number R and a signed
+LEB128 factored displacement B." Change the final sentence to "The
+resulting offset is B * data_alignment_factor."
+
+In item 6, DW_CFA_val_offset, change "a register number and a factored
+offset" to "a register number R and a factored displacement B." Change
+"a val_offset(N) rule where..." to "a val_offset(B *
+data_alignment_factor) rule."
+
+In item 7, DW_CFA_val_offset_sf, change "a register number and a
+factored offset" to "a register number R and a factored displacement B."
+Change "except that the second operand is signed and factored" to
+"except the B is signed."
+
+Replace the text of item 8, DW_CFA_register, with the following:
+
+    --------------------------------------------------------------------
+	The DW_CFA_register instruction takes two unsigned LEB128 operands
+	representing register numbers R1 and R2 respectively. The required
+	action is to set the rule for the register specified by R1 to be a
+	register(R2) rule.
+    --------------------------------------------------------------------
+
+In item 9, DW_CFA_expression, change "a register number" to "a register
+number R," and change "a DWARF expression" to "a DWARF operation
+expression E." Change "the register indicated by the register number" to
+"the register specified by R." Replace the end of the paragraph starting
+from "That is" with the following:
+
+    --------------------------------------------------------------------
+	[non-normative] That is, E computes the location description where
+	the register value can be retrieved.
+    --------------------------------------------------------------------
+
+In the non-normative paragraph beginning "See Section 6.4.2", change
+"that can be used" to "that can be used in E."
+
+In item 10, DW_CFA_val_expression, change "a register number" to "a
+register number R," and change "a DWARF expression" to "a DWARF
+operation expression E." Change "the register indicated by the register
+number" to "the register specified by R." Remove "where E is the DWARF
+expression." Replace the end of the paragraph starting from "That is"
+with the following:
+
+    --------------------------------------------------------------------
+	[non-normative] That is, E computes the value of register R.
+    --------------------------------------------------------------------
+
+In the non-normative paragraph beginning "See Section 6.4.2", change
+"that can be used" to "that can be used in E."
+
+In item 11, DW_CFA_restore, change "a register number" to "a register
+number R." Change "the indicated register" to "the register specified by
+R."
+
+In item 12, DW_CFA_restore_extended, change "a register number" to "a
+register number R."
