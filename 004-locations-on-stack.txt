@@ -239,6 +239,28 @@ Replace the description of DW_OP_push_object_address with the following:
     > state they pass an object?
     --------------------------------------------------------------------
 
+In Section 2.5.1.5 Control Flow Operations, in the description of
+DW_OP_call2/4/ref, add the following after the first bullet under "The
+call operation is evaluated by":
+
+    --------------------------------------------------------------------
+      * If D has a DW_AT_location attribute that is encoded as a loclist
+        or loclistsptr, then the specified location list expression E is
+        evaluated. The evaluation of E uses the current context, except
+        the result kind is a location description, the compilation unit
+        is the one that contains D, and the initial stack is empty. The
+        location description result is pushed on the stack.
+
+      * If D has a DW_AT_const_value attribute with a value V, then it
+        is as if a DW_OP_implicit_value V operation was executed.
+
+        [non-normative] This allows a call operation to be used to
+        compute the location description for any variable or formal
+        parameter regardless of whether the producer has optimized it to
+        a constant. This is consistent with the DW_OP_implicit_pointer
+        operation.
+    --------------------------------------------------------------------
+
 In Section 2.6.1.1.2 (now 2.6.2), add the following after the first
 paragraph:
 
