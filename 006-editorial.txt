@@ -4,3 +4,15 @@ In Section 2.5: DWARF Expressions (p. 26) and Section 2.6 Location
 Descriptions:
 
 Move DW_OP_nop to Control Flow Operations.
+
+[Work in progress...]
+
+Rename Section 7.7 from "DWARF Expressions and Location Descriptions" to
+"DWARF Expressions" (to reflect the unification of location descriptions
+into DWARF expressions).
+
+Rename Section 7.7.1 from "DWARF Expressions" to "Operation Expressions."
+
+Delete Section 7.7.2, Location Descriptions.
+
+Rename (and renumber) Section 7.7.3 from "Location Lists" to "Location List Expressions."
