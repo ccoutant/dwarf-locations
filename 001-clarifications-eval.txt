@@ -505,7 +505,7 @@ Replace the description of DW_OP_deref_type with the following:
     size of the location storage LS specified by any single location
     description SL of L.
 
-    See 2.5.x.x Implicit Location Description Operations for special
+    See 2.6.1.1.4 Implicit Location Descriptions for special
     rules concerning implicit location descriptions created by the
     DW_OP_implicit_pointer operation.
     --------------------------------------------------------------------
