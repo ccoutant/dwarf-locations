@@ -893,7 +893,7 @@ following:
     stack pointer register plus or minus some offset.
     --------------------------------------------------------------------
 
-Replacce the paragraph beginning "If a subroutine or entry point is
+Replace the paragraph beginning "If a subroutine or entry point is
 nested, ..." with the following:
 
     --------------------------------------------------------------------
@@ -918,11 +918,9 @@ nested, ..." with the following:
     --------------------------------------------------------------------
 
 
-In Section 3.4.2 Call Site Parameters, replace the entire contents of
-the section with the following...
-
-    > [For further discussion...]
-    > Keep first paragraph of 3.4.2?
+In Section 3.4.2 Call Site Parameters, replace the contents of the
+section starting from the second paragraph ("Each
+DW_TAG_call_site_parameter entry...") with the following...
 
     --------------------------------------------------------------------
     A DW_TAG_call_site_parameter debugger information entry may have a
