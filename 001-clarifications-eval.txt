@@ -190,9 +190,9 @@ subsections):
 
     8. An initial stack
 
-        This is a list of values or location descriptions that will be
-        pushed on the operation expression evaluation stack in the order
-        provided before evaluation of an operation expression starts.
+        This is a list of values that will be pushed on the operation
+        expression evaluation stack in the order provided before
+        evaluation of an operation expression starts.
 
         Some debugger information entries have attributes that evaluate
         their DWARF expression value with initial stack entries. In all
@@ -263,30 +263,18 @@ first paragraph:
     DW_ATE_hi_user.
     --------------------------------------------------------------------
 
-    > [For further discussion...]
-    > It may be desirable to add an implicit pointer base type encoding.
-    > It would be used for the type of the value that is produced when
-    > the DW_OP_deref* operation retrieves the full contents of an
-    > implicit pointer location storage created by the
-    > DW_OP_implicit_pointer operation. The literal value would record
-    > the debugging information entry and byte displacement specified by
-    > the associated DW_OP_implicit_pointer operation.
-    >
-    > It is unclear if DW_ATE_address is an integral type. GDB does not
-    > seem to consider it as integral.
-
 Insert the following after the end of the same section:
 
     --------------------------------------------------------------------
     Operations can act on entries on the stack, including adding entries
     and removing entries.
 
-    Evaluation of an operation expression starts with an empty stack on
-    which the entries from the initial stack provided by the context are
-    pushed in the order provided. Then the operations are evaluated,
-    starting with the first operation of the stream. Evaluation
-    continues until either an operation has an evaluation error, or
-    until one past the last operation of the stream is reached.
+    Evaluation of an expression starts with an empty stack on which the
+    entries from the initial stack provided by the context are pushed in
+    the order provided. Then the operations are evaluated, starting with
+    the first operation of the stream. Evaluation continues until either
+    an operation has an evaluation error, or until one past the last
+    operation of the stream is reached.
 
     The result of the evaluation is:
 

@@ -9,6 +9,10 @@ the section:
     expression (see 2.5.x DWARF Location List Expressions).
     --------------------------------------------------------------------
 
+In Section 2.5.1, DWARF Expression Evaluation Context, in item 8, "an
+initial stack," change "a list of values..." to "a list of values or
+location descriptions..."
+
 Rename the subsection 2.5.x General Operations:
 
     --------------------------------------------------------------------
@@ -30,6 +34,18 @@ Insert the following after the same paragraph:
     (see 2.x.x.x Memory Location Description Operations), then the DWARF
     operation expression is ill-formed.
     --------------------------------------------------------------------
+
+    > [For further discussion...]
+    > It may be desirable to add an implicit pointer base type encoding.
+    > It would be used for the type of the value that is produced when
+    > the DW_OP_deref* operation retrieves the full contents of an
+    > implicit pointer location storage created by the
+    > DW_OP_implicit_pointer operation. The literal value would record
+    > the debugging information entry and byte displacement specified by
+    > the associated DW_OP_implicit_pointer operation.
+    >
+    > It is unclear if DW_ATE_address is an integral type. GDB does not
+    > seem to consider it as integral.
 
 In Section 2.5.1.3 Stack Operations, insert the following at the end of
 the first paragraph, following “Operations that index the stack assume
