@@ -602,10 +602,11 @@ Replace the description of DW_OP_implicit_pointer with the following:
         location description SRL. SRL specifies RLS with a bit offset of
         0.
 
-        NOTE: If using DW_AT_const_value for variables and formal
-        parameters is deprecated and instead DW_AT_location is used with
-        an implicit location description, then this rule would not be
-        required.
+        > [For further discussion...]
+        > If using DW_AT_const_value for variables and formal parameters
+        > is deprecated and instead DW_AT_location is used with an
+        > implicit location description, then this rule would not be
+        > required.
 
       * Otherwise, it is an evaluation error.
 
