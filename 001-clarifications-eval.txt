@@ -496,15 +496,6 @@ Replace the description of DW_OP_deref_type with the following:
     D is not a DW_TAG_base_type debugging information entry, or if TS
     divided by 8 (the byte size) and rounded up to a whole number is not
     equal to S.
-
-    It is an evaluation error if any bit of the value is retrieved from
-    the undefined location storage or the offset of any bit exceeds the
-    size of the location storage LS specified by any single location
-    description SL of L.
-
-    See 2.6.1.1.4 Implicit Location Descriptions for special
-    rules concerning implicit location descriptions created by the
-    DW_OP_implicit_pointer operation.
     --------------------------------------------------------------------
 
 Replace the description of DW_OP_xderef with the following:

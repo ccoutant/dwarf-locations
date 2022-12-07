@@ -145,6 +145,19 @@ following:
     DW_OP_implicit_pointer operation.
     --------------------------------------------------------------------
 
+Add the following to the end of the description of DW_OP_deref_type:
+
+    --------------------------------------------------------------------
+    It is an evaluation error if any bit of the value is retrieved from
+    the undefined location storage or the offset of any bit exceeds the
+    size of the location storage LS specified by any single location
+    description SL of L.
+
+    See 2.6.1.1.4 Implicit Location Descriptions for special
+    rules concerning implicit location descriptions created by the
+    DW_OP_implicit_pointer operation.
+    --------------------------------------------------------------------
+
 In the description of DW_OP_xderef, replace the paragraph beginning “The
 value V is retrieved from the location described by L...” with the
 following:
