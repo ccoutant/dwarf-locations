@@ -368,14 +368,23 @@ description of DW_OP_form_tls_address with the following:
     DWARF expression is used.
     --------------------------------------------------------------------
 
-In the same section, replace the first paragraph of the description of
-DW_OP_call_frame_cfa with the following:
+In the same section, replace the description of DW_OP_call_frame_cfa
+with the following:
 
     --------------------------------------------------------------------
     DW_OP_call_frame_cfa pushes the location description L of the
     Canonical Frame Address (CFA) of the current subprogram, obtained
     from the call frame information on the stack. (See Section 6.4 Call
     Frame Information.)
+
+    [non-normative] Although the value of the DW_AT_frame_base attribute
+    of the debugger information entry corresponding to the current
+    subprogram can be computed using a location list expression, in some
+    cases this would require an extensive location list because the
+    values of the registers used in computing the CFA change during a
+    subprogram execution. If the call frame information is present, then
+    it already encodes such changes, and it is space efficient to
+    reference that using the DW_OP_call_frame_cfa operation.
     --------------------------------------------------------------------
 
 In Section 2.5.1.2 Register Values, replace the description of
