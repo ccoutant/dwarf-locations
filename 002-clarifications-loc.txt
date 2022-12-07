@@ -197,7 +197,7 @@ paragraph in that section with the following:
     An undefined location description specifies the undefined location
     storage. There is no concept of the size of the undefined location
     storage, nor of a bit offset for an undefined location description.
-    The DW_OP_* piece operations can implicitly specify an undefined
+    The DW_OP_*piece operations can implicitly specify an undefined
     location description, allowing any size and offset to be specified,
     and results in a part with all undefined bits.
     --------------------------------------------------------------------
