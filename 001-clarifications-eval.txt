@@ -15,11 +15,6 @@ paragraph:
     specified whether a value or location description is required as the
     result kind.
 
-    If a result kind is specified, and the result of the evaluation does
-    not match the specified result kind, then the implicit conversions
-    described in 2.5.4.4.3 Memory Location Description Operations are
-    performed if valid. Otherwise, the DWARF expression is ill-formed.
-
     If the evaluation of a DWARF expression encounters an evaluation
     error, then the result is an evaluation error.
 
@@ -292,11 +287,9 @@ Insert the following after the end of the same section:
             with DWARF Version 5 which uses an empty operation
             expression for this purpose.
 
-          * If the top stack entry is a location description, or can be
-            converted to one (see 2.5.4.4.3 Memory Location Description
-            Operations), then the result is that, possibly converted,
-            location description. Any other entries on the stack are
-            discarded.
+          * If the stack is not empty, then the result is a memory
+            location description (See Section 2.6.1.1.2 Memory Location
+            Descriptions). Any other entries on the stack are discarded.
 
           * Otherwise the DWARF expression is ill-formed.
 
@@ -307,10 +300,9 @@ Insert the following after the end of the same section:
 
       * If the current result kind specifies a value, then:
 
-          * If the top stack entry is a value, or can be converted to
-            one (see 2.5.4.4.3 Memory Location Description Operations),
-            then the result is that, possibly converted, value. Any
-            other entries on the stack are discarded.
+          * If the stack is not empty, then the result is the top
+            value on the stack. Any other entries on the stack are
+            discarded.
 
           * Otherwise the DWARF expression is ill-formed.
 

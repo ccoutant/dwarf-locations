@@ -1,5 +1,18 @@
 Part 4: Allow Location Descriptions on the Stack
 
+In Section 2.5 DWARF Expressions, add the following (non-normative) paragraph after the first two non-normative paragraphs:
+
+    --------------------------------------------------------------------
+    [non-normative] The evaluation of a DWARF expression can provide ...
+
+    If the evaluation of a DWARF expression ...
+
+    If a result kind is specified, and the result of the evaluation does
+    not match the specified result kind, then the implicit conversions
+    described in 2.5.4.4.3 Memory Location Description Operations are
+    performed if valid. Otherwise, the DWARF expression is ill-formed.
+    --------------------------------------------------------------------
+
 In Section 2.5 DWARF Expressions, add the following text at the end of
 the section:
 
@@ -46,6 +59,30 @@ Insert the following after the same paragraph:
     >
     > It is unclear if DW_ATE_address is an integral type. GDB does not
     > seem to consider it as integral.
+
+Near the end of the section, under the first-level bullet that begins
+"If the current result kind specifies a location description," replace
+the second-level bullet beginning "If the stack is not empty..." with
+the following:
+
+    --------------------------------------------------------------------
+          * If the top stack entry is a location description, or can be
+            converted to one (see 2.5.4.4.3 Memory Location Description
+            Operations), then the result is that, possibly converted,
+            location description. Any other entries on the stack are
+            discarded.
+    --------------------------------------------------------------------
+
+Under the first-level bullet beginning "If the current result kind
+specifies a location description" replace the second-level bullet
+beginning "If the stack is not empty" with the following:
+
+    --------------------------------------------------------------------
+          * If the top stack entry is a value, or can be converted to
+            one (see 2.5.4.4.3 Memory Location Description Operations),
+            then the result is that, possibly converted, value. Any
+            other entries on the stack are discarded.
+    --------------------------------------------------------------------
 
 In Section 2.5.1.3 Stack Operations, insert the following at the end of
 the first paragraph, following “Operations that index the stack assume
