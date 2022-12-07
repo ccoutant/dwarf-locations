@@ -493,11 +493,11 @@ Replace the description of DW_OP_stack_value with the following:
     It pushes a location description L with one implicit location
     description SL on the stack. SL specifies LS with a bit offset of 0.
 
-    The DW_OP_stack_value operation specifies that the object does not
-    exist in memory, but its value is nonetheless known. In this form,
-    the location description specifies the actual value of the object,
-    rather than specifying the memory or register storage that holds the
-    value.
+    [non-normative] The DW_OP_stack_value operation specifies that the
+    object does not exist in memory, but its value is nonetheless known.
+    In this form, the location description specifies the actual value of
+    the object, rather than specifying the memory or register storage
+    that holds the value.
 
     See DW_OP_implicit_pointer (following) for special rules concerning
     implicit pointer values produced by dereferencing implicit location
