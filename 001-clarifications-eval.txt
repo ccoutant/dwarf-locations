@@ -143,7 +143,12 @@ subsections):
 
         If specified:
 
-          * If the current thread is specified, then the current target
+          * If the current frame is specified, then the current target
+            architecture must be the same as the target architecture of
+            the current frame.
+
+          * If the current frame is specified and is the top frame, and
+            if the current thread is specified, then the current target
             architecture must be the same as the target architecture of
             the current thread.
 
