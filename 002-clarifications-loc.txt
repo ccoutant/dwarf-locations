@@ -1,6 +1,11 @@
 Part 2: Clarifications for Location Descriptions
 
-In Section 2.6 Location Descriptions, replace these paragraphs:
+In Section 2.6 Location Descriptions, in the first (non-normative)
+paragraph, change "whose location changes over the object's lifetime" to
+"whose location changes over the object's lifetime, and may reside at
+multiple locations simultaneously during parts of an object's lifetime."
+
+Replace these paragraphs:
 
     --------------------------------------------------------------------
     Information about the location of program objects is provided by
