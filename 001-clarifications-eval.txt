@@ -388,9 +388,6 @@ DW_OP_regval_type with the following:
     current compilation unit, that provides the type T of the register
     value.
 
-    The operation is equivalent to performing DW_OP_regx R;
-    DW_OP_deref_type DR.
-
     > [For further discussion...]
     > Should DWARF allow the type T to be a larger size than the size of
     > the register R? Restricting a larger bit size avoids any issue of

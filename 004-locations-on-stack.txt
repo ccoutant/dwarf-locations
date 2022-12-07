@@ -84,6 +84,14 @@ beginning "If the stack is not empty" with the following:
             other entries on the stack are discarded.
     --------------------------------------------------------------------
 
+In Section 2.5.1.2 Register Values, in the description of
+DW_OP_regval_type, add the following:
+
+    --------------------------------------------------------------------
+    The operation is equivalent to performing DW_OP_regx R;
+    DW_OP_deref_type DR.
+    --------------------------------------------------------------------
+
 In Section 2.5.1.3 Stack Operations, insert the following at the end of
 the first paragraph, following “Operations that index the stack assume
 that the top of the stack (most recently added entry) has index 0”:
