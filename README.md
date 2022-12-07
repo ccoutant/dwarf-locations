@@ -13,6 +13,7 @@ more manageable proposals, in a form acceptable to the DWARF committee.
 * Part 4: [Locations on the Stack](004-locations-on-stack.txt)
 * Part 5: [Deprecate `DW_OP_entry_value`](005-deprecate-entry-val.txt)
 * Part 6: [Editorial Reorganization](006-editorial.txt)
+* Part 15: [DWARF Operations to Create Vector Composite Location Descriptions](015-vector-composite-location-descriptions.txt)
 
 [amd]: https://llvm.org/docs/AMDGPUDwarfExtensionAllowLocationDescriptionOnTheDwarfExpressionStack/AMDGPUDwarfExtensionAllowLocationDescriptionOnTheDwarfExpressionStack.html#a-2-general-description
 [dwarf5]: https://dwarfstd.org/Dwarf5Std.php
