@@ -261,8 +261,8 @@ call operation is evaluated by":
         operation.
     --------------------------------------------------------------------
 
-In Section 2.6.1.1.2 (now 2.6.2), add the following after the first
-paragraph:
+In Section 2.6.1.1.2 Memory Location Descriptions (now 2.6.2), add the
+following after the first paragraph:
 
     --------------------------------------------------------------------
     If a stack entry is required to be a location description, but it is
