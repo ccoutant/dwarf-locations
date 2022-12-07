@@ -1,0 +1,256 @@
+Part 19: Support for Source Languages Mapped to SIMT Hardware
+
+PROBLEM DESCRIPTION
+
+If the source language is mapped onto the AMDGPU wavefronts in a SIMT manner,
+then the variable DWARF location expressions must compute the location for a
+single lane of the wavefront. Therefore, a DWARF operation, DW_OP_push_lane, is
+added to denote the current lane, much like DW_OP_push_object_address denotes
+the current object.
+
+In addition, a way is needed for the compiler to communicate how many source
+language threads of execution are mapped to a target architecture thread’s SIMT
+lanes. Therefore, a DW_AT_lanes DWARF attribute is added.
+
+> [For further discussion...]
+> Combine with DWARF issue 200720.1 "SIMD location expressions".
+
+PROPOSAL
+
+In Section 2.2 "Attribute Types", add the following row to Table 2.2 "Attribute
+names":
+
+    ----------------------------------------------------------------------------
+
+    Table 2.2: Attribute names
+    =========================== ====================================
+    Attribute                   Usage
+    =========================== ====================================
+    DW_AT_lanes                 SIMT lane count (see 3.3.5 "Low-Level Information")
+    =========================== ====================================
+
+    ----------------------------------------------------------------------------
+
+In Section 2.5.1 "DWARF Expression Evaluation Context" of [Allow location
+description on the DWARF evaluation stack], replace the first paragraph of the
+description of "A current thread":
+
+    ----------------------------------------------------------------------------
+    The target architecture thread identifier of the source program thread of
+    execution for which a user presented expression is currently being
+    evaluated.
+    ----------------------------------------------------------------------------
+
+with:
+
+    ----------------------------------------------------------------------------
+    The target architecture thread identifier. For source languages that are not
+    implemented using a SIMT execution model, this corresponds to the source
+    program thread of execution for which a user presented expression is
+    currently being evaluated. For source languages that are implemented using a
+    SIMT execution model, this together with the current lane corresponds to the
+    source program thread of execution for which a user presented expression is
+    currently being evaluated.
+    ----------------------------------------------------------------------------
+
+In Section 2.5.1 "DWARF Expression Evaluation Context" of [Allow location
+description on the DWARF evaluation stack], add the following after the
+description of "A current thread":
+
+    ----------------------------------------------------------------------------
+    3.  A current lane
+
+        The 0 based SIMT lane identifier to be used in evaluating a user
+        presented expression. This applies to source languages that are
+        implemented for a target architecture using a SIMT execution model.
+        These implementations map source language threads of execution to lanes
+        of the target architecture threads.
+ 
+        It is required for operations that are related to SIMT lanes.
+ 
+        [non-normative] For example, the DW_OP_push_lane operation and
+        DW_OP_form_aspace_address operation when given an address space that is
+        SIMT lane specific.
+ 
+        If specified, it must be consistent with the value of the DW_AT_lanes
+        attribute of the subprogram corresponding to context's frame and program
+        location. It is consistent if the value is greater than or equal to 0
+        and less than the, possibly default, value of the DW_AT_lanes attribute.
+        Otherwise the result is undefined.
+    ----------------------------------------------------------------------------
+
+In Section 2.5.1 "DWARF Expression Evaluation Context" of [Allow location
+description on the DWARF evaluation stack], replace the paragraph of the
+description of "A current target architecture":
+
+    ----------------------------------------------------------------------------
+    [non-normative] For example, target architecture specific entities include
+    DWARF register identifiers, DWARF address space identifiers, the default
+    address space, and the address space address sizes.
+    ----------------------------------------------------------------------------
+
+with:
+
+    ----------------------------------------------------------------------------
+    [non-normative] For example, target architecture specific entities include
+    DWARF register identifiers, DWARF lane identifiers, DWARF address space
+    identifiers, the default address space, and the address space address sizes.
+    ----------------------------------------------------------------------------
+
+In Section 2.5.1 "DWARF Expression Evaluation Context" of [Allow location
+description on the DWARF evaluation stack], replace the start of the paragraph:
+
+    ----------------------------------------------------------------------------
+    [non-normative] A DWARF expression for a location description may be able to
+    be evaluated without a thread, call frame, ...
+    ----------------------------------------------------------------------------
+
+with:
+
+    ----------------------------------------------------------------------------
+    [non-normative] A DWARF expression for a location description may be able to
+    be evaluated without a thread, lane, call frame, ...
+    ----------------------------------------------------------------------------
+
+In Section 2.5.3 "DWARF Location Description" of [Allow location description on
+the DWARF evaluation stack], replace the start of the paragraph:
+
+    ----------------------------------------------------------------------------
+    [non-normative] For example, creating a register location description
+    requires the thread context: the location storage is for the specified
+    register of that thread. Creating a memory location description for an
+    address space may required a thread context: the location storage is the
+    memory associated with that thread.
+    ----------------------------------------------------------------------------
+
+with:
+
+    ----------------------------------------------------------------------------
+    [non-normative] For example, creating a register location description
+    requires the thread context: the location storage is for the specified
+    register of that thread. Creating a memory location description for an
+    address space may required a thread and a lane context: the location storage
+    is the memory associated with that thread and lane.
+    ----------------------------------------------------------------------------
+
+In Section 2.5.4.3.1 "Literal Operations" of [Allow location description on the
+DWARF evaluation stack], add the following operation after the DW_OP_const_type
+description:
+
+    ----------------------------------------------------------------------------
+    8.  DW_OP_push_lane
+        DW_OP_push_lane pushes the current lane as a value with the generic
+        type.
+
+        [non-normative] For source languages that are implemented using a SIMT
+        execution model, this is the zero-based lane number that corresponds to
+        the source language thread of execution upon which the user is focused.
+
+        The value must be greater than or equal to 0 and less than the value of
+        the DW_AT_lanes attribute, otherwise the DWARF expression is ill-formed.
+        See Section 3.3.5 "Low-Level Information".
+    ----------------------------------------------------------------------------
+
+In Section 2.5.4.4.3 "Memory Location Description Operations" of [General
+Support for Address Spaces] proposal, in the definition of the
+DW_OP_form_aspace_address operation, replace the paragraph:
+
+    ----------------------------------------------------------------------------
+    [non-normative] For example, if AS is for per thread storage then LS is the
+    location storage for the current thread. Therefore, if L is accessed by an
+    operation, the location storage selected when the location description was
+    created is accessed, and not the location storage associated with the
+    current context of the access operation.
+    ----------------------------------------------------------------------------
+
+with:
+
+    ----------------------------------------------------------------------------
+    [non-normative] For example, if AS is for per thread storage then LS is the
+    location storage for the current thread. For languages that are implemented
+    using a SIMT execution model, then if AS is for per lane storage then LS is
+    the location storage for the current lane of the current thread. Therefore,
+    if L is accessed by an operation, the location storage selected when the
+    location description was created is accessed, and not the location storage
+    associated with the current context of the access operation.
+    ----------------------------------------------------------------------------
+
+In Section 3.3.5 "Low-Level Information", add the following after the
+description of the DW_AT_static_link attribute:
+
+    ----------------------------------------------------------------------------
+    For languages that are implemented using a SIMT execution model, a
+    DW_TAG_subprogram, DW_TAG_inlined_subroutine, or DW_TAG_entry_point debugger
+    information entry may have a DW_AT_lanes attribute whose value is an integer
+    constant that is the number of source language threads of execution per
+    target architecture thread.
+
+    [non-normative] For example, a compiler may map source language threads of
+    execution onto lanes of a target architecture thread using a SIMT execution
+    model.
+
+    It is the static number of source language threads of execution per target
+    architecture thread. It is not the dynamic number of source language threads
+    of execution with which the target architecture thread was initiated, for
+    example, due to smaller or partial work-groups.
+
+    If not present, the default value of 1 is used.
+
+    The DWARF is ill-formed if the value is less than or equal to 0.
+    ----------------------------------------------------------------------------
+
+In Section 6.4.2 "Call Frame Instructions" of [General Support for Address
+Spaces] proposal, add the following bullet after the DW_OP_push_object_address
+bullet:
+
+    ----------------------------------------------------------------------------
+    * DW_OP_push_lane is not allowed because the call frame instructions
+      describe the actions for the whole target architecture thread, not the
+      lanes independently.
+    ----------------------------------------------------------------------------
+
+In Section 7.5.4 "Attribute Encodings", add the following row to Table 7.5
+"Attribute encodings":
+
+    ----------------------------------------------------------------------------
+
+    Table 7.5: Attribute encodings
+    ================================== ====== ==================================
+    Attribute Name                     Value  Classes
+    ================================== ====== ==================================
+    DW_AT_lanes                        TBA    constant
+    ================================== ====== ==================================
+
+    ----------------------------------------------------------------------------
+
+In Section 7.7.1 "Operation Expressions" of [General Support for Address Spaces]
+proposal, add the following row to Table 7.9 "DWARF Operation Encodings":
+
+    ----------------------------------------------------------------------------
+
+    Table 7.9: DWARF Operation Encodings
+    ================================== ===== ======== ==========================
+    Operation                          Code  Number   Notes
+                                             of
+                                             Operands
+    ================================== ===== ======== ==========================
+    DW_OP_push_lane                    TBA      0
+    ================================== ===== ======== ==========================
+
+    ----------------------------------------------------------------------------
+
+In Appendix A "Attributes by Tag Value (Informative)", add the following to
+Table A.1 Attributes by tag value":
+
+    ----------------------------------------------------------------------------
+
+    Table A.1: Attributes by tag value
+    ============================== =============================
+    Tag Name                      Applicable Attributes
+    ============================== =============================
+    DW_TAG_entry_point             DW_AT_lanes
+    DW_TAG_inlined_subroutine      DW_AT_lanes
+    DW_TAG_subprogram              DW_AT_lanes
+    ============================== =============================
+
+    ----------------------------------------------------------------------------
