@@ -1,0 +1,200 @@
+Part 21: Support for Divergent Control Flow of SIMT Hardware
+
+PROBLEM DESCRIPTION
+
+If the source language is mapped onto the AMDGPU wavefronts in a SIMT manner the
+compiler can use the AMDGPU execution mask register to control which lanes are
+active. To describe the conceptual location of non-active lanes requires an
+attribute that has an expression that computes the source location PC for each
+lane.
+
+For efficiency, the expression calculates the source location the wavefront as a
+whole. This can be done using the DW_OP_select_bit_piece (see [DWARF Operations
+to Create Vector Composite Location Descriptions]) operation. Therefore, a
+DW_AT_lane_pc DWARF attribute is added.
+
+The AMDGPU may update the execution mask to perform whole wavefront operations.
+Therefore, there is a need for an attribute that computes the current active
+lane mask. This can have an expression that may evaluate to the SIMT active lane
+mask register or to a saved mask when in whole wavefront execution mode.
+Therefore, a DW_AT_active_lane DWARF attribute is added.
+
+PROPOSAL
+
+In Section 2.2 "Attribute Types", add the following rows to Table 2.2 "Attribute
+names":
+
+    ----------------------------------------------------------------------------
+
+    Table 2.2: Attribute names
+    =========================== ====================================
+    Attribute                   Usage
+    =========================== ====================================
+    DW_AT_active_lane           SIMT active lanes (see 3.3.5 "Low-Level Information")
+    DW_AT_lane_pc               SIMT lane program location (see 3.3.5 "Low-Level Information")
+    =========================== ====================================
+
+    ----------------------------------------------------------------------------
+
+In Section 2.5.1 "DWARF Expression Evaluation Context" of [Allow location
+description on the DWARF evaluation stack], replace the following paragraph in
+the description of "A current call frame":
+
+    ----------------------------------------------------------------------------
+    If specified, it must be an active call frame in the current thread.
+    Otherwise the result is undefined.
+    ----------------------------------------------------------------------------
+
+with:
+
+    ----------------------------------------------------------------------------
+    If specified, it must be an active call frame in the current thread. If the
+    current lane is specified, then that lane must have been active on entry to
+    the call frame (see the DW_AT_lane_pc attribute). Otherwise the result is
+    undefined.
+    ----------------------------------------------------------------------------
+
+In Section 2.5.1 "DWARF Expression Evaluation Context" of [Allow location
+description on the DWARF evaluation stack], replace the following in the
+description of "A current program location":
+
+    ----------------------------------------------------------------------------
+    If specified:
+
+        * If the current call frame is the top call frame, it must be the
+          current target architecture program location.
+
+        * If the current call frame F is not the top call frame, it must be the
+          program location associated with the call site in the current caller
+          frame F that invoked the callee frame.
+
+        * Otherwise the result is undefined.
+    ----------------------------------------------------------------------------
+
+with:
+
+    ----------------------------------------------------------------------------
+    If specified:
+
+    * If the current lane is not specified:
+
+      * If the current call frame is the top call frame, it must be the current
+        target architecture program location.
+
+      * If the current call frame F is not the top call frame, it must be the
+        program location associated with the call site in the current caller
+        frame F that invoked the callee frame.
+
+    * If the current lane is specified and the architecture program location LPC
+      computed by the DW_AT_lane_pc attribute for the current lane is not the
+      undefined location description (indicating the lane was not active on
+      entry to the call frame), it must be LPC.
+
+    * Otherwise the result is undefined.
+    ----------------------------------------------------------------------------
+
+In Section 3.3.5 "Low-Level Information" of [Support for Source Languages Mapped
+to SIMT Hardware], add the following after the description of the DW_AT_lanes
+and DW_AT_iterations attributes:
+
+    ----------------------------------------------------------------------------
+    5.  For source languages that are implemented using a SIMT execution model,
+        a DW_TAG_subprogram, DW_TAG_inlined_subroutine, or DW_TAG_entry_point
+        debugging information entry may have a DW_AT_lane_pc attribute whose
+        value is a DWARF expression E.
+
+        The result of the attribute is obtained by evaluating E with a context
+        that has a result kind of a location description, an unspecified object,
+        the compilation unit that contains E, an empty initial stack, and other
+        context elements corresponding to the source language thread of
+        execution upon which the user is focused, if any.
+
+        The resulting location description L is for a lane count sized vector of
+        generic type elements. The lane count is the value of the DW_AT_lanes
+        attribute. Each element holds the conceptual program location of the
+        corresponding lane. If the lane was not active when the current
+        subprogram was called, its element is an undefined location description.
+
+        The DWARF is ill-formed if L does not have exactly one single location
+        description.
+
+        [non-normative] DW_AT_lane_pc allows the compiler to indicate
+        conceptually where each SIMT lane of a target architecture thread is
+        positioned even when it is in divergent control flow that is not active.
+
+        [non-normative] Typically, the result is a location description with one
+        composite location description with each part being a location
+        description with either one undefined location description or one memory
+        location description.
+
+        If not present, the target architecture thread is not being used in a
+        SIMT manner, and the thread's current program location is used.
+
+    6.  For languages that are implemented using a SIMT execution model, a
+        DW_TAG_subprogram, DW_TAG_inlined_subroutine, or DW_TAG_entry_point
+        debugger information entry may have a DW_AT_active_lane attribute whose
+        value is a DWARF expression E.
+
+        E is evaluated with a context that has a result kind of a location
+        description, an unspecified object, the compilation unit that contains
+        E, an empty initial stack, and other context elements corresponding to
+        the source language thread of execution upon which the user is focused,
+        if any.
+
+        The DWARF is ill-formed if L does not have exactly one single location
+        description SL.
+
+        The active lane bit mask V for the current program location is obtained
+        by reading from SL using a target architecture specific integral base
+        type T that has a bit size equal to the value of the DW_AT_lanes
+        attribute of the subprogram corresponding to context's frame and program
+        location. The Nth least significant bit of the mask corresponds to the
+        Nth lane. If the bit is 1 the lane is active, otherwise it is inactive.
+        The result of the attribute is the value V.
+
+        [non-normative] Some targets may update the target architecture
+        execution mask for regions of code that must execute with different sets
+        of lanes than the current active lanes. For example, some code must
+        execute with all lanes made temporarily active. DW_AT_active_lane allows
+        the compiler to provide the means to determine the source language
+        active lanes at any program location. Typically, this attribute will use
+        a loclist to express different locations of the active lane mask at
+        different program locations.
+
+        If not present and DW_AT_lanes is greater than 1, then the target
+        architecture execution mask is used.
+    ----------------------------------------------------------------------------
+
+In Section 7.5.4 "Attribute Encodings", add the following rows to Table 7.5
+"Attribute encodings":
+
+    ----------------------------------------------------------------------------
+
+    Table 7.5: Attribute encodings
+    ================================== ====== ==================================
+    Attribute Name                     Value  Classes
+    ================================== ====== ==================================
+    DW_AT_active_lane                  TBA    exprloc, loclist
+    DW_AT_lane_pc                      TBA    exprloc, loclist
+    ================================== ====== ==================================
+
+    ----------------------------------------------------------------------------
+
+In Appendix A "Attributes by Tag Value (Informative)", add the following to
+Table A.1 Attributes by tag value":
+
+    ----------------------------------------------------------------------------
+
+    Table A.1: Attributes by tag value
+    ============================= =============================
+    Tag Name                      Applicable Attributes
+    ============================= =============================
+    DW_TAG_entry_point            DW_AT_active_lane
+                                  DW_AT_lane_pc
+    DW_TAG_inlined_subroutine     DW_AT_active_lane
+                                  DW_AT_lane_pc
+    DW_TAG_subprogram             DW_AT_active_lane
+                                  DW_AT_lane_pc
+    ============================= =============================
+
+    ----------------------------------------------------------------------------
