@@ -1,5 +1,7 @@
 Part 4: Allow Location Descriptions on the Stack
 
+In Section 2.5 DWARF Expressions, remove the second sentence of the first paragraph: "They are expressed in terms of DWARF operations that operate on a stack of values."
+
 In Section 2.5 DWARF Expressions, add the following (non-normative) paragraph after the first two non-normative paragraphs:
 
     --------------------------------------------------------------------
