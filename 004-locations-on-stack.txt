@@ -890,8 +890,9 @@ Descriptions with the following:
         the start of the part location description.
     --------------------------------------------------------------------
 
-In Section 2.6.2 (now 2.6.6) Location Lists, insert the following at the
-beginning of the section:
+In Section 2.6.2 (now 2.6.6) Location Lists, rename the section "2.6.6
+Location List Expressions," and insert the following at the beginning of
+the section:
 
     --------------------------------------------------------------------
     [non-normative] To meet the needs of recent computer architectures
@@ -903,8 +904,9 @@ beginning of the section:
     described has these requirements.
     --------------------------------------------------------------------
 
-Remove the second and third paragraphs (“A location list is indicated
-by...” and “This location list representation, the loclist class, ...”).
+Remove the first three paragraphs ("Location lists are used in place
+of...," “A location list is indicated by...,” and “This location list
+representation, the loclist class, ...”).
 
 Replace the text of Item 1, Bounded location description, with the
 following:
