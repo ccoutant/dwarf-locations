@@ -59,7 +59,7 @@ Move paragraphs 2-5 of 2.5.x General Operations into this new section, and chang
 Rename the subsection 2.5.x General Operations:
 
     --------------------------------------------------------------------
-    2.5.x DWARF Operation Expressions
+    2.5.3 DWARF Operation Expressions
     --------------------------------------------------------------------
 
 Insert the following before the paragraph beginning “Operations can act
@@ -146,8 +146,93 @@ the stack is empty" with the following:
             > an empty stack for this case.
     --------------------------------------------------------------------
 
-In Section 2.5.1.2 Register Values, in the description of
-DW_OP_regval_type, add the following:
+In Section 2.5.1.1 Literal Encodings, replace the description of
+DW_OP_addr with the following:
+
+    --------------------------------------------------------------------
+    DW_OP_addr has a single byte constant value operand, which has the
+    size of the generic type, that represents an address A.
+
+    It pushes a location description L with one memory location
+    description SL on the stack. SL specifies the memory location
+    storage corresponding to the target architecture default address
+    space with a bit offset equal to A scaled by 8 (the byte size).
+
+    [non-normative] If the DWARF is part of a code object, then A may
+    need to be relocated. For example, in the ELF code object format, A
+    must be adjusted by the difference between the ELF segment virtual
+    address and the virtual address at which the segment is loaded.
+    --------------------------------------------------------------------
+
+In the same section, replace the description of DW_OP_addrx with the
+following:
+
+    --------------------------------------------------------------------
+    DW_OP_addrx has a single unsigned LEB128 integer operand that
+    represents a zero-based index into the .debug_addr section relative
+    to the value of the DW_AT_addr_base attribute of the associated
+    compilation unit. The address value A in the .debug_addr section has
+    the size of the generic type.
+
+    It pushes a location description L with one memory location
+    description SL on the stack. SL specifies the memory location
+    storage corresponding to the target architecture default address
+    space with a bit offset equal to A scaled by 8 (the byte size).
+
+    [non-normative] If the DWARF is part of a code object, then A may
+    need to be relocated. For example, in the ELF code object format, A
+    must be adjusted by the difference between the ELF segment virtual
+    address and the virtual address at which the segment is loaded.
+    --------------------------------------------------------------------
+
+In Section 2.5.1.2 Register Values, replace the description of
+DW_OP_fbreg with the following:
+
+    --------------------------------------------------------------------
+    DW_OP_fbreg has a single signed LEB128 integer operand that
+    represents a byte displacement B.
+
+    The location description L for the frame base of the current
+    subprogram is obtained from the DW_AT_frame_base attribute of the
+    debugger information entry corresponding to the current subprogram
+    as described in 3.3.5 Low-Level Information.
+
+    The location description L is updated by bit offset B scaled by 8
+    (the byte size) and pushed on the stack.
+    --------------------------------------------------------------------
+
+In the same section, replace the description of
+DW_OP_breg0...DW_OP_breg31 with the following:
+
+    --------------------------------------------------------------------
+    The DW_OP_breg<N> operations encode the numbers of up to 32
+    registers, numbered from 0 through 31, inclusive. The register
+    number R corresponds to the N in the operation name.
+
+    They have a single signed LEB128 integer operand that represents a
+    byte displacement B.
+
+    The address space identifier AS is defined as the one corresponding
+    to the target architecture specific default address space.
+
+    The address size S is defined as the address bit size of the target
+    architecture specific address space corresponding to AS.
+
+    The contents of the register specified by R are retrieved as if a
+    DW_OP_regval_type R, DR operation was performed where DR is the
+    offset of a hypothetical debug information entry in the current
+    compilation unit for an unsigned integral base type of size S bits.
+    B is added and the least significant S bits are treated as an
+    unsigned value to be used as an address A.
+
+    They push a location description L comprising one memory location
+    description LS on the stack. LS specifies the memory location
+    storage that corresponds to AS with a bit offset equal to A scaled
+    by 8 (the byte size).
+    --------------------------------------------------------------------
+
+In the same section, in the description of DW_OP_regval_type, add the
+following:
 
     --------------------------------------------------------------------
     The operation is equivalent to performing DW_OP_regx R;
@@ -301,6 +386,44 @@ Replace the description of DW_OP_push_object_address with the following:
     > state they pass an object?
     --------------------------------------------------------------------
 
+In the same section, replace the first paragraph of the description of
+DW_OP_form_tls_address with the following:
+
+    --------------------------------------------------------------------
+    DW_OP_form_tls_address pops one stack entry that must be an integral
+    type value and treats it as a thread-local storage address TA.
+
+    It pushes a location description L with one memory location
+    description SL on the stack. SL is the target architecture specific
+    memory location description that corresponds to the thread-local
+    storage address TA.
+
+    The meaning of the thread-local storage address TA is defined by the
+    run-time environment. If the run-time environment supports multiple
+    thread-local storage blocks for a single thread, then the block
+    corresponding to the executable or shared library containing this
+    DWARF expression is used.
+    --------------------------------------------------------------------
+
+In the same section, replace the description of DW_OP_call_frame_cfa
+with the following:
+
+    --------------------------------------------------------------------
+    DW_OP_call_frame_cfa pushes the location description L of the
+    Canonical Frame Address (CFA) of the current subprogram, obtained
+    from the call frame information on the stack. (See Section 6.4 Call
+    Frame Information.)
+
+    [non-normative] Although the value of the DW_AT_frame_base attribute
+    of the debugger information entry corresponding to the current
+    subprogram can be computed using a location list expression, in some
+    cases this would require an extensive location list because the
+    values of the registers used in computing the CFA change during a
+    subprogram execution. If the call frame information is present, then
+    it already encodes such changes, and it is space efficient to
+    reference that using the DW_OP_call_frame_cfa operation.
+    --------------------------------------------------------------------
+
 In Section 2.5.1.5 Control Flow Operations, in the description of
 DW_OP_call2/4/ref, add the following after the first bullet under "The
 call operation is evaluated by":
@@ -370,129 +493,6 @@ following after the first paragraph:
     architecture default address space with a bit offset B that is a
     multiple of 8, then it is implicitly converted to a value equal to B
     divided by 8 (the byte size) with the generic type.
-    --------------------------------------------------------------------
-
-In Section 2.5.1.1 Literal Encodings, replace the description of
-DW_OP_addr with the following:
-
-    --------------------------------------------------------------------
-    DW_OP_addr has a single byte constant value operand, which has the
-    size of the generic type, that represents an address A.
-
-    It pushes a location description L with one memory location
-    description SL on the stack. SL specifies the memory location
-    storage corresponding to the target architecture default address
-    space with a bit offset equal to A scaled by 8 (the byte size).
-
-    [non-normative] If the DWARF is part of a code object, then A may
-    need to be relocated. For example, in the ELF code object format, A
-    must be adjusted by the difference between the ELF segment virtual
-    address and the virtual address at which the segment is loaded.
-    --------------------------------------------------------------------
-
-In the same section, replace the description of DW_OP_addrx with the
-following:
-
-    --------------------------------------------------------------------
-    DW_OP_addrx has a single unsigned LEB128 integer operand that
-    represents a zero-based index into the .debug_addr section relative
-    to the value of the DW_AT_addr_base attribute of the associated
-    compilation unit. The address value A in the .debug_addr section has
-    the size of the generic type.
-
-    It pushes a location description L with one memory location
-    description SL on the stack. SL specifies the memory location
-    storage corresponding to the target architecture default address
-    space with a bit offset equal to A scaled by 8 (the byte size).
-
-    [non-normative] If the DWARF is part of a code object, then A may
-    need to be relocated. For example, in the ELF code object format, A
-    must be adjusted by the difference between the ELF segment virtual
-    address and the virtual address at which the segment is loaded.
-    --------------------------------------------------------------------
-
-In Section 2.5.1.3 Stack Operations, replace the first paragraph of the
-description of DW_OP_form_tls_address with the following:
-
-    --------------------------------------------------------------------
-    DW_OP_form_tls_address pops one stack entry that must be an integral
-    type value and treats it as a thread-local storage address TA.
-
-    It pushes a location description L with one memory location
-    description SL on the stack. SL is the target architecture specific
-    memory location description that corresponds to the thread-local
-    storage address TA.
-
-    The meaning of the thread-local storage address TA is defined by the
-    run-time environment. If the run-time environment supports multiple
-    thread-local storage blocks for a single thread, then the block
-    corresponding to the executable or shared library containing this
-    DWARF expression is used.
-    --------------------------------------------------------------------
-
-In the same section, replace the description of DW_OP_call_frame_cfa
-with the following:
-
-    --------------------------------------------------------------------
-    DW_OP_call_frame_cfa pushes the location description L of the
-    Canonical Frame Address (CFA) of the current subprogram, obtained
-    from the call frame information on the stack. (See Section 6.4 Call
-    Frame Information.)
-
-    [non-normative] Although the value of the DW_AT_frame_base attribute
-    of the debugger information entry corresponding to the current
-    subprogram can be computed using a location list expression, in some
-    cases this would require an extensive location list because the
-    values of the registers used in computing the CFA change during a
-    subprogram execution. If the call frame information is present, then
-    it already encodes such changes, and it is space efficient to
-    reference that using the DW_OP_call_frame_cfa operation.
-    --------------------------------------------------------------------
-
-In Section 2.5.1.2 Register Values, replace the description of
-DW_OP_fbreg with the following:
-
-    --------------------------------------------------------------------
-    DW_OP_fbreg has a single signed LEB128 integer operand that
-    represents a byte displacement B.
-
-    The location description L for the frame base of the current
-    subprogram is obtained from the DW_AT_frame_base attribute of the
-    debugger information entry corresponding to the current subprogram
-    as described in 3.3.5 Low-Level Information.
-
-    The location description L is updated by bit offset B scaled by 8
-    (the byte size) and pushed on the stack.
-    --------------------------------------------------------------------
-
-In the same section, replace the description of
-DW_OP_breg0...DW_OP_breg31 with the following:
-
-    --------------------------------------------------------------------
-    The DW_OP_breg<N> operations encode the numbers of up to 32
-    registers, numbered from 0 through 31, inclusive. The register
-    number R corresponds to the N in the operation name.
-
-    They have a single signed LEB128 integer operand that represents a
-    byte displacement B.
-
-    The address space identifier AS is defined as the one corresponding
-    to the target architecture specific default address space.
-
-    The address size S is defined as the address bit size of the target
-    architecture specific address space corresponding to AS.
-
-    The contents of the register specified by R are retrieved as if a
-    DW_OP_regval_type R, DR operation was performed where DR is the
-    offset of a hypothetical debug information entry in the current
-    compilation unit for an unsigned integral base type of size S bits.
-    B is added and the least significant S bits are treated as an
-    unsigned value to be used as an address A.
-
-    They push a location description L comprising one memory location
-    description LS on the stack. LS specifies the memory location
-    storage that corresponds to AS with a bit offset equal to A scaled
-    by 8 (the byte size).
     --------------------------------------------------------------------
 
 In Section 2.6.1.1.3 (now 2.6.3) Register Location Descriptions, replace
