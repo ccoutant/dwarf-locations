@@ -505,8 +505,25 @@ following after the first paragraph:
     divided by 8 (the byte size) with the generic type.
     --------------------------------------------------------------------
 
-In Section 2.6.1.1.3 (now 2.6.3) Register Location Descriptions, replace
-the description of DW_OP_regx with the following:
+In Section 2.6.1.1.3 (now 2.6.3) Register Location Descriptions, rename
+the section "Register Location Description Operations."
+
+Replace the first four paragraphs of the section with the following:
+
+    --------------------------------------------------------------------
+    There is a register location storage that corresponds to each of the
+    target architecture registers. The size of each register location
+    storage corresponds to the size of the corresponding target
+    architecture register.
+
+    A register location description specifies a register location
+    storage. The bit offset corresponds to a bit position within the
+    register. Bits accessed using a register location description access
+    the corresponding target architecture register starting at the
+    specified bit offset.
+    --------------------------------------------------------------------
+
+Replace the description of DW_OP_regx with the following:
 
     --------------------------------------------------------------------
     DW_OP_regx has a single unsigned LEB128 integer operand that
@@ -536,10 +553,11 @@ the description of DW_OP_regx with the following:
     of the access operation.
     --------------------------------------------------------------------
 
-In Section 2.6.1.1.4 (now 2.6.4) Implicit Location Descriptions, in the
-first paragraph, replace “either known or known to be undefined” with
-“known, either as a constant or by computations on other locations and
-values in the program.” Add the following paragraph after the first:
+In Section 2.6.1.1.4 (now 2.6.4) Implicit Location Descriptions, rename the section "Implicit Location Description Operations."
+
+In the first paragraph, replace “either known or known to be undefined”
+with “known, either as a constant or by computations on other locations
+and values in the program.” Add the following paragraph after the first:
 
     --------------------------------------------------------------------
     An implicit location description specifies an implicit location
@@ -726,10 +744,12 @@ Replace the description of DW_OP_implicit_pointer with the following:
     operation.
     --------------------------------------------------------------------
 
-Replace the contents of Section 2.6.1.2 (now 2.6.5) Composite Location
-Descriptions with the following:
+In Section 2.6.1.2 (now 2.6.5) Composite Location Descriptions, rename
+the section and replace its contents with the following:
 
     --------------------------------------------------------------------
+    2.6.5 Composite Location Description Operations
+
     A composite location storage represents an object or value which may
     be contained in part of another location storage or contained in
     parts of more than one location storage.
