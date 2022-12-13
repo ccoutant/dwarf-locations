@@ -1,4 +1,4 @@
-Part 4: Allow Location Descriptions on the Stack
+Part 6: Allow Location Descriptions on the Stack
 
 In Section 2.5 DWARF Expressions, remove the second sentence of the
 first paragraph: "They are expressed in terms of DWARF operations that

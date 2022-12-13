@@ -1,4 +1,6 @@
-Part 5: Clarifications for DW_OP_entry_value
+Part 8: Clarifications for DW_OP_entry_value
+
+[Work in progress...]
 
 > [For further discussion, after a replacement proposal is in place...]
 > In Section 2.5.1.7 Special Operations, mark DW_OP_entry_value as

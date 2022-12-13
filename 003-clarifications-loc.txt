@@ -1,4 +1,4 @@
-Part 2: Clarifications for Location Descriptions
+Part 3: Clarifications for Location Descriptions
 
 In Section 2.6 Location Descriptions, in the first (non-normative)
 paragraph, change "whose location changes over the object's lifetime" to

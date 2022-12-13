@@ -1,4 +1,4 @@
-Part 6: Editorial Reorganization
+Part 7: Editorial Reorganization
 
 In Section 2.5: DWARF Expressions (p. 26) and Section 2.6 Location
 Descriptions:
