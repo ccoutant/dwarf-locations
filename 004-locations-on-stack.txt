@@ -28,6 +28,34 @@ In Section 2.5.1, DWARF Expression Evaluation Context, in item 8, "an
 initial stack," change "a list of values..." to "a list of values or
 location descriptions..."
 
+After Section 2.5.1, insert a new section "2.5.2 DWARF Expression Value"
+(and renumber subsequent subsections):
+
+Move paragraphs 2-5 of 2.5.x General Operations into this new section, and change "A value on the stack has..." to "A value has...":
+
+    --------------------------------------------------------------------
+    2.5.2 DWARF Expression Value
+
+    A value has a type and a literal value. It can
+    represent a literal value of any supported base type of the target
+    architecture. The base type specifies the size, encoding, and
+    endianity of the literal value.
+
+    There is a distinguished base type termed the generic type, which is
+    an integral type that has the size of an address in the target
+    architecture default address space, a target architecture defined
+    endianity, and unspecified signedness.
+
+    [non-normative] The generic type is the same as the unspecified type
+    used for stack operations defined in DWARF Version 4 and before.
+
+    An integral type is a base type that has an encoding of
+    DW_ATE_signed, DW_ATE_signed_char, DW_ATE_unsigned,
+    DW_ATE_unsigned_char, DW_ATE_boolean, or any target architecture
+    defined integral encoding in the inclusive range DW_ATE_lo_user to
+    DW_ATE_hi_user.
+    --------------------------------------------------------------------
+
 Rename the subsection 2.5.x General Operations:
 
     --------------------------------------------------------------------
