@@ -937,8 +937,10 @@ applies.”
 In the text of Item 4, End-of-list, replace “location list” with
 “location list expression.”
 
-Insert the following before the paragraph beginning “A location list
-consists of a sequence...”:
+Remove the paragraph beginning "A location list consists of a sequence
+of..."
+
+Insert the following in its place:
 
     --------------------------------------------------------------------
     The address ranges defined by the bounded location description
