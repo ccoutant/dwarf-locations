@@ -62,10 +62,23 @@ Insert the following after the same paragraph:
     > It is unclear if DW_ATE_address is an integral type. GDB does not
     > seem to consider it as integral.
 
-Near the end of the section, under the first-level bullet that begins
-"If the current result kind specifies a location description," replace
-the second-level bullet beginning "If the stack is not empty..." with
-the following:
+Near the end of the section, under the first-level bullet item that
+begins "If the current result kind specifies a location description":
+
+(1) Replace the second-level bullet item beginning "If the stack is
+empty..." with the following:
+
+    --------------------------------------------------------------------
+          * If the stack is empty, the result is a location description
+            with one undefined location description.
+
+            [non-normative] This rule is for backwards compatibility
+            with DWARF Version 5 which uses an empty operation
+            expression for this purpose.
+    --------------------------------------------------------------------
+
+(2) Replace the second-level bullet item beginning "If the stack is not
+empty..." with the following:
 
     --------------------------------------------------------------------
           * If the top stack entry is a location description, or can be
@@ -75,8 +88,8 @@ the following:
             discarded.
     --------------------------------------------------------------------
 
-Under the first-level bullet beginning "If the current result kind
-specifies a location description" replace the second-level bullet
+Under the first-level bullet item beginning "If the current result kind
+specifies a location description," replace the second-level bullet
 beginning "If the stack is not empty" with the following:
 
     --------------------------------------------------------------------
@@ -84,6 +97,25 @@ beginning "If the stack is not empty" with the following:
             one (see 2.5.4.4.3 Memory Location Description Operations),
             then the result is that, possibly converted, value. Any
             other entries on the stack are discarded.
+    --------------------------------------------------------------------
+
+Under the first-level bullet item beginning "If the current result kind
+is not specified," replace the second-level bullet item beginning "If
+the stack is empty" with the following:
+
+    --------------------------------------------------------------------
+          * If the stack is empty, the result is a location description
+            with one undefined location description.
+
+            [non-normative] This rule is for backwards compatibility
+            with DWARF Version 5 which uses an empty operation
+            expression for this purpose.
+
+            > [For further discussion...]
+            > This rule is consistent with the rule above for when a
+            > location description is requested. However, GDB appears to
+            > report this as an error and no GDB tests appear to cause
+            > an empty stack for this case.
     --------------------------------------------------------------------
 
 In Section 2.5.1.2 Register Values, in the description of

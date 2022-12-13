@@ -280,12 +280,8 @@ Insert the following after the end of the same section:
       * If the current result kind specifies a location description,
         then:
 
-          * If the stack is empty, the result is a location description
-            with one undefined location description.
-
-            [non-normative] This rule is for backwards compatibility
-            with DWARF Version 5 which uses an empty operation
-            expression for this purpose.
+          * If the stack is empty, the result is an empty location
+            description.
 
           * If the stack is not empty, then the result is a memory
             location description (See Section 2.6.1.1.2 Memory Location
@@ -308,18 +304,8 @@ Insert the following after the end of the same section:
 
       * If the current result kind is not specified, then:
 
-          * If the stack is empty, the result is a location description
-            with one undefined location description.
-
-            [non-normative] This rule is for backwards compatibility
-            with DWARF Version 5 which uses an empty operation
-            expression for this purpose.
-
-            > [For further discussion...]
-            > This rule is consistent with the rule above for when a
-            > location description is requested. However, GDB appears to
-            > report this as an error and no GDB tests appear to cause
-            > an empty stack for this case.
+          * If the stack is empty, the result is an empty location
+            description.
 
           * Otherwise, the top stack entry is returned. Any other
             entries on the stack are discarded.
