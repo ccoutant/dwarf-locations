@@ -23,3 +23,7 @@ DW_OP_entry_value add the following after the first paragraph:
     [non-normative] It may be used to determine the value of arguments
     on entry to the current call frame provided they are not clobbered.
     --------------------------------------------------------------------
+
+> [For further discussion...]
+> GDB only implements DW_OP_entry_value when E is exactly DW_OP_reg* or
+> DW_OP_breg*; DW_OP_deref*.
