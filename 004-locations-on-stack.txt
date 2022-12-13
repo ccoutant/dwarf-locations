@@ -1,22 +1,23 @@
 Part 4: Allow Location Descriptions on the Stack
 
-In Section 2.5 DWARF Expressions, remove the second sentence of the first paragraph: "They are expressed in terms of DWARF operations that operate on a stack of values."
+In Section 2.5 DWARF Expressions, remove the second sentence of the
+first paragraph: "They are expressed in terms of DWARF operations that
+operate on a stack of values."
 
-In Section 2.5 DWARF Expressions, add the following (non-normative) paragraph after the first two non-normative paragraphs:
+Add the following paragraph after the paragraph beginning "If the
+evaluation of a DWARF expression...":
 
     --------------------------------------------------------------------
-    [non-normative] The evaluation of a DWARF expression can provide ...
-
-    If the evaluation of a DWARF expression ...
-
     If a result kind is specified, and the result of the evaluation does
     not match the specified result kind, then the implicit conversions
     described in 2.5.4.4.3 Memory Location Description Operations are
     performed if valid. Otherwise, the DWARF expression is ill-formed.
     --------------------------------------------------------------------
 
-In Section 2.5 DWARF Expressions, add the following text at the end of
-the section:
+Remove the paragraph "A DWARF expression is encoded as a stream of
+operations..."
+
+Add the following text at the end of the section:
 
     --------------------------------------------------------------------
     A DWARF expression can either be encoded as an operation expression
@@ -31,7 +32,8 @@ location descriptions..."
 After Section 2.5.1, insert a new section "2.5.2 DWARF Expression Value"
 (and renumber subsequent subsections):
 
-Move paragraphs 2-5 of 2.5.x General Operations into this new section, and change "A value on the stack has..." to "A value has...":
+Move paragraphs 2-5 of 2.5.x General Operations into this new section,
+and change "A value on the stack has..." to "A value has...":
 
     --------------------------------------------------------------------
     2.5.2 DWARF Expression Value
@@ -60,6 +62,14 @@ Rename the subsection 2.5.x General Operations:
 
     --------------------------------------------------------------------
     2.5.3 DWARF Operation Expressions
+    --------------------------------------------------------------------
+
+Insert the following as the first paragraph of the section:
+
+    --------------------------------------------------------------------
+    An operation expression is comprised of a stream of operations, each
+    consisting of an opcode followed by zero or more operands. The
+    number of operands is implied by the opcode.
     --------------------------------------------------------------------
 
 Insert the following before the paragraph beginning “Operations can act

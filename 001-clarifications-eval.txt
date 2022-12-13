@@ -235,8 +235,7 @@ first paragraph:
 ... with the following:
 
     --------------------------------------------------------------------
-    Each general operation represents a postfix operation on a simple
-    stack machine.
+    Operations represents a postfix operation on a simple stack machine.
 
     A value on the stack has a type and a literal value. It can
     represent a literal value of any supported base type of the target
