@@ -2,8 +2,13 @@ Part 1: DW_OP_call_ref Correction
 
 Section 2.5.1.5 (Control Flow Operations), page 36, lines 15-19
 
+This is part 1 in a series of proposals related to support for debugging
+on heterogeneous architectures. Although this proposal is not directly
+related to heterogeneous architectures, it lays the groundwork for
+subsequent proposals in this series.
 
-Background
+
+BACKGROUND
 ----------
 
 In Section 2.5.1.5 (Control Flow Operations), the DW_OP_call_ref
@@ -29,8 +34,8 @@ an offset within the same executable or shared object. Their purpose
 is for references between compilation units, not between linked objects.
 
 
-Proposal
---------
+PROPOSED CHANGES
+----------------
 
 In Section 2.5.1.5 (Control Flow Operations), on page 36, in item 4
 (DW_OP_call2, etc.), replace the sentences:

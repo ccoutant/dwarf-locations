@@ -1,11 +1,30 @@
 Part 7: Editorial Reorganization
 
+This is part 7 in a series of proposals related to support for debugging
+on heterogeneous architectures. This proposal is editorial in nature, and
+does not make any substantive changes.
+
+[Work in progress...]
+
+
+BACKGROUND
+----------
+
+With the changes proposed in Part 6 of this series, DWARF expressions
+and location descriptions have essentially been unified, and the
+distinction between the two is no longer material. The bulk of this
+proposal merely reorganizes the text from Sections 2.5 (DWARF
+Expressions) and 2.6 (Location Descriptions) into a single section, and
+rearranges the operators into more logical groupings.
+
+
+PROPOSED CHANGES
+----------------
+
 In Section 2.5: DWARF Expressions (p. 26) and Section 2.6 Location
 Descriptions:
 
 Move DW_OP_nop to Control Flow Operations.
-
-[Work in progress...]
 
 Rename Section 7.7 from "DWARF Expressions and Location Descriptions" to
 "DWARF Expressions" (to reflect the unification of location descriptions
@@ -15,4 +34,5 @@ Rename Section 7.7.1 from "DWARF Expressions" to "Operation Expressions."
 
 Delete Section 7.7.2, Location Descriptions.
 
-Rename (and renumber) Section 7.7.3 from "Location Lists" to "Location List Expressions."
+Rename (and renumber) Section 7.7.3 from "Location Lists" to "Location
+List Expressions."

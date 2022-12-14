@@ -1,5 +1,25 @@
 Part 3: Clarifications for Location Descriptions
 
+This is part 3 in a series of proposals related to support for debugging
+on heterogeneous architectures. Although this proposal is not directly
+related to heterogeneous architectures, it lays the groundwork for
+subsequent proposals in this series.
+
+
+BACKGROUND
+----------
+
+This proposal is editorial in nature: it does not intend to change the
+meaning of any DWARF constructs, but merely to clarify aspects of
+DWARF expression evaluation that were unclear to the teams implementing
+DWARF consumers.
+
+The changes proposed below alter the taxonomy of location descriptions.
+
+
+PROPOSED CHANGES
+----------------
+
 In Section 2.6 Location Descriptions, in the first (non-normative)
 paragraph, change "whose location changes over the object's lifetime" to
 "whose location changes over the object's lifetime, and may reside at

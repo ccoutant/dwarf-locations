@@ -1,6 +1,17 @@
 Part 8: Clarifications for DW_OP_entry_value
 
+This is part 8 in a series of proposals related to support for debugging
+on heterogeneous architectures.
+
 [Work in progress...]
+
+
+BACKGROUND
+----------
+
+
+PROPOSED CHANGES
+----------------
 
 > [For further discussion, after a replacement proposal is in place...]
 > In Section 2.5.1.7 Special Operations, mark DW_OP_entry_value as

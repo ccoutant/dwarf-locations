@@ -1,5 +1,25 @@
 Part 6: Allow Location Descriptions on the Stack
 
+This is part 6 in a series of proposals related to support for debugging
+on heterogeneous architectures. This is the core proposal of the series:
+it unifies DWARF values and location descriptions and allows the
+expression stack to operate on both. Several subsequent proposals will
+build on this foundation.
+
+
+BACKGROUND
+----------
+
+The changes proposed below change the DWARF expression evaluation stack
+from a stack of (typed) values only to a stack of items that can be
+either values or location descriptions. As such, the location
+description operators are no longer "terminal" and can participate in
+subsequent DWARF stack operations.
+
+
+PROPOSED CHANGES
+----------------
+
 In Section 2.5 DWARF Expressions, remove the second sentence of the
 first paragraph: "They are expressed in terms of DWARF operations that
 operate on a stack of values."
@@ -38,10 +58,10 @@ and change "A value on the stack has..." to "A value has...":
     --------------------------------------------------------------------
     2.5.2 DWARF Expression Value
 
-    A value has a type and a literal value. It can
-    represent a literal value of any supported base type of the target
-    architecture. The base type specifies the size, encoding, and
-    endianity of the literal value.
+    A value has a type and a literal value. It can represent a literal
+    value of any supported base type of the target architecture. The
+    base type specifies the size, encoding, and endianity of the literal
+    value.
 
     There is a distinguished base type termed the generic type, which is
     an integral type that has the size of an address in the target

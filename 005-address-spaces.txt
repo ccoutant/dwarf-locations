@@ -1,5 +1,24 @@
 Part 5: Address Spaces
 
+This is part 5 in a series of proposals related to support for debugging
+on heterogeneous architectures. This proposal lays more groundwork for
+subsequent proposals by introducing the concept of multiple address
+spaces, which heretofore had only been alluded to in the spec (See
+Section 1.3.2).
+
+
+BACKGROUND
+----------
+
+The changes proposed below introduce the concept of an address space,
+and a default address space for the target architecture. Subsequent
+proposals will make use of this, allowing location descriptions to
+specify address spaces other than the default one.
+
+
+PROPOSED CHANGES
+----------------
+
 In Section 2.6.1.1.2 (now 2.6.2), add the following after the first
 paragraph:
 

@@ -1,5 +1,29 @@
 Part 2: Clarifications for Expression Evaluation
 
+This is part 2 in a series of proposals related to support for debugging
+on heterogeneous architectures. Although this proposal is not directly
+related to heterogeneous architectures, it lays the groundwork for
+subsequent proposals in this series.
+
+
+BACKGROUND
+----------
+
+This proposal is editorial in nature: it does not intend to change the
+meaning of any DWARF constructs, but merely to clarify aspects of
+DWARF expression evaluation that were unclear to the teams implementing
+DWARF consumers.
+
+The changes proposed below provide additional rigor in the description
+of DWARF expressions. This proposal defines a context within which
+expression evaluation takes place, specifies the conditions under
+which an expression is ill formed, and adopts a more formal notation
+in the description of the stack operations.
+
+
+PROPOSED CHANGES
+----------------
+
 In Section 2.5 DWARF Expressions, add the following text after the first
 paragraph:
 
