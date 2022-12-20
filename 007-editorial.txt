@@ -4,8 +4,6 @@ This is part 7 in a series of proposals related to support for debugging
 on heterogeneous architectures. This proposal is editorial in nature, and
 does not make any substantive changes.
 
-[Work in progress...]
-
 
 BACKGROUND
 ----------
@@ -21,10 +19,214 @@ rearranges the operators into more logical groupings.
 PROPOSED CHANGES
 ----------------
 
-In Section 2.5: DWARF Expressions (p. 26) and Section 2.6 Location
-Descriptions:
+After section 2.5.2 DWARF Expression Value add a new section 2.5.3 DWARF
+Location Description and renumber the following sections. Move the text from
+section 2.6 Location Descriptions (but not its subsections) to the new section.
+Delete the last paragraph that starts with "Location descriptions are
+distinguished in a context sensitive manner...".
 
-Move DW_OP_nop to Control Flow Operations.
+In section 2.5 DWARF Expressions delete the paragraph:
+
+    --------------------------------------------------------------------
+    In addition to the general operations that are defined here, operations that
+    are specific to location descriptions are defined in Section 2.6 on page 38.
+    --------------------------------------------------------------------
+
+In section 2.5.1 DWARF Expression Evaluation Context, change the reference to
+the old section 2.6 Location Descriptions to the new section 2.5.3 DWARF
+Location Description for the descriptions of "A current object" and "An initial
+stack".
+
+Move section 2.5.4.3 Stack Operations to be the first subsection of 2.5.4 DWARF
+Operation Expressions and move section 2.5.4.5 Control Flow Operations to be the
+second subsection.
+
+Add a new third subsection of 2.5.4 DWARF Operation Expressions named 2.5.4.3
+Value Operations:
+
+    --------------------------------------------------------------------
+    2.5.4.3 Value Operations
+
+    This section describes the operations that push values on the stack.
+
+    Each value stack entry has a type and a literal value. It can represent a
+    literal value of any supported base type of the target architecture. The
+    base type specifies the size, encoding, and endianity of the literal value.
+
+    The base type of value stack entries can be the distinguished generic type.
+    --------------------------------------------------------------------
+
+In the new section 2.5.4.1 Stack Operations delete the following paragraph:
+
+    --------------------------------------------------------------------
+    Each entry on the stack has an associated type.
+    --------------------------------------------------------------------
+
+and change the description of the following operations:
+
+    --------------------------------------------------------------------
+    1.  DW_OP_dup
+        DW_OP_dup duplicates the stack entry at the top of the stack.
+
+    2.  DW_OP_drop
+        DW_OP_drop pops the stack entry at the top of the stack and discards it.
+
+    3.  DW_OP_pick
+        ...
+
+    4.  DW_OP_over
+        ...
+
+    5.  DW_OP_swap
+        DW_OP_swap swaps the top two stack entries. The entry at the top of the
+        stack becomes the second stack entry, and the second stack entry becomes
+        the top of the stack.
+
+    6.  DW_OP_rot
+        DW_OP_rot rotates the first three stack entries. The entry at the top of
+        the stack becomes the third stack entry, the second entry becomes the
+        top of the stack, and the third entry becomes the second entry.
+    --------------------------------------------------------------------
+
+In the new section 2.5.4.2 Control Flow Operations, change "DWARF expression" to
+"DWARF operation expression" in the the first paragraph and the description of
+DW_OP_bra.
+
+Move DW_OP_nop to be the first operation in the new section 2.5.4.2 Control Flow
+Operations, and change the description to:
+
+    --------------------------------------------------------------------
+    1.  DW_OP_nop
+        DW_OP_nop is a place holder. It has no effect on the DWARF stack
+        entries.
+    --------------------------------------------------------------------
+
+Renumber the following operations in the same section.
+
+In the description of DW_OP_call2/call4/call_ref, add Oxford comma before "and"
+to be consistent, and delete the final section 7.5.4 reference (which does not
+seem to be an appropriate section, 7.5.6 would be a better section but other
+mentions of these forms do not link to that section either):
+
+    --------------------------------------------------------------------
+    Operand interpretation of DW_OP_call2, DW_OP_call4, and DW_OP_call_ref is
+    exactly like that for DW_FORM_ref2, DW_FORM_ref4, and DW_FORM_ref_addr,
+    respectively.
+    --------------------------------------------------------------------
+
+Move the old section 2.5.4.1 Literal Encodings to be the first subsection of
+section 2.5.4.3 Value Operations and rename to section 2.5.4.3.1 Literal
+Operations.
+
+Move the old section 2.5.4.4 Arithmetic and Logical Operations to be the second
+subsection of section 2.5.4.3 Value Operations, becoming section 2.5.4.3.2
+Arithmetic and Logical Operations.
+
+Move the old section 2.5.4.6 Type Conversions to be the third subsection of
+section 2.5.4.3 Value Operations and rename to section 2.5.4.3.3 Type Conversion
+Operations.
+
+Move the old section 2.5.4.7 Special Operations to be the forth subsection of
+section 2.5.4.3 Value Operations and rename to section 2.5.4.3.4 Special Value
+Operations. In the first paragraph change "special operations" to "special value
+operations".
+
+Move the following operations into section 2.5.4.3.4 Special Value Operations
+before DW_OP_entry_value:
+
+    --------------------------------------------------------------------
+    1.  DW_OP_regval_type
+        ...
+
+    2.  DW_OP_deref
+        ...
+
+    3.  DW_OP_deref_size
+        ...
+
+    4.  DW_OP_deref_type
+        ...
+
+    5.  DW_OP_xderef
+        ...
+
+    6.  DW_OP_xderef_size
+        ...
+
+    7.  DW_OP_xderef_type
+        ...
+    
+    8.  DW_OP_entry_value [same]
+        ...
+    --------------------------------------------------------------------
+
+Delete old section 2.5.4.2 Register Values, but save the text for the
+DW_OP_fbreg, DW_OP_breg<N>, and DW_OP_bregx operations to be moved the new
+section 2.5.4.4.3 Memory Location Description Operations.
+
+Move and rename old section 2.6 Location Descriptions to 2.5.4.4 Location
+Description Operations. Add the following as its only paragraph:
+
+    --------------------------------------------------------------------
+    This section describes the operations that push location descriptions on the
+    stack.
+    --------------------------------------------------------------------
+
+Add new section 2.5.4.4.1 General Location Description Operations as the first
+subsection of 2.5.4.4 Location Description Operations. Move the description of
+DW_OP_push_object_address to the new subsection.
+
+Move old section 2.6.1 Undefined Location Description Operations to be the
+second subsection of 2.5.4.4 Location Description Operations and so numbered
+2.5.4.4.2.
+
+Move old section 2.6.2 Memory Location Descriptions to be the third subsection
+of 2.5.4.4 Location Description Operations and rename to 2.5.4.4.3 Memory
+Location Description Operations. Delete the first paragraph:
+
+    --------------------------------------------------------------------
+    A memory location description consists of a non-empty DWARF expression (see
+    Section 2.5 on page 26), whose value is the address of a piece or all of an
+    object or other entity in memory.
+    --------------------------------------------------------------------
+
+Move the following operations to the end of the new section 2.5.4.4.3 Memory
+Location Description Operations:
+
+    --------------------------------------------------------------------
+    1.  DW_OP_addr
+        ...
+
+    2.  DW_OP_addrx
+        ...
+
+    3.  DW_OP_form_tls_address
+        ...
+
+    4.  DW_OP_call_frame_cfa
+        ...
+
+    5.  DW_OP_fbreg
+        ...
+
+    6.  DW_OP_breg0, DW_OP_breg1, ..., DW_OP_breg31
+        ...
+
+    7.  DW_OP_bregx
+        ...
+    --------------------------------------------------------------------
+
+Move section 2.6.3 Register Location Description Operations to be the forth
+subsection of 2.5.4.4 Location Description Operations and numbered to 2.5.4.4.4.
+
+Move section 2.6.4 Implicit Location Description Operations to be the fifth
+subsection of 2.5.4.4 Location Description Operations and numbered to 2.5.4.4.5.
+
+Move section 2.6.5 Composite Location Description Operations to be the sixth
+subsection of 2.5.4.4 Location Description Operations and numbered to 2.5.4.4.6.
+
+Move and rename section 2.6.6 Location List Expressions to be 2.5.5 DWARF
+Location List Expressions.
 
 Rename Section 7.7 from "DWARF Expressions and Location Descriptions" to
 "DWARF Expressions" (to reflect the unification of location descriptions
@@ -34,5 +236,5 @@ Rename Section 7.7.1 from "DWARF Expressions" to "Operation Expressions."
 
 Delete Section 7.7.2, Location Descriptions.
 
-Rename (and renumber) Section 7.7.3 from "Location Lists" to "Location
-List Expressions."
+Rename (and renumber) Section "7.7.3 Location Lists" to "7.7.2 Location List
+Expressions."

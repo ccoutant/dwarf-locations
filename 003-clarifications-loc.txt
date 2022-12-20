@@ -92,16 +92,16 @@ With the following:
     [non-normative] Location descriptions are a language independent
     representation of addressing rules.
 
-        They can be the result of evaluating a debugger information
-        entry attribute that specifies an operation expression of
+      * [non-normative] They can be the result of evaluating a debugger
+        information entry attribute that specifies an operation expression of
         arbitrary complexity. In this usage they can describe the
         location of an object as long as its lifetime is either static
         or the same as the lexical block (see 3.5 Lexical Block Entries)
         that owns it, and it does not move during its lifetime.
 
-        They can be the result of evaluating a debugger information
-        entry attribute that specifies a location list expression. In
-        this usage they can describe the location of an object that has
+      * [non-normative] They can be the result of evaluating a debugger
+        information entry attribute that specifies a location list expression.
+        In this usage they can describe the location of an object that has
         a limited lifetime, changes its location during its lifetime, or
         has multiple locations over part or all of its lifetime.
 
@@ -161,23 +161,23 @@ With the following:
     [non-normative] Examples of context that can invalidate a location
     description are:
 
-      * The thread context is required and execution causes the thread
-        to terminate.
+      * [non-normative] The thread context is required and execution causes the
+        thread to terminate.
 
-      * The call frame context is required and further execution causes
-        the call frame to return to the calling frame.
+      * [non-normative] The call frame context is required and further execution
+        causes the call frame to return to the calling frame.
 
-      * The program location is required and further execution of the
-        thread occurs. That could change the location list entry or call
+      * [non-normative] The program location is required and further execution
+        of the thread occurs. That could change the location list entry or call
         frame information entry that applies.
 
-      * An operation uses call frame information:
+      * [non-normative] An operation uses call frame information:
 
-          * Any of the frames used in the virtual call frame unwinding
-            return.
+          * [non-normative] Any of the frames used in the virtual call frame
+            unwinding return.
 
-          * The top call frame is used, the program location is used to
-            select the call frame information entry, and further
+          * [non-normative] The top call frame is used, the program location is
+            used to select the call frame information entry, and further
             execution of the thread occurs.
 
     [non-normative] A DWARF expression can be used to compute a location

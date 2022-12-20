@@ -74,7 +74,7 @@ subsections):
         It is required for operations that are related to target
         architecture threads.
 
-        [non-normative] For example: the DW_OP_regval_type operation.
+        [non-normative] For example, the DW_OP_regval_type operation.
 
     3. A current call frame
 
@@ -89,7 +89,7 @@ subsections):
         It is required for operations that specify target architecture
         registers to support virtual unwinding of the call stack.
 
-        [non-normative] For example: the DW_OP_*reg* operations.
+        [non-normative] For example, the DW_OP_*reg* operations.
 
         If specified, it must be an active call frame in the current
         thread. Otherwise the result is undefined.
@@ -136,7 +136,7 @@ subsections):
         also provide the default address space address size if no
         current target architecture is specified.
 
-        [non-normative] For example: the DW_OP_constx and DW_OP_addrx
+        [non-normative] For example, the DW_OP_constx and DW_OP_addrx
         operations.
 
         [non-normative] Note that this compilation unit may not be the
@@ -155,7 +155,7 @@ subsections):
         It is required for operations that specify target architecture
         specific entities.
 
-        [non-normative] For example: target architecture specific
+        [non-normative] For example, target architecture specific
         entities include DWARF register identifiers, DWARF address space
         identifiers, the default address space, and the address space
         address sizes.
@@ -199,12 +199,12 @@ subsections):
 
         It is required for the DW_OP_push_object_address operation.
 
-        [non-normative] For example: the DW_AT_data_location attribute
+        [non-normative] For example, the DW_AT_data_location attribute
         on type debug information entries specifies the program object
         corresponding to a runtime descriptor as the current object when
         it evaluates its associated expression.
 
-        The result is undefined if the location descriptor is invalid
+        The result is undefined if the location description is invalid
         (see 2.6 Location Descriptions).
 
     8. An initial stack
@@ -217,7 +217,7 @@ subsections):
         their DWARF expression value with initial stack entries. In all
         other cases the initial stack is empty.
 
-        The result is undefined if any location descriptors are invalid
+        The result is undefined if any location descriptions are invalid
         (see 2.6 Location Descriptions).
 
     If the evaluation requires a context element that is not specified,
@@ -259,7 +259,7 @@ first paragraph:
 ... with the following:
 
     --------------------------------------------------------------------
-    Operations represents a postfix operation on a simple stack machine.
+    Operations represent a postfix operation on a simple stack machine.
 
     A value on the stack has a type and a literal value. It can
     represent a literal value of any supported base type of the target
@@ -270,20 +270,17 @@ first paragraph:
     an integral type that has the size of an address in the target
     architecture default address space, a target architecture defined
     endianity, and unspecified signedness.
-
-    [non-normative] The generic type is the same as the unspecified type
-    used for stack operations defined in DWARF Version 4 and before.
-
-    An integral type is a base type that has an encoding of
-    DW_ATE_signed, DW_ATE_signed_char, DW_ATE_unsigned,
-    DW_ATE_unsigned_char, DW_ATE_boolean, or any target architecture
-    defined integral encoding in the inclusive range DW_ATE_lo_user to
-    DW_ATE_hi_user.
     --------------------------------------------------------------------
 
 Insert the following after the end of the same section:
 
     --------------------------------------------------------------------
+    An integral type is a base type that has an encoding of
+    DW_ATE_signed, DW_ATE_signed_char, DW_ATE_unsigned,
+    DW_ATE_unsigned_char, DW_ATE_boolean, or any target architecture
+    defined integral encoding in the inclusive range DW_ATE_lo_user to
+    DW_ATE_hi_user.
+
     Operations can act on entries on the stack, including adding entries
     and removing entries.
 
@@ -348,6 +345,62 @@ Insert the following after the end of the same section:
         Expressions).
     --------------------------------------------------------------------
 
+Replace the first paragraph in Section 2.5.1.1 Literal Encodings:
+
+    --------------------------------------------------------------------
+    The following operations all push a value onto the DWARF stack. Operations
+    other than DW_OP_const_type push a value with the generic type, and if the
+    value of a constant in one of these operations is larger than can be stored
+    in a single stack element, the value is truncated to the element size and
+    the low-order bits are pushed on the stack.
+    --------------------------------------------------------------------
+
+with:
+
+    --------------------------------------------------------------------
+    The following operations all push a literal value onto the DWARF stack.
+
+    Operations other than DW_OP_const_type push a value V with the generic type.
+    If V is larger than the generic type, then V is truncated to the generic
+    type size and the low-order bits used.
+    --------------------------------------------------------------------
+
+In Section 2.5.1.1 Literal Encodings, replace the description of the following
+operations:
+
+    --------------------------------------------------------------------
+    1.  DW_OP_lit0, DW_OP_lit1, ..., DW_OP_lit31
+        DW_OP_lit<N> operations encode an unsigned literal value N from 0
+        through 31, inclusive. They push the value N with the generic type.
+    
+    3.  DW_OP_const1u, DW_OP_const2u, DW_OP_const4u, DW_OP_const8u
+        DW_OP_const<N>u operations have a single operand that is a 1, 2, 4, or
+        8-byte unsigned integer constant U, respectively. They push the value U
+        with the generic type.
+    
+    4.  DW_OP_const1s, DW_OP_const2s, DW_OP_const4s, DW_OP_const8s
+        DW_OP_const<N>s operations have a single operand that is a 1, 2, 4, or
+        8-byte signed integer constant S, respectively. They push the value S
+        with the generic type.
+    
+    5.  DW_OP_constu
+        DW_OP_constu has a single unsigned LEB128 integer operand N. It pushes
+        the value N with the generic type.
+    
+    6.  DW_OP_consts
+        DW_OP_consts has a single signed LEB128 integer operand N. It pushes the
+        value N with the generic type.
+    
+    8.  DW_OP_constx
+        DW_OP_constx has a single unsigned LEB128 integer operand that
+        represents a zero-based index into the .debug_addr section relative to
+        the value of the DW_AT_addr_base attribute of the associated compilation
+        unit. The value N in the .debug_addr section has the size of the generic
+        type. It pushes the value N with the generic type.
+    
+        [non-normative] The DW_OP_constx... [same]
+    --------------------------------------------------------------------
+
 In Section 2.5.1.1 Literal Encodings, replace the description of
 DW_OP_const_type with the following:
 
@@ -410,7 +463,7 @@ DW_OP_regval_type with the following:
     > does not cause any test failures in common architectures. If the
     > compiler for a target architecture did want some form of
     > conversion, including a larger result type, it could always
-    > explicitly used the DW_OP_convert operation.
+    > explicitly use the DW_OP_convert operation.
     >
     > If T is a larger type than the register size, then the default GDB
     > register hook reads bytes from the next register (or reads out of
@@ -506,6 +559,10 @@ Replace the description of DW_OP_deref_type with the following:
     divided by 8 (the byte size) and rounded up to a whole number is not
     equal to S.
     --------------------------------------------------------------------
+
+    > [For further discussion...]
+    > This definition allows the base type to be a bit size since there seems no
+    > reason to restrict it.
 
 Replace the description of DW_OP_xderef with the following:
 
@@ -712,10 +769,11 @@ DW_OP_entry_value with the following:
     Otherwise, the DWARF expression is ill-formed.
     --------------------------------------------------------------------
 
-In Section 2.6.1.1.3 Register Location Descriptions, in the description
-of DW_OP_reg0...DW_OP_reg31, change "The object addressed is in register
-n" with "The target architecture register number R corresponds to the N
-in the operation name."
+In Section 2.6.1.1.3 Register Location Descriptions, in the description of
+DW_OP_reg0...DW_OP_reg31, change "The DW_OP_reg<n> operations encode the
+names..." with "The DW_OP_reg<n> operations encode the numbers...", and change
+"The object addressed is in register n" with "The target architecture register
+number R corresponds to the N in the operation name."
 
 Add the following paragraph at the end of the description of
 DW_OP_reg0...DW_OP_reg31:
@@ -723,6 +781,8 @@ DW_OP_reg0...DW_OP_reg31:
     --------------------------------------------------------------------
     The operation is equivalent to performing DW_OP_regx R.
     --------------------------------------------------------------------
+
+2.6.1.1.3 Register Location Descriptions
 
 In Section 7.4, 32-Bit and 64-Bit DWARF Formats, in item 3, add the following
 row to the table:
