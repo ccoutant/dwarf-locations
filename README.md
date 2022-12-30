@@ -10,7 +10,7 @@ more manageable proposals, in a form acceptable to the DWARF committee.
 * Part 1: [Clarifications for Expression Evaluation](001-clarifications-eval.txt)
 * Part 2: [Clarifications for Location Descriptions](002-clarifications-loc.txt)
 * Part 3: [Clarifications for CFI](003-clarifications-cfi.txt)
-* Part 4: [Clarifications for Memory](004-clarifications-mem.txt)
+* Part 4: [Clarifications for Memory Location Descriptions](004-clarifications-mem.txt)
 * Part 5: [Locations on the Stack](005-locations-on-stack.txt)
 * Part 6: [Editorial Reorganization](006-editorial.txt)
 
