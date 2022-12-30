@@ -1,6 +1,6 @@
-Part 2: Clarifications for Expression Evaluation
+Part 1: Clarifications for Expression Evaluation
 
-This is part 2 in a series of proposals related to support for debugging
+This is part 1 in a series of proposals related to support for debugging
 on heterogeneous architectures. Although this proposal is not directly
 related to heterogeneous architectures, it lays the groundwork for
 subsequent proposals in this series.

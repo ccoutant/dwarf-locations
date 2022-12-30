@@ -1,6 +1,6 @@
-Part 7: Editorial Reorganization
+Part 6: Editorial Reorganization
 
-This is part 7 in a series of proposals related to support for debugging
+This is part 6 in a series of proposals related to support for debugging
 on heterogeneous architectures. This proposal is editorial in nature, and
 does not make any substantive changes.
 

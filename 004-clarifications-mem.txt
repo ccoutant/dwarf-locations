@@ -1,6 +1,6 @@
-Part 5: Clarifications for Memory Location Descriptions
+Part 4: Clarifications for Memory Location Descriptions
 
-This is part 5 in a series of proposals related to support for debugging on
+This is part 4 in a series of proposals related to support for debugging on
 heterogeneous architectures. This proposal lays more groundwork for subsequent
 proposals by introducing the concept of addressable memory storage that is
 associated with each address space supported by a target architecture, which

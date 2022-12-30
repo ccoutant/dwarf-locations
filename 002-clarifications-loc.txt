@@ -1,6 +1,6 @@
-Part 3: Clarifications for Location Descriptions
+Part 2: Clarifications for Location Descriptions
 
-This is part 3 in a series of proposals related to support for debugging
+This is part 2 in a series of proposals related to support for debugging
 on heterogeneous architectures. Although this proposal is not directly
 related to heterogeneous architectures, it lays the groundwork for
 subsequent proposals in this series.

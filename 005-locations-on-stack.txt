@@ -1,6 +1,6 @@
-Part 6: Allow Location Descriptions on the Stack
+Part 5: Allow Location Descriptions on the Stack
 
-This is part 6 in a series of proposals related to support for debugging
+This is part 5 in a series of proposals related to support for debugging
 on heterogeneous architectures. This is the core proposal of the series:
 it unifies DWARF values and location descriptions and allows the
 expression stack to operate on both. Several subsequent proposals will
