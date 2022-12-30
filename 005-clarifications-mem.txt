@@ -1,19 +1,20 @@
-Part 5: Address Spaces
+Part 5: Clarifications for Memory Location Descriptions
 
-This is part 5 in a series of proposals related to support for debugging
-on heterogeneous architectures. This proposal lays more groundwork for
-subsequent proposals by introducing the concept of multiple address
-spaces, which heretofore had only been alluded to in the spec (See
-Section 1.3.2).
+This is part 5 in a series of proposals related to support for debugging on
+heterogeneous architectures. This proposal lays more groundwork for subsequent
+proposals by introducing the concept of addressable memory storage that is
+associated with each address space supported by a target architecture, which
+heretofore had only been alluded to in the spec (See Section 1.3.2).
 
 
 BACKGROUND
 ----------
 
-The changes proposed below introduce the concept of an address space,
-and a default address space for the target architecture. Subsequent
-proposals will make use of this, allowing location descriptions to
-specify address spaces other than the default one.
+The changes proposed below introduce the concept of distinct memory storage for
+each address space supported by a target architecture, and a default address
+space for the target architecture. Subsequent proposals will make use of this,
+allowing memory location descriptions to specify address spaces other than the
+default one.
 
 
 PROPOSED CHANGES
@@ -61,7 +62,4 @@ paragraph:
     location description SL is defined to be a memory byte address
     location description. It has a byte address equal to A and an
     address space equal to AS of the corresponding SL.
-
-    DW_ASPACE_none is defined as the target architecture default address
-    space.
     --------------------------------------------------------------------
