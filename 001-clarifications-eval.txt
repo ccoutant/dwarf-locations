@@ -732,9 +732,6 @@ DW_OP_entry_value with the following:
     DW_OP_entry_value pushes the value of an expression that is
     evaluated in the context of the calling frame.
 
-    [non-normative] It may be used to determine the value of arguments
-    on entry to the current call frame provided they are not clobbered.
-
     It has two operands. The first is an unsigned LEB128 integer S. The
     second is a block of bytes, with a length equal S, interpreted as a
     DWARF operation expression E.
