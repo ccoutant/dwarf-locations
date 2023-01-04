@@ -1,4 +1,4 @@
-Part 11: Generalize Creation of Undefined Location Descriptions
+Part 8: Generalize Creation of Undefined Location Descriptions
 
 PROBLEM DESCRIPTION
 

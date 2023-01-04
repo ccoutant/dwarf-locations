@@ -13,6 +13,9 @@ more manageable proposals, in a form acceptable to the DWARF committee.
 * Part 4: [Clarifications for Memory Location Descriptions](004-clarifications-mem.txt)
 * Part 5: [Locations on the Stack](005-locations-on-stack.txt)
 * Part 6: [Editorial Reorganization](006-editorial.txt)
+* Part 7: [Generalize Offsetting of Location Descriptions](010-generalize-offsetting.txt)
+* Part 8: [Generalize Creation of Undefined Location Descriptions](011-generalize-undefined.txt)
+* Part 9: [Generalize Creation of Composite Location Descriptions](012-generalize-composite.txt)
 
 Independent issues not part of this series:
 

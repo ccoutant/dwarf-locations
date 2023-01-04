@@ -1,4 +1,4 @@
-Part 10: Generalize Offsetting of Location Descriptions
+Part 7: Generalize Offsetting of Location Descriptions
 
 PROBLEM DESCRIPTION
 
