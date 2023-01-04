@@ -1,0 +1,35 @@
+Part 19: Add the HIP Programing Language
+
+PROBLEM DESCRIPTION
+
+Add the HIP programming language, which is supported by the AMDGPU.
+
+PROPOSAL
+
+In Section 3.1.1 "Full and Partial Compilation Unit Entries", add the following
+row to Table 3.1 "Language Names":
+
+    ----------------------------------------------------------------------------
+
+    Table 3.1: Language Names
+    ==================== =============================
+    Language Name        Meaning
+    ==================== =============================
+    DW_LANG_HIP          HIP
+    ==================== =============================
+
+    ----------------------------------------------------------------------------
+
+In Section 7.12 "Source Languages", add the following row to Table 7.17
+"Language encodings":
+
+    ----------------------------------------------------------------------------
+
+    Table 7.17: Language encodings
+    ==================== ====== ===================
+    Language Name        Value  Default Lower Bound
+    ==================== ====== ===================
+    DW_LANG_HIP          TBA    0
+    ==================== ====== ===================
+
+    ----------------------------------------------------------------------------
