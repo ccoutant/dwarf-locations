@@ -1,0 +1,400 @@
+Part 10: Generalize Offsetting of Location Descriptions
+
+PROBLEM DESCRIPTION
+
+After [Allow location description on the DWARF evaluation stack] proposal, the
+DW_OP_plus and DW_OP_minus operations can be defined to operate on a memory
+location description in the default target architecture specific address space
+and a generic type value to produce an updated memory location description. This
+allows them to continue to be used to offset an address.
+
+To generalize offsetting to any location description, including location
+descriptions that describe when bytes are in registers, are implicit, or a
+composite of these, the DW_OP_offset, DW_OP_offset_uconst, and DW_OP_bit_offset
+offset operations are added.
+
+The offset operations can operate on location storage of any size. For example,
+implicit location storage could be any number of bits in size. It is simpler to
+define offsets that exceed the size of the location storage as being an
+evaluation error, than having to force an implementation to support potentially
+infinite precision offsets to allow it to correctly track a series of positive
+and negative offsets that may transiently overflow or underflow, but end up in
+range. This is simple for the arithmetic operations as they are defined in
+terms of two's compliment arithmetic on a base type of a fixed size. Therefore,
+the offset operation define that integer overflow is ill-formed. This is in
+contrast to the DW_OP_plus, DW_OP_plus_uconst, and DW_OP_minus arithmetic
+operations which define that it causes wrap-around.
+
+Having the offset operations allows DW_OP_push_object_address to push a
+location description that may be in a register, or be an implicit value. The
+DWARF expression of DW_TAG_ptr_to_member_type can use the offset operations
+without regard to what kind of location description was pushed.
+
+Since [Allow location description on the DWARF evaluation stack] has
+generalized location storage to be bit indexable, DW_OP_bit_offset generalizes
+DWARF to work with bit fields. This is generally not possible in DWARF Version
+5.
+
+The DW_OP_*piece operations only allow literal indices. A way to use a computed
+offset of an arbitrary location description (such as a vector register) is
+required. The offset operations provide this ability since they can be used to
+compute a location description on the stack.
+
+It could be possible to define DW_OP_plus, DW_OP_plus_uconst, and DW_OP_minus to
+operate on any location description to avoid needing DW_OP_offset and
+DW_OP_offset_uconst. However, this is not proposed since currently the
+arithmetic operations are defined to require values of the same base type and
+produces a result with the same base type. Allowing these operations to act on
+location descriptions would permit the first operand to be a location
+description and the second operand to be an integral value type, or vice versa,
+and return a location description. This complicates the rules for implicit
+conversions between default address space memory location descriptions and
+generic base type values. Currently the rules would convert such a location
+description to the memory address value and then perform two's compliment wrap
+around arithmetic. If the result was used as a location description, it would be
+implicitly converted back to a default address space memory location
+description. This is different to the overflow rules on location descriptions.
+To allow control, an operation that converts a memory location description to an
+address integral type value would be required. Keeping a separation of location
+description operations and arithmetic operations avoids this semantic
+complexity.
+
+PROPOSED SOLUTION
+
+This proposal depends on proposal [Allow location description on the DWARF
+evaluation stack].
+
+In Section 2.5.3 "DWARF Location Description", delete the following paragraph:
+
+    ----------------------------------------------------------------------------
+    Updating a location description L by a bit offset B is defined as adding the
+    value of B to the bit offset of each single location description SL of L. It
+    is an evaluation error if the updated bit offset of any SL is less than 0 or
+    greater than or equal to the size of the location storage specified by SL.
+    ----------------------------------------------------------------------------
+
+Add the following to Section 2.5.4.4.1 "General Location Description
+Operations":
+
+    ----------------------------------------------------------------------------
+
+    1.  DW_OP_offset
+        DW_OP_offset pops two stack entries. The first must be an integral type
+        value that represents a byte displacement B. The second must be a
+        location description L.
+
+        It adds the value of B scaled by 8 (the byte size) to the bit offset of
+        each single location description SL of L, and pushes the updated L.
+
+        It is an evaluation error if the updated bit offset of any SL is less
+        than 0 or greater than or equal to the size of the location storage
+        specified by SL.
+
+    2.  DW_OP_offset_uconst
+        DW_OP_offset_uconst has a single unsigned LEB128 integer operand that
+        represents a byte displacement B.
+
+        The operation is equivalent to performing DW_OP_constu B;
+        DW_OP_offset.
+
+        [non-normative] This operation is supplied specifically to be able to
+        encode more field displacements in two bytes than can be done with
+        DW_OP_lit; DW_OP_offset.</i>
+
+    3.  DW_OP_bit_offset
+        DW_OP_bit_offset pops two stack entries. The first must be an integral
+        type value that represents a bit displacement B. The second must be a
+        location description L.
+
+        It adds the value of B to the bit offset of each single location
+        description SL of L, and pushes the updated L.
+
+        It is an evaluation error if the updated bit offset of any SL is less
+        than 0 or greater than or equal to the size of the location storage
+        specified by SL.
+
+    4.  DW_OP_push_object_address
+        ...[same]
+    ----------------------------------------------------------------------------
+
+> [For further discussion...]
+> Should DW_OP_offset_uconst be named DW_OP_offset_uconst to match
+> DW_OP_plus_uconst, or DW_OP_offset_constu to match DW_OP_constu?
+
+In Section 2.5.4.4.3 "Memory Location Description Operations" in the description
+of DW_OP_fbreg, replace the paragraph:
+
+    ----------------------------------------------------------------------------
+    The location description L is updated by bit offset B scaled by 8 (the byte
+    size) and pushed on the stack.
+    ----------------------------------------------------------------------------
+
+... with the following:
+
+    ----------------------------------------------------------------------------
+    The location description L is updated as if the DW_OP_LLVM_offset_uconst B
+    operation was applied. The updated L is pushed on the stack.
+    ----------------------------------------------------------------------------
+
+In Section 2.5.4.4.5 "Implicit Location Description Operations" in the
+description of DW_OP_implicit_pointer, replace the paragraph:
+
+    ----------------------------------------------------------------------------
+    The location description RL is updated by bit offset B scaled by 8 (the byte
+    size).
+    ----------------------------------------------------------------------------
+
+... with the following:
+
+    ----------------------------------------------------------------------------
+    The bit offset of RL is updated as if the DW_OP_LLVM_offset_uconst B
+    operation was applied.
+    ----------------------------------------------------------------------------
+
+In Section 2.5.4.4.6 "Composite Location Description Operations" in the
+description of DW_OP_piece, after the paragraph:
+
+    ----------------------------------------------------------------------------
+    [non-normative] Many compilers store a single variable in sets of
+    registers...
+    ----------------------------------------------------------------------------
+
+... add the following paragraph:
+
+    ----------------------------------------------------------------------------
+    [non-normative] If a non-0 byte displacement is required, the
+    DW_OP_LLVM_offset operation can be used to update the location description
+    before using it as the part location description of a DW_OP_piece
+    operation.
+    ----------------------------------------------------------------------------
+
+In Section 5.7.3 "Derived or Extended Structures, Classes and Interfaces" in the
+description of DW_AT_data_member_location, replace the following paragraph:
+
+    ----------------------------------------------------------------------------
+    The result of the attribute is obtained by updating the bit offset of the
+    location description of the beginning of the containing entity by B scaled
+    by 8 (the byte size). The result is the location description of the base of
+    the member entry.
+    ----------------------------------------------------------------------------
+
+... with the following:
+
+    ----------------------------------------------------------------------------
+    The result of the attribute is obtained by evaluating a DW_OP_LLVM_offset B
+    operation with an initial stack comprising the location description of the
+    beginning of the containing entity. The result of the evaluation is the
+    location description of the base of the member entry.
+    ----------------------------------------------------------------------------
+
+In Section 6.4.1 Structure of Call Frame Information, replace the following
+paragraph:
+
+    ----------------------------------------------------------------------------
+    offset(N)
+        N is a signed byte offset. The previous value of this register is saved
+        at the location description L, where L is the location description of
+        the current CFA (see [2.5.4 DWARF Operation Expressions]) updated with
+        the bit offset N scaled by 8 (the byte size).
+    ----------------------------------------------------------------------------
+
+... with the following:
+
+    ----------------------------------------------------------------------------
+    offset(N)
+        N is a signed byte offset. The previous value of this register is saved
+        at the location description computed as if the DWARF operation
+        expression DW_OP_LLVM_offset N is evaluated with the current
+        context, except the result kind is a location description, the
+        compilation unit is unspecified, the object is unspecified, and an
+        initial stack comprising the location description of the current CFA
+        (see 2.5.4 DWARF Operation Expressions).
+    ----------------------------------------------------------------------------
+
+And the following paragraph:
+
+    ----------------------------------------------------------------------------
+    val_offset(N)
+        N is a signed byte offset. The previous value of this register is the
+        memory byte address of the location description L, where L is the
+        location description of the current CFA (see [2.5.4 DWARF Operation
+        Expressions]) updated with the bit offset
+        N scaled by 8 (the byte size).
+    ----------------------------------------------------------------------------
+
+... with the following:
+
+    ----------------------------------------------------------------------------
+    val_offset(N)
+        N is a signed byte offset. The previous value of this register is the
+        memory byte address of the location description computed as if the DWARF
+        operation expression DW_OP_LLVM_offset N is evaluated with the current
+        context, except the result kind is a location description, the
+        compilation unit is unspecified, the object is unspecified, and an
+        initial stack comprising the location description of the current CFA
+        (see 2.5.4 DWARF Operation Expressions).
+    ----------------------------------------------------------------------------
+
+Add the following rows to table 7.9 in section "7.7.1 Operation Expressions":
+
+    ----------------------------------------------------------------------------
+
+    ------------------- ----- --------- ---------------------------
+                              No. of
+    Operation           Code  Operands  Notes
+    ------------------- ----- --------- ---------------------------
+    ...
+    DW_OP_offset        TBA      0
+    DW_OP_offset_uconst TBA      1      ULEB128 byte displacement
+    DW_OP_bit_offset    TBA      0
+    ------------------- ----- --------- ---------------------------
+
+    ----------------------------------------------------------------------------
+
+In Appendix D.1.3 "DWARF Location Description Examples", replace the example:
+
+    ----------------------------------------------------------------------------
+    DW_OP_plus_uconst 4
+        A structure member is four bytes from the start of the structure
+        instance. The base address is assumed to be already on the stack.
+    ----------------------------------------------------------------------------
+
+... with the following:
+
+    ----------------------------------------------------------------------------
+    DW_OP_offset_uconst 4
+        A structure member is four bytes from the start of the structure
+        instance. The location description of the base of the structure instance
+        is assumed to be already on the stack.
+    ----------------------------------------------------------------------------
+
+In Appendix D.1.3 "DWARF Location Description Examples", replace the example:
+
+    ----------------------------------------------------------------------------
+    DW_OP_entry_value 1 DW_OP_reg5 DW_OP_plus_uconst 16
+        The address of the memory location is calculated by adding 16 to the
+        value contained in register 5 upon entering the current subprogram.
+    ----------------------------------------------------------------------------
+
+... with the following:
+
+    ----------------------------------------------------------------------------
+    DW_OP_entry_value 1 DW_OP_reg5 DW_OP_offset_uconst 16
+        The address of the memory location is calculated by adding 16 to the
+        value contained in register 5 upon entering the current subprogram.
+    ----------------------------------------------------------------------------
+
+In Appendix D.2.1 "Fortran Simple Array Example", replace each occurrence of
+DW_OP_plus with DW_OP_offset in Figure D.4 "Fortran array example: DWARF
+description".
+
+In Appendix D.2.3 "Fortran 2008 Assumed-rank Array Example", replace Figure D.13
+"Sample DWARF for the array descriptor in Figure D.12":
+
+    ----------------------------------------------------------------------------
+    10$:  DW_TAG_array_type
+            DW_AT_type(reference to real)
+            DW_AT_rank(expression=
+                DW_OP_push_object_address
+                DW_OP_lit<n>
+                DW_OP_plus
+                DW_OP_deref)
+            DW_AT_data_location(expression=
+                DW_OP_push_object_address
+                DW_OP_lit<n>
+                DW_OP_plus
+                DW_OP_deref)
+    11$:     DW_TAG_generic_subrange
+                DW_AT_type(reference to integer)
+                !   offset of rank in descriptor
+                !   offset of data in descriptor
+                DW_AT_lower_bound(expression=
+                !   Looks up the lower bound of dimension i.
+                !   Operation                       ! Stack effect
+                !   (implicit)                      ! i
+                    DW_OP_lit<n>                    ! i sizeof(dim)
+                    DW_OP_mul                       ! dim[i]
+                    DW_OP_lit<n>                    ! dim[i] offsetof(dim)
+                    DW_OP_plus                      ! dim[i]+offset
+                    DW_OP_push_object_address       ! dim[i]+offsetof(dim) objptr
+                    DW_OP_plus                      ! objptr.dim[i]
+                    DW_OP_lit<n>                    ! objptr.dim[i] offsetof(lb)
+                    DW_OP_plus                      ! objptr.dim[i].lowerbound
+                    DW_OP_deref)                    ! *objptr.dim[i].lowerbound
+                DW_AT_upper_bound(expression=
+                !   Looks up the upper bound of dimension i.
+                    DW_OP_lit<n>                    ! sizeof(dim)
+                    DW_OP_mul
+                    DW_OP_lit<n>                    ! offsetof(dim)
+                    DW_OP_plus
+                    DW_OP_push_object_address
+                    DW_OP_plus
+                    DW_OP_lit<n>                    ! offset of upperbound in dim
+                    DW_OP_plus
+                    DW_OP_deref)
+                DW_AT_byte_stride(expression=
+                !   Looks up the byte stride of dimension i.
+                    ...
+                !   (analogous to DW_AT_upper_bound)
+                    )
+    ----------------------------------------------------------------------------
+
+... with the following:
+
+    ----------------------------------------------------------------------------
+    10$:  DW_TAG_array_type
+            DW_AT_type(reference to real)
+            DW_AT_rank(expression=
+                DW_OP_push_object_address
+                DW_OP_lit<n>
+|               DW_OP_offset
+                DW_OP_deref)
+            DW_AT_data_location(expression=
+                DW_OP_push_object_address
+                DW_OP_lit<n>
+|               DW_OP_offset
+                DW_OP_deref)
+    11$:     DW_TAG_generic_subrange
+                DW_AT_type(reference to integer)
+                !   offset of rank in descriptor
+                !   offset of data in descriptor
+                DW_AT_lower_bound(expression=
+                !   Looks up the lower bound of dimension i.
+                !   Operation                       ! Stack effect
+                !   (implicit)                      ! i
+                    DW_OP_lit<n>                    ! i sizeof(dim)
+                    DW_OP_mul                       ! dim[i]
+                    DW_OP_lit<n>                    ! dim[i] offsetof(dim)
+                    DW_OP_plus                      ! dim[i]+offset
+                    DW_OP_push_object_address       ! dim[i]+offsetof(dim) objptr
+|                   DW_OP_swap                      ! objptr dim[i]+offsetof(dim)
+|                   DW_OP_offset                    ! objptr.dim[i]
+                    DW_OP_lit<n>                    ! objptr.dim[i] offsetof(lb)
+|                   DW_OP_offset                    ! objptr.dim[i].lowerbound
+                    DW_OP_deref)                    ! *objptr.dim[i].lowerbound
+                DW_AT_upper_bound(expression=
+                !   Looks up the upper bound of dimension i.
+                    DW_OP_lit<n>                    ! sizeof(dim)
+                    DW_OP_mul
+                    DW_OP_lit<n>                    ! offsetof(dim)
+                    DW_OP_plus
+                    DW_OP_push_object_address
+|                   DW_OP_swap
+|                   DW_OP_offset
+                    DW_OP_lit<n>                    ! offset of upperbound in dim
+|                   DW_OP_offset
+                    DW_OP_deref)
+                DW_AT_byte_stride(expression=
+                !   Looks up the byte stride of dimension i.
+                    ...
+                !   (analogous to DW_AT_upper_bound)
+                    )
+    ----------------------------------------------------------------------------
+
+> [For further discussion...]
+> This example suggests that DW_AT_lower_bound and DW_AT_upper_bound evaluate an
+> exprloc with an initial stack containing the rank value. The attribute
+> definition should be updated to state this.
+
+In Appendix D.2.6 "Ada Example", replace DW_OP_plus with DW_OP_offset in Figure
+D.20 "Ada example: DWARF description".
