@@ -139,7 +139,7 @@ subsections):
         [non-normative] For example, the DW_OP_constx and DW_OP_addrx
         operations.
 
-        [non-normative] Note that this compilation unit may not be the
+        [non-normative] Note that this compilation unit might not be the
         same as the compilation unit determined from the loaded code
         object corresponding to the current program location. For
         example, the evaluation of the expression E associated with a
@@ -676,8 +676,8 @@ the following:
     the 32-bit DWARF format, or an 8-byte unsigned value in the 64-bit
     DWARF format, that represents the byte offset DR of a debugging
     information entry D relative to the beginning of the .debug_info
-    section that contains the current compilation unit. D may not be in
-    the current compilation unit.
+    section that contains the current compilation unit. D might not be
+    in the current compilation unit.
     --------------------------------------------------------------------
 
 Replace the last paragraph (beginning “These operations transfer
