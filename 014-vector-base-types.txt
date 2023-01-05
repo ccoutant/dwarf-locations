@@ -1,0 +1,94 @@
+Part 14: Support for Vector Base Types
+
+PROBLEM DESCRIPTION
+
+The vector registers of the AMDGPU are represented as their full wavefront
+size, meaning the wavefront size times the dword size. This reflects the
+actual hardware and allows the compiler to generate DWARF for languages that
+map a thread to the complete wavefront. It also allows more efficient DWARF to
+be generated to describe the CFI as only a single expression is required for
+the whole vector register, rather than a separate expression for each lane's
+dword of the vector register. It also allows the compiler to produce DWARF
+that indexes the vector register if it spills scalar registers into portions
+of a vector register.
+
+DWARF 5 expression stack value entries are required to have a base type. Since
+AMDGPU registers are a vector of dwords, the ability to specify that a base type
+is a vector is required.
+
+PROPOSAL
+
+In Section 2.2 "Attribute Types", add the following row to Table 2.2 "Attribute
+names":
+
+    ----------------------------------------------------------------------------
+
+    Table 2.2: Attribute names
+    =========================== ====================================
+    Attribute                   Usage
+    =========================== ====================================
+    DW_AT_vector_size           Base type vector size (see Section 5.1 "Base Type Entries")
+    =========================== ====================================
+
+    ----------------------------------------------------------------------------
+
+In Section 5.1 "Base Type Entries", add the following attribute:
+
+    ----------------------------------------------------------------------------
+    A DW_TAG_base_type debugger information entry for a base type T may have a
+    DW_AT_vector_size attribute whose value is an integer constant that is the
+    vector type size N. The representation of a vector base type is as N
+    contiguous elements, each one having the representation of a base type T'
+    that is the same as T without the DW_AT_vector_size attribute. If a
+    DW_TAG_base_type debugger information entry does not have a
+    DW_AT_vector_size attribute, then the base type is not a vector type. The
+    DWARF is ill-formed if N is not greater than 0.
+    ----------------------------------------------------------------------------
+
+> [For further discussion...]
+> LLVM has mention of a non-upstreamed debugger information entry that is
+> intended to support vector types. However, that was not for a base type so
+> would not be suitable as the type of a stack value entry. But perhaps that
+> could be replaced by using this attribute.
+
+> [For further discussion...]
+> Compare this with the DW_AT_GNU_vector extension supported by GNU. Is it
+> better to add an attribute to the existing DW_TAG_base_type debug entry, or
+> allow some forms of DW_TAG_array_type (those that have the DW_AT_GNU_vector
+> attribute) to be used as stack entry value types?
+
+In Section 7.5.4 "Attribute Encodings", add the following row to Table 7.5
+"Attribute encodings":
+
+    ----------------------------------------------------------------------------
+
+    Table 7.5: Attribute encodings
+    ================================== ====== ===================================
+    Attribute Name                     Value  Classes
+    ================================== ====== ===================================
+    DW_AT_vector_size                  TBA    constant
+    ================================== ====== ===================================
+
+    ----------------------------------------------------------------------------
+
+In Section 7.32 "Type Signature Computation", Table 7.32 "Attributes used in
+type signature computation", add the following attribute in alphabetical order
+to the list:
+
+    ----------------------------------------------------------------------------
+    DW_AT_vector_size
+    ----------------------------------------------------------------------------
+
+In Appendix A "Attributes by Tag Value (Informative)", add the following item to
+Table A.1 "Attributes by tag value" row for DW_TAG_base_type:
+
+    ----------------------------------------------------------------------------
+
+    Table A.1:: Attributes by tag value
+    ============================= =============================
+    Tag Name                      Applicable Attributes
+    ============================= =============================
+    DW_TAG_base_type              DW_AT_vector_size
+    ============================= =============================
+
+    ----------------------------------------------------------------------------
