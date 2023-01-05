@@ -99,7 +99,7 @@ Operations":
 
         [non-normative] This operation is supplied specifically to be able to
         encode more field displacements in two bytes than can be done with
-        DW_OP_lit; DW_OP_offset.</i>
+        DW_OP_lit*; DW_OP_offset.
 
     3.  DW_OP_bit_offset
         DW_OP_bit_offset pops two stack entries. The first must be an integral
@@ -132,7 +132,7 @@ of DW_OP_fbreg, replace the paragraph:
 ... with the following:
 
     ----------------------------------------------------------------------------
-    The location description L is updated as if the DW_OP_LLVM_offset_uconst B
+    The location description L is updated as if the DW_OP_offset_uconst B
     operation was applied. The updated L is pushed on the stack.
     ----------------------------------------------------------------------------
 
@@ -147,8 +147,8 @@ description of DW_OP_implicit_pointer, replace the paragraph:
 ... with the following:
 
     ----------------------------------------------------------------------------
-    The bit offset of RL is updated as if the DW_OP_LLVM_offset_uconst B
-    operation was applied.
+    The bit offset of RL is updated as if the DW_OP_offset_uconst B operation
+    was applied.
     ----------------------------------------------------------------------------
 
 In Section 2.5.4.4.6 "Composite Location Description Operations" in the
@@ -162,9 +162,42 @@ description of DW_OP_piece, after the paragraph:
 ... add the following paragraph:
 
     ----------------------------------------------------------------------------
-    [non-normative] If a non-0 byte displacement is required, the
-    DW_OP_LLVM_offset operation can be used to update the location description
-    before using it as the part location description of a DW_OP_piece
+    [non-normative] If a non-0 byte displacement is required, the DW_OP_offset
+    operation can be used to update the location description before using it as
+    the part location description of a DW_OP_piece operation.
+    ----------------------------------------------------------------------------
+
+In Section 2.5.4.4.6 "Composite Location Description Operations" in the
+description of DW_OP_bit_piece, replace the paragraph:
+
+    ----------------------------------------------------------------------------
+    The action is the same as for DW_OP_piece, except that any part created has
+    the bit size S, and the location description PL of any created part is
+    updated by a bit offset B.
+    ----------------------------------------------------------------------------
+
+... with the following paragraph:
+
+    ----------------------------------------------------------------------------
+    The action is the same as for DW_OP_piece, except that any part created has
+    the bit size S, and the location description PL of any created part is
+    updated as if the DW_OP_constu B; DW_OP_bit_offset operations were applied.
+    ----------------------------------------------------------------------------
+
+In Section 2.5.4.4.6 "Composite Location Description Operations" in the
+description of DW_OP_bit_piece, after the paragraph:
+
+    ----------------------------------------------------------------------------
+    [non-normative] DW_OP_bit_piece is used instead of DW_OP_piece when the
+    piece...
+    ----------------------------------------------------------------------------
+
+... add the following paragraph:
+
+    ----------------------------------------------------------------------------
+    [non-normative] If a computed bit displacement is required, the
+    DW_OP_bit_offset operation can be used to update the location description
+    before using it as the part location description of a DW_OP_bit_piece
     operation.
     ----------------------------------------------------------------------------
 
@@ -181,7 +214,7 @@ description of DW_AT_data_member_location, replace the following paragraph:
 ... with the following:
 
     ----------------------------------------------------------------------------
-    The result of the attribute is obtained by evaluating a DW_OP_LLVM_offset B
+    The result of the attribute is obtained by evaluating a DW_OP_offset B
     operation with an initial stack comprising the location description of the
     beginning of the containing entity. The result of the evaluation is the
     location description of the base of the member entry.
@@ -204,11 +237,11 @@ paragraph:
     offset(N)
         N is a signed byte offset. The previous value of this register is saved
         at the location description computed as if the DWARF operation
-        expression DW_OP_LLVM_offset N is evaluated with the current
-        context, except the result kind is a location description, the
-        compilation unit is unspecified, the object is unspecified, and an
-        initial stack comprising the location description of the current CFA
-        (see 2.5.4 DWARF Operation Expressions).
+        expression DW_OP_offset N is evaluated with the current context, except
+        the result kind is a location description, the compilation unit is
+        unspecified, the object is unspecified, and an initial stack comprising
+        the location description of the current CFA (see 2.5.4 DWARF Operation
+        Expressions).
     ----------------------------------------------------------------------------
 
 And the following paragraph:
@@ -228,7 +261,7 @@ And the following paragraph:
     val_offset(N)
         N is a signed byte offset. The previous value of this register is the
         memory byte address of the location description computed as if the DWARF
-        operation expression DW_OP_LLVM_offset N is evaluated with the current
+        operation expression DW_OP_offset N is evaluated with the current
         context, except the result kind is a location description, the
         compilation unit is unspecified, the object is unspecified, and an
         initial stack comprising the location description of the current CFA
