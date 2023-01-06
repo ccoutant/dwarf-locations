@@ -226,7 +226,7 @@ DW_OP_fbreg with the following:
     DW_OP_fbreg has a single signed LEB128 integer operand that
     represents a byte displacement B.
 
-    The location description L for the frame base of the current
+    The location description L for the <i>frame base</i> of the current
     subprogram is obtained from the DW_AT_frame_base attribute of the
     debugger information entry corresponding to the current subprogram
     as described in 3.3.5 Low-Level Information.
@@ -467,6 +467,21 @@ with the following:
     subprogram execution. If the call frame information is present, then
     it already encodes such changes, and it is space efficient to
     reference that using the DW_OP_call_frame_cfa operation.
+    --------------------------------------------------------------------
+
+In Section 2.5.1.5 Control Flow Operations, in the description of
+DW_OP_call2/4/ref, replace the first paragraph:
+
+    --------------------------------------------------------------------
+    DW_OP_call2, DW_OP_call4, and DW_OP_call_ref perform DWARF procedure calls
+    during evaluation of a DWARF expression.
+    --------------------------------------------------------------------
+
+with:
+
+    --------------------------------------------------------------------
+    DW_OP_call2, DW_OP_call4, and DW_OP_call_ref perform DWARF procedure calls
+    during evaluation of a DWARF operation expression.
     --------------------------------------------------------------------
 
 In Section 2.5.1.5 Control Flow Operations, in the description of
@@ -719,7 +734,7 @@ Replace the description of DW_OP_stack_value with the following:
     DW_OP_stack_value pops one stack entry that must be a value V.
 
     An implicit location storage LS is created with the literal value V
-    using the size, encoding, and enianity specified by V’s base type.
+    using the size, encoding, and endianity specified by V’s base type.
 
     It pushes a location description L with one implicit location
     description SL on the stack. SL specifies LS with a bit offset of 0.
@@ -1264,7 +1279,7 @@ following:
     description in any of the target architecture specific address
     spaces.
 
-    The resulting L is the frame base for the subprogram or entry point.
+    The resulting L is the <i>frame base</i> for the subprogram or entry point.
 
     [non-normative] Typically, E will use the DW_OP_call_frame_cfa operation or
     be a stack pointer register plus or minus some offset.
@@ -1284,7 +1299,7 @@ nested, ..." with the following:
     initial stack, and other context elements corresponding to the
     source language thread of execution upon which the user is focused,
     if any. The result of the evaluation is the location description L
-    of the canonical frame address (see 6.4 Call Frame Information) of
+    of the <i>canonical frame address</i> (see 6.4 Call Frame Information) of
     the relevant call frame of the subprogram instance that immediately
     lexically encloses the current call frame’s subprogram or entry
     point.
@@ -1419,6 +1434,28 @@ In Section 4.1 Data Object Entries, replace the first paragraph of item 4
 > This allows the DW_OP_call* operations to be used to push the location
 > description of any variable regardless of how it is optimized.
 
+In Section 4.2 Common Block Entries, replace the paragraph:
+
+    --------------------------------------------------------------------
+    A common block entry also has a DW_AT_location attribute whose value
+    describes the location of the beginning of the common block.
+    --------------------------------------------------------------------
+
+with:
+
+    --------------------------------------------------------------------
+    A common block entry also has a DW_AT_location attribute whose value is a
+    DWARF expression E that describes the location of the common block at
+    run-time. The result of the attribute is obtained by evaluating E with a
+    context that has a result kind of a location description, an unspecified
+    object, the compilation unit that contains E, an empty initial stack, and
+    other context elements corresponding to the source language thread of
+    execution upon which the user is focused, if any. The result of the
+    evaluation is the location description of the base of the common block. See
+    2.5.4.2 Control Flow Operations for special evaluation rules used by the
+    DW_OP_call* operations.
+    --------------------------------------------------------------------
+
 In Section 5.7.3 Derived or Extended Structures, Classes and Interfaces,
 in the paragraph about DW_AT_data_member_location, replace the second
 sentence through the end of the paragraph with the following:
@@ -1545,3 +1582,14 @@ In Section 5.18.1 Data Location, replace the second and third paragraphs with:
     > need it.
     --------------------------------------------------------------------
 
+In Section 7.7.1 "DWARF Expressions", change the first paragraph from:
+
+    --------------------------------------------------------------------
+    A DWARF expression is stored...
+    --------------------------------------------------------------------
+
+to:
+
+    --------------------------------------------------------------------
+    A DWARF operation expression is stored...
+    --------------------------------------------------------------------
