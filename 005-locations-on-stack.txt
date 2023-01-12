@@ -810,9 +810,9 @@ Replace the description of DW_OP_implicit_pointer with the following:
     Otherwise, T is a target architecture specific integral type with a
     bit size equal to S.
 
-    If IPV is either implicitly converted to a location description
-    (only done if AS is the target architecture default address space),
-    then the resulting location description RL is:
+    If IPV is implicitly converted to a location description (only done if AS is
+    the target architecture default address space), then the resulting location
+    description RL is:
 
       * If D has a DW_AT_location attribute, the DWARF expression E from
         the DW_AT_location attribute is evaluated with the current
