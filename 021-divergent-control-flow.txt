@@ -1,4 +1,4 @@
-Part 21: Support for Divergent Control Flow of SIMT Hardware
+Part 17: Support for Divergent Control Flow of SIMT Hardware
 
 PROBLEM DESCRIPTION
 
