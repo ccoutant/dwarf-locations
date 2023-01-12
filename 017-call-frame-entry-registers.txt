@@ -1,0 +1,70 @@
+Part 17: DWARF Operation to Access Call Frame Entry Registers
+
+PROBLEM DESCRIPTION
+
+As described in [DWARF Operations to Create Vector Composite Location
+Descriptions], a DWARF expression involving the set of SIMT lanes active on
+entry to a subprogram is required. The SIMT active lane mask may be held in a
+register that is modified as the subprogram executes. However, when a function
+returns the active lane mask register must be restored to the value it had on
+entry.
+
+The  Call Frame Information (CFI) already encodes such register saving, so it is
+more efficient to provide an operation to return the location of a saved
+register than have to generate a loclist to describe the same information. This
+is now possible since [Allow location description on the DWARF evaluation stack]
+allows location descriptions on the stack.
+
+PROPOSAL
+
+In Section 2.5.4.4.1 "General Location Description Operations" of [Allow
+location description on the DWARF evaluation stack], add the following operation
+after DW_OP_push_object_address:
+
+    ----------------------------------------------------------------------------
+    5.  DW_OP_call_frame_entry_reg
+        DW_OP_call_frame_entry_reg has a single unsigned LEB128 integer operand
+        that represents a target architecture register number R.
+
+        It pushes a location description L that holds the value of register R on
+        entry to the current subprogram as defined by the call frame information
+        (see Section 6.4 "Call Frame Information").
+
+        [non-normative] If there is no call frame information defined, then the
+        default rules for the target architecture are used. If the register rule
+        is <i>undefined</i>, then the undefined location description is pushed.
+        If the register rule is <i>same value</i>, then a register location
+        description for R is pushed.
+    ----------------------------------------------------------------------------
+
+In Section 6.4.2 "Call Frame Instructions" of [Allow location description on the
+DWARF evaluation stack], add the following bullet to the end of the list:
+
+    ----------------------------------------------------------------------------
+    * DW_OP_call_frame_entry_reg is not allowed if evaluating E causes a
+      circular dependency between DW_OP_call_frame_entry_reg operations.
+
+      [non-normative] For example, if a register R1 has a
+      DW_CFA_def_cfa_expression instruction that evaluates a
+      DW_OP_call_frame_entry_reg operation that specifies register R2, and
+      register R2 has a DW_CFA_def_cfa_expression instruction that that
+      evaluates a DW_OP_call_frame_entry_reg operation that specifies register
+      R1.
+    ----------------------------------------------------------------------------
+
+In Section 7.7.1 "Operation Expressions" of [Allow location description on the
+DWARF evaluation stack], add the following row to Table 7.9 "DWARF Operation
+Encodings":
+
+    ----------------------------------------------------------------------------
+
+    Table 7.9: DWARF Operation Encodings
+    ================================== ===== ======== ==========================
+    Operation                          Code  Number   Notes
+                                             of
+                                             Operands
+    ================================== ===== ======== ==========================
+    DW_OP_call_frame_entry_reg         TBA      1     ULEB128 register number
+    ================================== ===== ======== ==========================
+
+    ----------------------------------------------------------------------------
