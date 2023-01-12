@@ -201,6 +201,40 @@ description of DW_OP_bit_piece, after the paragraph:
     operation.
     ----------------------------------------------------------------------------
 
+In Section 2.5.4.4.6 "Composite Location Description Operations" in the
+description of DW_OP_bit_piece, replace the paragraph:
+
+    ----------------------------------------------------------------------------
+    The action is the same as for DW_OP_piece, except that any part created has
+    the bit size S, and the location description PL of any created part is
+    updated by a bit offset B.
+    ----------------------------------------------------------------------------
+
+... with the following paragraph:
+
+    ----------------------------------------------------------------------------
+    The action is the same as for DW_OP_piece, except that any part created has
+    the bit size S, and the location description PL of any created part is
+    updated as if the DW_OP_constu B; DW_OP_bit_offset operations were applied.
+    ----------------------------------------------------------------------------
+
+In Section 2.5.4.4.6 "Composite Location Description Operations" in the
+description of DW_OP_bit_piece, after the paragraph:
+
+    ----------------------------------------------------------------------------
+    [non-normative] DW_OP_bit_piece is used instead of DW_OP_piece when the
+    piece...
+    ----------------------------------------------------------------------------
+
+... add the following paragraph:
+
+    ----------------------------------------------------------------------------
+    [non-normative] If a computed bit displacement is required, the
+    DW_OP_bit_offset operation can be used to update the location description
+    before using it as the part location description of a DW_OP_bit_piece
+    operation.
+    ----------------------------------------------------------------------------
+
 In Section 5.7.3 "Derived or Extended Structures, Classes and Interfaces" in the
 description of DW_AT_data_member_location, replace the following paragraph:
 
