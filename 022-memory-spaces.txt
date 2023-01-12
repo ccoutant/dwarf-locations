@@ -1,0 +1,170 @@
+Part 22: Support for Source Language Memory Spaces
+
+PROBLEM DESCRIPTION
+
+AMDGPU supports languages, such as OpenCL, that define source language memory
+classes. Support is added to define language specific memory spaces so they
+can be used in a consistent way by consumers.
+
+Support for using memory spaces in defining source language types and data
+object allocation is also added.
+
+PROPOSAL
+
+In Section 2.2 "Attribute Types", add the following row to Table 2.2 "Attribute
+names":
+
+    ----------------------------------------------------------------------------
+
+    Table 2.2: Attribute names
+    =========================== ====================================
+    Attribute                   Usage
+    =========================== ====================================
+    DW_AT_memory_space          Pointer or reference types (see 5.3 "Type Modifier Entries")
+                                Data objects (see 4.1 "Data Object Entries")
+    =========================== ====================================
+
+Add the following after Section 2.12 "Segmented Addresses":
+
+    ----------------------------------------------------------------------------
+    2.x Memory Spaces
+
+    DWARF memory spaces are used for source languages that have the concept of
+    memory spaces. They are used in the DW_AT_memory_space attribute for pointer
+    type, reference type, variable, formal parameter, and constant debugger
+    information entries.
+
+    Each DWARF memory space is conceptually a separate source language memory
+    space with its own lifetime and aliasing rules. DWARF memory spaces are used
+    to specify the source language memory spaces that pointer type and reference
+    type values refer, and to specify the source language memory space in which
+    variables are allocated.
+
+    Although DWARF memory space identifiers are source language specific,
+    DW_MSPACE_none is a common memory space supported by all source languages,
+    and defined as the source language default memory space.
+
+    The set of currently defined DWARF memory spaces, together with source
+    language mappings, is given in Table 2.x "Source language memory space".
+
+    Vendor defined source language memory spaces may be defined using codes in
+    the range DW_MSPACE_lo_user to DW_MSPACE_hi_user.
+
+    Table 2.x: Source language memory spaces
+    ================== ============ ============== ============== ==============
+    Memory Space Name  Meaning      C/C++          OpenCL         CUDA/HIP
+    ================== ============ ============== ============== ==============
+    DW_MSPACE_none     generic      <i>default</i> generic        <i>default</i>
+    DW_MSPACE_global   global                      global
+    DW_MSPACE_constant constant                    constant       constant
+    DW_MSPACE_group    thread-group                local          shared
+    DW_MSPACE_private  thread                      private
+    DW_MSPACE_lo_user
+    DW_MSPACE_hi_user
+    ================== ============ ============== ============== ==============
+
+    ----------------------------------------------------------------------------
+
+> [For further discussion...]
+> The approach presented in Table 2.x "Source language memory spaces" is to
+> define the default DW_MSPACE_none to be the generic address class and not the
+> global address class. This matches how CLANG and LLVM have added support for
+> CUDA-like languages on top of existing C++ language support. This allows all
+> addresses to be generic by default which matches CUDA-like languages.
+>
+> An alternative approach is to define DW_MSPACE_none as being the global memory
+> space and then change DW_MSPACE_global to DW_MSPACE_generic. This would match
+> the reality that languages that do not support multiple memory spaces only
+> have one default global memory space. Generally, in these languages if they
+> expose that the target architecture supports multiple memory spaces, the
+> default one is still the global memory space. Then a language that does
+> support multiple memory spaces has to explicitly indicate which pointers have
+> the added ability to reference more than the global memory space. However,
+> compilers generating DWARF for CUDA-like languages would then have to define
+> every CUDA-like language pointer type or reference type with a
+> DW_AT_memory_space attribute of DW_MSPACE_generic to match the language
+> semantics.
+
+In Section 4.1 "Data Object Entries" add the following to the attribute list:
+
+    ----------------------------------------------------------------------------
+    14. A DW_AT_memory_space attribute with a constant value representing a
+        source language specific DWARF memory space (see 2.x "Memory Spaces").
+        If omitted, defaults to DW_MSPACE_none.
+    ----------------------------------------------------------------------------
+
+In Section 5.3 "Type Modifier Entries", after the paragraph starting "A modified
+type entry describing a pointer or reference type...", add the following
+paragraph:
+
+    ----------------------------------------------------------------------------
+    A modified type entry describing a pointer or reference type (using
+    DW_TAG_pointer_type, DW_TAG_reference_type or DW_TAG_rvalue_reference_type)
+    may have a DW_AT_memory_space attribute with a constant value representing a
+    source language specific DWARF memory space (see 2.x "Memory Spaces"). If
+    omitted, defaults to DW_MSPACE_none.
+    ----------------------------------------------------------------------------
+
+In Section 7.5.4 "Attribute Encodings", add the following row to Table 7.5
+"Attribute encodings":
+
+    ----------------------------------------------------------------------------
+
+    Table 7.5: Attribute encodings
+    ================================== ====== ==================================
+    Attribute Name                     Value  Classes
+    ================================== ====== ==================================
+    DW_AT_memory_space                 TBA    constant
+    ================================== ====== ==================================
+
+    ----------------------------------------------------------------------------
+
+After Section 7.13 "Address Class Encodings" and Section 7.x "Address Space
+Encodings", add the following section:
+
+    ----------------------------------------------------------------------------
+    7.x Memory Space Encodings
+
+    The encodings of the constants used for the currently defined memory spaces
+    are given in Table 7.x "Memory space encodings".
+
+    Table 7.x: Memory space encodings
+
+    ========================== ======
+    Memory Space Name          Value
+    ========================== ======
+    DW_MSPACE_none             0x0000
+    DW_MSPACE_global           0x0001
+    DW_MSPACE_constant         0x0002
+    DW_MSPACE_group            0x0003
+    DW_MSPACE_private          0x0004
+    DW_MSPACE_lo_user          0x8000
+    DW_MSPACE_hi_user          0xffff
+    ========================== ======
+
+    ----------------------------------------------------------------------------
+
+In Section 7.32 "Type Signature Computation", Table 7.32 "Attributes used in
+type signature computation", add the following attribute in alphabetical order
+to the list:
+
+    ----------------------------------------------------------------------------
+    DW_AT_memory_space
+    ----------------------------------------------------------------------------
+
+In Appendix A "Attributes by Tag Value (Informative)", add the following to
+Table A.1 Attributes by tag value":
+
+    ----------------------------------------------------------------------------
+
+    Table A.1: Attributes by tag value
+    ============================= =============================
+    Tag Name                      Applicable Attributes
+    ============================= =============================
+    DW_TAG_variable               DW_AT_memory_space
+    DW_TAG_formal_parameter       DW_AT_memory_space
+    DW_TAG_constant               DW_AT_memory_space
+    DW_TAG_pointer_type           DW_AT_memory_space
+    DW_TAG_reference_type         DW_AT_memory_space
+    DW_TAG_rvalue_reference_type  DW_AT_memory_space
+    ============================= =============================
