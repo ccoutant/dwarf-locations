@@ -1,0 +1,102 @@
+Part 15: DWARF Operations to Create Vector Composite Location Descriptions
+
+PROBLEM DESCRIPTION
+
+AMDGPU optimized code may spill vector registers to non-global address space
+memory, and this spilling may be done only for SIMT lanes that are active on
+entry to the subprogram. To support this the CFI rule for the partially spilled
+register needs to use an expression that uses the EXEC register as a bit mask to
+select between the register (for inactive lanes) and the stack spill location
+(for active lanes that are spilled). This needs to evaluate to a location
+description, and not a value, as a debugger needs to change the value if the
+user assigns to the variable.
+
+Another usage is to create an expression that evaluates to provide a vector of
+logical PCs for active and inactive lanes in a SIMT execution model. Again the
+EXEC register is used to select between active and inactive PC values. In order
+to represent a vector of PC values, a way to create a composite location
+description that is a vector of a single location is used.
+
+To support this, a composite location description that can be created as a
+masked select is required. In addition, an operation that creates a composite
+location description that is a vector on another location description is needed.
+
+PROPOSAL
+
+In Section 2.5.4.4.6 "Composite Location Description Operations" of [Allow
+location description on the DWARF evaluation stack], add the following
+operations:
+
+    ----------------------------------------------------------------------------
+    4.  DW_OP_extend
+        DW_OP_extend has two operands. The first is an unsigned LEB128 integer
+        that represents the element bit size S. The second is an unsigned LEB128
+        integer that represents a count C.
+
+        It pops one stack entry that must be a location description and is
+        treated as the part location description PL.
+
+        A location description L comprised of one complete composite location
+        description SL is pushed on the stack.
+
+        A complete composite location storage LS is created with C identical
+        parts P. Each P specifies PL and has a bit size of S.
+
+        SL specifies LS with a bit offset of 0.
+
+        The DWARF expression is ill-formed if the element bit size or count are
+        0.
+
+    5.  DW_OP_select_bit_piece
+        DW_OP_select_bit_piece has two operands. The first is an unsigned LEB128
+        integer that represents the element bit size S. The second is an
+        unsigned LEB128 integer that represents a count C.
+
+        It pops three stack entries. The first must be an integral type value
+        that represents a bit mask value M. The second must be a location
+        description that represents the one-location description L1. The third
+        must be a location description that represents the zero-location
+        description L0.
+
+        A complete composite location storage LS is created with C parts PN
+        ordered in ascending N from 0 to C-1 inclusive. Each PN specifies
+        location description PLN and has a bit size of S.
+
+        PLN is as if the DW_OP_bit_offset N*S operation was applied to PLXN.
+
+        PLXN is the same as L0 if the Nth least significant bit of M is a zero,
+        otherwise it is the same as L1.
+
+        A location description L comprised of one complete composite location
+        description SL is pushed on the stack. SL specifies LS with a bit offset
+        of 0.
+
+        The DWARF expression is ill-formed if S or C are 0, or if the bit size
+        of M is less than C.
+    ----------------------------------------------------------------------------
+
+> [For further discussion...]
+> Should the count operand for DW_OP_extend and DW_OP_select_bit_piece be
+> changed to get the count value off the stack? This would allow support for
+> architectures that have variable length vector instructions such as ARM and
+> RISC-V.
+
+In Section "7.7.1 Operation Expressions" of [Allow location description on the
+DWARF evaluation stack], add the following rows to Table 7.9 "DWARF Operation
+Encodings":
+
+    ----------------------------------------------------------------------------
+
+    Table 7.9: DWARF Operation Encodings
+    ================================== ===== ======== ===============================
+    Operation                          Code  Number   Notes
+                                             of
+                                             Operands
+    ================================== ===== ======== ===============================
+    DW_OP_extend                       TBA      2     ULEB128 bit size,
+                                                      ULEB128 count
+    DW_OP_select_bit_piece             TBA      2     ULEB128 bit size,
+                                                      ULEB128 count
+    ================================== ===== ======== ===============================
+
+    ----------------------------------------------------------------------------
