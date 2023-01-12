@@ -137,8 +137,9 @@ For the "val_expression(E)" register rule, replace the description with the
 following:
 
     --------------------------------------------------------------------
-    The previous value of this register is the value produced by evaluating the
-    DWARF operation expression E (see 2.5.4 DWARF Operation Expressions).
+    The previous value of this register is located at the implicit location
+    description created from the value produced by evaluating the DWARF
+    operation expression E (see 2.5.4 DWARF Operation Expressions).
 
     E is evaluated with the current context, except the result kind is a
     value, the compilation unit is unspecified, the object is
@@ -235,19 +236,19 @@ replace "register number" by "register number R", and replace "offset" with
 "byte displacement B." Change the second sentence to the following:
 
     --------------------------------------------------------------------
-    The required action is to define the current CFA rule to be the
-    result of evaluating the DWARF operation expression DW_OP_bregx R, B
-    as a location description.
+    The required action is to define the current CFA rule to be equivalent to
+    the result of evaluating the DWARF operation expression DW_OP_bregx R, B as
+    a location description.
     --------------------------------------------------------------------
 
-In item 2, DW_CFA_def_cfa_sf, replae "register number" with "register number R",
+In item 2, DW_CFA_def_cfa_sf, replace "register number" with "register number R",
 and replace "offset" with "byte displacement B." Change the second and third
 sentence to the following:
 
     --------------------------------------------------------------------
-    The required action is to define the current CFA rule to be the
-    result of evaluating the DWARF operation expression DW_OP_bregx R,
-    B * data_alignment_factor as a location description.
+    The required action is to define the current CFA rule to be equivalent to
+    the result of evaluating the DWARF operation expression DW_OP_bregx R, B *
+    data_alignment_factor as a location description.
     --------------------------------------------------------------------
 
 Add the following paragraph:
@@ -257,22 +258,14 @@ Add the following paragraph:
     second operand is signed and factored.
     --------------------------------------------------------------------
 
-    > [For further discussion...]
-    > (ccoutant) I don't see what was wrong with the original DWARF 5
-    > description, which simply defines the operation in terms of the
-    > preceding one.
-    >
-    > (ttye) Formally defining what "except that the second operand is signed
-    > and factored" means seems clearer.
-
 Replace the text of item 3, DW_CFA_def_cfa_register, with the following:
 
     --------------------------------------------------------------------
-    The DW_CFA_def_cfa_register instruction takes a single unsigned
-    LEB128 operand representing a register number R. The required action
-    is to define the current CFA rule to be the result of evaluating the
-    DWARF operation expression DW_OP_bregx R, B as a location
-    description. B is the old CFA byte displacement.
+    The DW_CFA_def_cfa_register instruction takes a single unsigned LEB128
+    operand representing a register number R. The required action is to define
+    the current CFA rule to be equivalent to the result of evaluating the DWARF
+    operation expression DW_OP_bregx R, B as a location description. B is the
+    old CFA byte displacement.
 
     If the subprogram has no current CFA rule, or the rule was defined
     by a DW_CFA_def_cfa_expression instruction, then the DWARF is ill-formed.
@@ -281,11 +274,11 @@ Replace the text of item 3, DW_CFA_def_cfa_register, with the following:
 Replace the text of item 4, DW_CFA_def_cfa_offset, with the following:
 
     --------------------------------------------------------------------
-    The DW_CFA_def_cfa_offset instruction takes a single unsigned LEB128
-    operand representing a (non-factored) byte displacement B. The
-    required action is to define the current CFA rule to be the result
-    of evaluating the DWARF operation expression DW_OP_bregx R, B as a
-    location description. R is the old CFA register number.
+    The DW_CFA_def_cfa_offset instruction takes a single unsigned LEB128 operand
+    representing a (non-factored) byte displacement B. The required action is to
+    define the current CFA rule to be equivalent to the result of evaluating the
+    DWARF operation expression DW_OP_bregx R, B as a location description. R is
+    the old CFA register number.
 
     If the subprogram has no current CFA rule, or the rule was defined
     by a DW_CFA_def_cfa_expression instruction, then the DWARF is
@@ -296,12 +289,11 @@ Replace the text of item 5, DW_CFA_def_cfa_offset_sf, with the
 following:
 
     --------------------------------------------------------------------
-    The DW_CFA_def_cfa_offset_sf instruction takes a signed LEB128
-    operand representing a factored byte displacement B. The required
-    action is to define the current CFA rule to be the result of
-    evaluating the DWARF operation expression DW_OP_bregx R, B *
-    data_alignment_factor as a location description. R is the old CFA
-    register number.
+    The DW_CFA_def_cfa_offset_sf instruction takes a signed LEB128 operand
+    representing a factored byte displacement B. The required action is to
+    define the current CFA rule to be equivalent to the result of evaluating the
+    DWARF operation expression DW_OP_bregx R, B * data_alignment_factor as a
+    location description. R is the old CFA register number.
 
     If the subprogram has no current CFA rule, or the rule was defined
     by a DW_CFA_def_cfa_expression instruction, then the DWARF is
@@ -315,12 +307,12 @@ Replace the text of item 6, DW_CFA_def_cfa_expression, with the
 following:
 
     --------------------------------------------------------------------
-    The DW_CFA_def_cfa_expression instruction takes a single operand
-    encoded as a DW_FORM_exprloc value representing a DWARF operation
-    expression E. The required action is to define the current CFA rule
-    to be the result of evaluating E with the current context, except
-    the result kind is a location description, the compilation unit is
-    unspecified, the object is unspecified, and an empty initial stack.
+    The DW_CFA_def_cfa_expression instruction takes a single operand encoded as
+    a DW_FORM_exprloc value representing a DWARF operation expression E. The
+    required action is to define the current CFA rule to be equivalent to the
+    result of evaluating E with the current context, except the result kind is a
+    location description, the compilation unit is unspecified, the object is
+    unspecified, and an empty initial stack.
 
     [non-normative] See 6.4.2 Call Frame Instructions regarding restrictions on
     the DWARF expression operations that can be used in E.
