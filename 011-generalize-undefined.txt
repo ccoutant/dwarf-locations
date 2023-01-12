@@ -17,6 +17,22 @@ PROPOSED SOLUTION
 This proposal depends on proposal [Allow location description on the DWARF
 evaluation stack].
 
+In Section 2.5.4 "DWARF Operation Expressions", replace the two occurrences of
+the paragraph:
+
+    ----------------------------------------------------------------------------
+    [non-normative] This rule is for backwards compatibility with DWARF Version
+    5 which uses an empty operation expression for this purpose.
+    ----------------------------------------------------------------------------
+
+with:
+
+    ----------------------------------------------------------------------------
+    [non-normative] This rule is for backwards compatibility with DWARF Version
+    5 which has no explicit operation to create an undefined location
+    description, and uses an empty operation expression for this purpose.
+    ----------------------------------------------------------------------------
+
 Replace section 2.5.4.4.2 "Undefined Location Description Operations" from
 [Allow location description on the DWARF evaluation stack] (which in turn
 replaces DWARF Version 5 Section 2.6.1.1.1 "Empty Location Descriptions") with:
