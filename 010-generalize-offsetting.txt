@@ -13,6 +13,25 @@ descriptions that describe when bytes are in registers, are implicit, or a
 composite of these, the DW_OP_offset, DW_OP_offset_uconst, and DW_OP_bit_offset
 offset operations are added.
 
+It could be possible to define DW_OP_plus, DW_OP_plus_uconst, and DW_OP_minus to
+operate on any location description to avoid needing DW_OP_offset and
+DW_OP_offset_uconst. However, this is not proposed since currently the
+arithmetic operations are defined to require values of the same base type and
+produces a result with the same base type. Allowing these operations to act on
+location descriptions would permit the first operand to be a location
+description and the second operand to be an integral value type, or vice versa,
+and return a location description. This complicates the rules for implicit
+conversions between default address space memory location descriptions and
+generic base type values. Currently the rules would convert such a location
+description to the memory address value and then perform two's compliment wrap
+around arithmetic. If the result was used as a location description, it would be
+implicitly converted back to a default address space memory location
+description. This is different to the overflow rules on location descriptions.
+To allow control, an operation that converts a memory location description to an
+address integral type value would be required. Keeping a separation of location
+description operations and arithmetic operations avoids this semantic
+complexity.
+
 The offset operations can operate on location storage of any size. For example,
 implicit location storage could be any number of bits in size. It is simpler to
 define offsets that exceed the size of the location storage as being an
@@ -40,24 +59,6 @@ offset of an arbitrary location description (such as a vector register) is
 required. The offset operations provide this ability since they can be used to
 compute a location description on the stack.
 
-It could be possible to define DW_OP_plus, DW_OP_plus_uconst, and DW_OP_minus to
-operate on any location description to avoid needing DW_OP_offset and
-DW_OP_offset_uconst. However, this is not proposed since currently the
-arithmetic operations are defined to require values of the same base type and
-produces a result with the same base type. Allowing these operations to act on
-location descriptions would permit the first operand to be a location
-description and the second operand to be an integral value type, or vice versa,
-and return a location description. This complicates the rules for implicit
-conversions between default address space memory location descriptions and
-generic base type values. Currently the rules would convert such a location
-description to the memory address value and then perform two's compliment wrap
-around arithmetic. If the result was used as a location description, it would be
-implicitly converted back to a default address space memory location
-description. This is different to the overflow rules on location descriptions.
-To allow control, an operation that converts a memory location description to an
-address integral type value would be required. Keeping a separation of location
-description operations and arithmetic operations avoids this semantic
-complexity.
 
 PROPOSED SOLUTION
 
