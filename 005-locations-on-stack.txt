@@ -6,6 +6,18 @@ it unifies DWARF values and location descriptions and allows the
 expression stack to operate on both. Several subsequent proposals will
 build on this foundation.
 
+The immediate benefit of this proposal is that the DW_OP_call* operators
+can now return a location description, permitting the DWARF producer
+to use DWARF procedures for complex location descriptions that might
+be shared among several variables, or shared among several entries in
+a location list.
+
+This proposal also lays the groundwork for later proposals in this series
+that add the ability to operate on location descriptions to modify them
+(e.g., to describe a sub-field of a vector register). These follow-on
+proposals are presented separately in order to keep the size of each
+one manageable and understandable.
+
 
 BACKGROUND
 ----------
