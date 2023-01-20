@@ -3,11 +3,12 @@ Part 18: Support for Source Language Memory Spaces
 PROBLEM DESCRIPTION
 
 AMDGPU supports languages, such as OpenCL, that define source language memory
-classes. Support is added to define language specific memory spaces so they
-can be used in a consistent way by consumers.
+classes. Support is added to define language specific memory spaces so they can
+be used in a consistent way by consumers.
 
-Support for using memory spaces in defining source language types and data
-object allocation is also added.
+A new attribute DW_AT_memory_space is added to support using memory spaces in
+defining source language pointer and reference types and data object
+allocation.
 
 PROPOSAL
 

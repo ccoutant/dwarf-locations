@@ -1,7 +1,8 @@
-DW_OP_call_ref Correction
+DW_OP_call_ref & DW_OP_implicit_pointer Correction
 
 Section 2.5.1.5 (Control Flow Operations), page 36, lines 15-19
-
+Section 2.6.1.1.4 (Implicit Location Descriptions), page 41
+Section 7.5.5 (Classes and Forms), on page 217
 
 BACKGROUND
 ----------
