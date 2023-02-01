@@ -32,17 +32,19 @@ address integral type value would be required. Keeping a separation of location
 description operations and arithmetic operations avoids this semantic
 complexity.
 
+The offset operators are designed to address four specific problems.
+
 The offset operations can operate on location storage of any size. For example,
-implicit location storage could be any number of bits in size. It is simpler to
-define offsets that exceed the size of the location storage as being an
-evaluation error, than having to force an implementation to support potentially
-infinite precision offsets to allow it to correctly track a series of positive
-and negative offsets that may transiently overflow or underflow, but end up in
-range. This is simple for the arithmetic operations as they are defined in
-terms of two's compliment arithmetic on a base type of a fixed size. Therefore,
-the offset operation define that integer overflow is ill-formed. This is in
-contrast to the DW_OP_plus, DW_OP_plus_uconst, and DW_OP_minus arithmetic
-operations which define that it causes wrap-around.
+register, composite, and implicit location storage could be any number of bits
+in size. It is simpler to define offsets that exceed the size of the location
+storage as being an evaluation error, than having to force an implementation to
+support potentially infinite precision offsets to allow it to correctly track a
+series of positive and negative offsets that may transiently overflow or
+underflow, but end up in range. This is simple for the arithmetic operations as
+they are defined in terms of two's compliment arithmetic on a base type of a
+fixed size. Therefore, the offset operation defines that integer overflow is
+ill-formed. This is in contrast to the DW_OP_plus, DW_OP_plus_uconst, and
+DW_OP_minus arithmetic operations which define that it causes wrap-around.
 
 Having the offset operations allows DW_OP_push_object_address to push a
 location description that may be in a register, or be an implicit value. The

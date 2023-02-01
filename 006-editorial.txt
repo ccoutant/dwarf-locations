@@ -8,7 +8,7 @@ does not make any substantive changes.
 BACKGROUND
 ----------
 
-With the changes proposed in Part 6 of this series, DWARF expressions
+With the changes proposed in Part 5 of this series, DWARF expressions
 and location descriptions have essentially been unified, and the
 distinction between the two is no longer material. The bulk of this
 proposal merely reorganizes the text from Sections 2.5 (DWARF

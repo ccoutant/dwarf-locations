@@ -15,10 +15,15 @@ that can only be put on complete objects, such as a variable. That makes it only
 suitable for describing an entity (such as variable or subprogram code) that is
 in a single kind of memory.
 
-Therefore, AMDGPU uses the DWARF concept of address spaces. For example, a
-variable may be allocated in a register that is partially spilled to the call
-stack which is in the private address space, and partially spilled to the local
-address space.
+AMDGPU uses multiple address spaces. For example, a variable may be allocated in
+a register that is partially spilled to the call stack which is in the private
+address space, and partially spilled to the local address space. DWARF mentions
+address spaces, for example as an argument to the DW_OP_xderef* operations. A
+new section that defines address classes is added.
+
+A new attribute DW_AT_address_space is added to pointer and reference types.
+This allows the compiler to specify which address space is being used to
+represent the pointer or reference type.
 
 DWARF 5 uses the concept of an address in many expression operations but does
 not define how it relates to address spaces. For example,
@@ -39,7 +44,7 @@ address space. For example, AMDGPU variables can be allocated in the local
 address space at a fixed address.
 
 A DW_OP_form_aspace_address operation is added and defined to create a memory
-location description from an address and address space. If can be used to
+location description from an address and address space. It can be used to
 specify the location of a variable that is allocated in a specific address
 space. This allows the size of addresses in an address space to be larger than
 the generic type. It also allows a consumer great implementation freedom. It
