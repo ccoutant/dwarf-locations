@@ -1,0 +1,313 @@
+Background
+----------
+
+In DWARF 5, location descriptions are used to provide information about
+the location of program objects.
+
+Location descriptions can be either of two forms:
+ - Single location descriptions, which are a language independent
+   representation of addressing rules of arbitrary complexity built
+   from DWARF expressions and/or other DWARF operations specific to
+   describing locations.
+ - Location lists, which are used to describe objects that have a
+   limited lifetime or change their location during their lifetime.
+
+A single location description is either:
+ - A simple location description, representing an object which exists
+   in one contiguous piece at the given location, or
+ - A composite location description consisting of one or more simple
+   location descriptions, each of which is followed by one composition
+   operation. Each simple location description describes the location
+   of one piece of the object; each composition operation describes
+   which part of the object is located there. Each simple location
+   description that is a DWARF expression is evaluated independently
+   of any others.
+
+It is worth pointing out that not all simple location descriptions
+involve DWARF expressions and it is unclear how location description
+operations are evaluated in relation to DWARF expressions that occur
+in the same exprloc DWARF operation stream. Are location description
+operations evaluated in sequential order (for example following control
+flow), or do they act as demarking the end of a DWARF expression?
+
+Either way, only DWARF expression operations are evaluated using a
+typed value stack, which naturally imposes some limitations:
+ - Simple location description kinds that reference the DWARF stack
+   are: empty, memory and implicit value on that stack.
+ - The value of the address of a memory location description can be
+   pushed on the stack. But there is no suitable stack entry to push
+   for any other kind of location description.
+
+As a consequence of these limitations, the only way for one program
+object to reference another is by previously placing an address of the
+referenced object on the DWARF stack, which is only possible if that
+object is in memory.
+
+Some of the areas in DWARF that are affected by these limitations are:
+ - DW_OP_push_object_address expression operation,
+ - DW_OP_call2, DW_OP_call4, DW_OP_call_ref expression operations,
+ - DW_AT_data_member_location attribute and
+ - DW_AT_use_location attribute.
+
+Problem Description
+-------------------
+
+C++ Example 1: Object of derived class "B" needs to access a member "x"
+               of base class "A" through the use of virtual table.
+               (Use of DW_AT_data_member_location attribute)
+  class A {
+  public:
+    char x;
+  };
+  class B : public virtual A {} o;
+
+The vtable pointer for B contains an entry vbase_offset for each virtual
+base class. In this case, that vtable layout is:
+
+ -24: vbase_offset[A]=8
+ -16: offset_to_top=0
+  -8: B RTTI
+   0: <vtable for B>
+
+.debug_info             ! Architecture Itanium.
+ 1$:DW_TAG_class_type
+      DW_AT_name("A")
+ 2$:  DW_TAG_member
+        DW_AT_name("x")
+        DW_AT_type(reference to "char")
+
+ 3$:DW_TAG_class_type
+      DW_AT_name("B")
+ 4$:  DW_TAG_inheritance
+        DW_AT_type(reference to $1)
+        DW_AT_data_member_location
+          DW_OP_dup       ! Duplicate location of "B".
+          DW_OP_deref     ! Read "B"'s vtable pointer.
+          DW_OP_constu 24
+          DW_OP_minus     ! Calculate address of "vbase_offset[A]".
+          DW_OP_deref     ! Read value of "vbase_offset[A]".
+          DW_OP_plus      ! Calculate address of "A" data members.
+
+The DW_AT_data_member_location attribute evaluation is only valid for
+objects of class "B" that have a memory location description as these
+can be pushed on the stack as a memory address value. For any other
+kind of location description the attribute evaluation is invalid.
+
+Ada Example 2: Dynamic array type where objects of that type are
+               implemented using short descriptors, made out of size
+               and data buffer address fields.
+               (Use of DW_OP_push_object_address operation)
+
+  procedure Foo is
+    type myArray is array(Integer range <>) of Integer;
+    function Bar (arraySize : Integer) return Integer is
+      barArray : myArray(0..arraySize);
+      result : Integer := 0;
+    begin
+      for I in 0 .. arraySize loop
+        -- initialisation of barArray elements.
+      end loop;
+
+      -- some processing that calculates result.
+      return result;
+    end;
+
+    fooArray : myArray(0..3);
+  begin
+    for I in 0 .. 3 loop
+      fooArray(I) := Bar (I);
+    end loop;
+
+    -- rest of the procedure
+  end Foo;
+
+.debug_info              ! Architecture x86.
+ 1$:DW_TAG_subprogram
+      DW_AT_name("foo")
+
+ 2$:  DW_TAG_array_type
+        DW_AT_name("foo__myarray___")
+        DW_AT_type(reference to "int")
+        DW_AT_data_location
+          DW_OP_push_object_address ! Push object descriptor location.
+          DW_OP_constu 8            ! Offset to data buffer address.
+          DW_OP_plus                ! Add offset to reach data buffer.
+          DW_OP_deref               ! Read address of the data buffer.
+ 3$:    DW_TAG_subrange_type
+          DW_AT_type(reference to "int")
+          DW_AT_upper_bound
+            DW_OP_push_object_address
+            DW_OP_deref             ! Push upper bound value.
+
+ 4$:  DW_TAG_subprogram
+        DW_AT_name("bar")
+
+ 5$:    DW_TAG_variable
+          DW_AT_name("bar__bararray___")
+          DW_AT_type(reference to 2$)
+          DW_AT_location
+            DW_OP_fbreg -20      ! Array descriptor is on the stack.
+
+ 6$:    DW_TAG_variable
+          DW_AT_name("foo__fooarray___")
+          DW_AT_type(reference to 2$)
+          DW_AT_location
+            DW_OP_regx RAX       ! Array descriptor is in a composite
+            DW_OP_piece 8        ! of two registers.
+            DW_OP_regx RDX
+            DW_OP_piece 8
+
+While the memory location description of array "bar" can be used in
+conjunction with DW_OP_push_object_address operation, the composite
+location description of the array "foo" can't.
+
+C++ Example 3: DWARF expression to describe offset/indexing/indirection
+               relationship between variables, to describe an optimized
+               out variable. (Use of DW_OP_call4 operation)
+
+struct property_info {
+  int square_footage;
+  char *address;
+};
+
+struct owner_info {
+  char *name;
+  char *address;
+};
+
+struct purchase_record {
+  struct property_info *property;
+  struct owner_info *owner;
+};
+
+inline void foo (struct purchase_record record)
+{
+  /* Variable "record" can be transformed (split/peeled)
+     so that members of that structure can have different
+     locations during the lifetime of that variable.  */
+
+  char *owner_address = record.owner->address;
+  bar (record.property);     // Some inlined function call.
+
+  /* Variable owner_address is not used at all
+     and therefore can be optimized out.  */
+}
+
+.debug_info                 ! Any architecture.
+ 1$:DW_TAG_structure_type
+      DW_AT_name("property_info")
+ 2$:  DW_TAG_member
+        DW_AT_name("square_footage");
+        DW_AT_type(reference to "int")
+ 3$:  DW_TAG_member
+        DW_AT_name("address")
+        DW_AT_type(reference to "char *")
+
+ 4$:DW_TAG_pointer_type
+      DW_AT_type(reference to 1$)
+
+ 5$:DW_TAG_structure_type
+      DW_AT_name("owner_info")
+ 6$:  DW_TAG_member
+        DW_AT_name("name");
+        DW_AT_type(reference to "char *")
+ 7$:  DW_TAG_member
+        DW_AT_name("address")
+        DW_AT_type(reference to "char *")
+
+ 8$:DW_TAG_pointer_type
+      DW_AT_type(reference to 5$)
+
+ 9$:DW_TAG_structure_type
+      DW_AT_name("purchase_record")
+10$:  DW_TAG_member
+        DW_AT_name("property");
+        DW_AT_type(reference to 4$)
+11$:  DW_TAG_member
+        DW_AT_name("owner")
+        DW_AT_type(reference to 8$)
+
+12$:DW_TAG_subprogram
+      DW_AT_name("foo")
+
+13$:  DW_TAG_formal_parameter
+        DW_AT_name("record")
+        DW_AT_type(reference to 9$)
+        DW_AT_location(location list <x>)
+
+14$:  DW_TAG_variable
+        DW_AT_name("owner_address")
+        DW_AT_type(reference to "char *")
+        DW_AT_location
+          DW_OP_call4 (reference to 13$)  ! Push "record" locdesc.
+          DW_OP_constu 8      ! Push offset to "record::owner_info".
+          DW_OP_plus          ! Add offset to "record" locdesc.
+          DW_OP_deref_size 8  ! Read address from "record::owner_info".
+          DW_OP_constu 8      ! Push offset to "owner_info::address".
+          DW_OP_plus          ! Add offset to "owner_info" address.
+
+This only works if variable "record" is in memory for all location
+list ranges of <x>.
+
+C++ Example 4: Pointer to member implementation on Itanium.
+
+struct s {
+  int m;
+  int n;
+};
+int s::* p;
+
+.debug_info               ! Architecture Itanium.
+ 1$:DW_TAG_structure_type
+      DW_AT_name("s")
+ 2$:  DW_TAG_member
+        DW_AT_name("m")
+        DW_AT_type(reference to "int")
+        DW_AT_data_member_location(0)
+ 3$:  DW_TAG_member
+        DW_AT_name("n")
+        DW_AT_type(reference to "int")
+        DW_AT_data_member_location(4)
+
+ 4$:DW_TAG_ptr_to_member_type
+        DW_AT_containing_type(reference to 1$)
+        DW_AT_type(reference to "int *")
+        DW_AT_use_location
+          DW_OP_plus
+
+ 5$:DW_TAG_variable
+      DW_AT_name("p")
+      DW_AT_type(reference to 4$)
+      DW_AT_location(location list <x>)
+
+The DW_AT_use_location attribute expects two values to be pushed onto
+the DWARF expression stack before its description is evaluated.
+
+The first value pushed is the value of the pointer to member object
+itself. The second value pushed is the base address of the entire
+structure or union instance containing the member whose address is
+being calculated.
+
+This means that only structure (or union) instances which reside in
+memory can be described by this attribute.
+
+Proposed Solution
+-----------------
+
+In DWARF 5, only program objects found in memory can be referenced
+by a DWARF expression. This limits the usability of what can be
+expressed using the mentioned DIE attributes and DWARF operations.
+
+To remove this limitation, it is proposed to extend the DWARF
+expression stack to allow each stack entry to either be a value or a
+location description. In addition, evaluation rules are defined
+to implicitly convert a stack element that is a value to a location
+description, and vice versa, so that all DWARF 5 expressions continue
+to have the same semantics. This reflects that a memory address is
+effectively used as a proxy for a memory location description.
+
+Existing DWARF expression operations that are used with memory
+addresses are generalized to act on any location description kind.
+DWARF expression operations that create and manipulate location
+descriptions are changed to pop and push location descriptions on the
+stack.
