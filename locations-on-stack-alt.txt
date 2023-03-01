@@ -1,0 +1,182 @@
+DWARF Proposal
+
+Location Descriptions on the DWARF Stack
+
+
+BACKGROUND
+==========
+
+The DWARF 5 concept of location descriptions (Section 2.6) limits their
+use to cases where the location described is final, and not subject to
+some further modification, with two exceptions. First, if the location
+description is a memory location description, it is a simple DWARF
+expression (Section 2.5) that can be modified by further DWARF
+expression operators. Second, for any form of location description, it
+can be offset by a fixed number of bits by using a DW_OP_bit_piece
+composition operator.
+
+Where do these limitations matter?
+
+Consider the case of a pointer-to-member type in C++, where the object
+(or part of the object) has been promoted to a register. In this case,
+DW_AT_use_location is not able to provide the address of the object, as
+it can only push a memory address. In optimized code, it sometimes would
+need to provide a register location description or a composite location
+description, but these cannot be pushed onto the DWARF stack. If
+DW_AT_use_location were allowed to push a composite location description
+on the stack, we could apply further operations to determine the
+register location of the member being referenced.
+
+Consider the case where a DW_OP_call* operator is used to get the
+location of a variable. If the variable happens to be in a register at
+the current PC, the call operator cannot succeed, as it cannot push
+anything but a memory location on the stack.
+
+Both of these cases have a common limiting factor: that location
+descriptions cannot be pushed onto the stack, and subsequently operated
+on to produce derived location descriptions.
+
+
+OVERVIEW
+========
+
+This proposal removes that limitation. The DWARF stack is extended so
+that it can hold elements that are either (typed) values or (single)
+location descriptions. The operators in Section 2.6 that previously
+defined register and implicit location descriptions are now considered
+part of a DWARF expression, and are no longer "terminal" in the sense
+that they cannot be part of a larger expression.
+
+Memory location descriptions and values of the generic type are
+considered equivalent and interchangeable.
+
+Most existing expression operators defined in Section 2.5 continue to be
+limited to operating on values only.
+
+The DW_OP_deref* and DW_OP_xderef* operators are extended to operate on
+any location description, and provide the value contained at that
+location, whether in memory, in a register, in implicit storage, or a
+composite value.
+
+The DW_OP_push_object_address operator pushes a location description,
+which may be a memory address (as before), or a register, implicit
+storage, or a composite.
+
+The DW_AT_use_location attribute provides an expression used to compute
+the address of a member for a pointer-to-member type, and expects the
+evaluation mechanism to provide the value of the pointer and the
+location of the object as implicitly-pushed elements on the stack. The
+latter element is now allowed to be any location description.
+
+Two new operators, DW_OP_offset and DW_OP_bit_offset, are introduced
+that allow a location description on the stack to be modified by a byte
+or a bit offset.
+
+The composite location description operators, DW_OP_piece and
+DW_OP_bit_piece, are redefined to build up a composite location
+description, which is held in the top element of the stack. A new
+operator, DW_OP_piece_end, is defined for use when a composite location
+description is complete, and there is a need to continue the expression.
+
+The DW_OP_call* operators are now allowed to leave a location
+description on the stack.
+
+
+PROPOSED CHANGES
+================
+
+(page 26, Section 2.5 DWARF Expressions, first paragraph) Change "[They
+are expressed in terms of DWARF operations] that operate on a stack of
+values" to "... that operate on a stack. Each element in the stack may
+be either a value or a location description (see Section 2.6)."
+
+(page 26, Section 2.5.1 General Operations, first paragraph) Change
+"Each element of the stack has a type and a value, and can represent [a
+value of any supported base type of the target machine]" to "Most
+operations operate on values on the stack, which are typed, and can
+represent ...."
+
+(page 30, Section 2.5.1.3 Stack Operations) Under DW_OP_deref, change
+"...and treats it as an address..." to "...and treats it as a location
+description...". Delete "The popped value must have an integral type."
+
+Under DW_OP_deref_size and DW_OP_deref_type, make the same changes.
+
+(page 32, same section) Under DW_OP_push_object_address, change
+"...pushes the address of the object..." to "...pushes the location
+description of the object...".
+
+(page 36, Section 2.5.1.5 Control Flow Operations) Under DW_OP_call2,
+etc., change "...may add to and/or remove from values on the stack" to
+"...may add or remove values of location descriptions on the stack."
+Change "Values on the stack [at the time of the call]" to "Values and/or
+location descriptions on the stack..." Change "...values left on the
+stack by the called expression may be used as return values..." to
+"...values and location descriptions left on the stack by the called
+expression may be used as return values and location descriptions..."
+
+(page 39, Section 2.6.1.1.3 Register Location Descriptions) Remove the
+non-normative text "A register location description must stand alone as
+the entire description of an object or a piece of an object."
+
+(page 42, Section 2.6.1.2 Composite Location Descriptions) Replace:
+
+    --------------------------------------------------------------------
+	Each piece is described by a composition operation, which does not
+	compute a value nor store any result on the DWARF stack. There may
+	be one or more composition operations in a single composite location
+	description. A series of such operations describes the parts of a
+	value in memory address order.
+    --------------------------------------------------------------------
+
+with:
+
+    --------------------------------------------------------------------
+	Each piece is described by a composition operation. There may be one
+	or more composition operations in a single composite location
+	description. A series of such operations describes the parts of a
+	value in memory address order. Each composition operation pops a
+	location description from the stack and replaces it with a new
+	partial composite location description on the DWARF stack. If the
+	immediately preceding element on the stack is also a partial
+	composite location description (i.e., it is not the first piece in
+	the series), the two partial composite location descriptions are
+	combined into a single partial composite location description.
+    --------------------------------------------------------------------
+
+Add:
+
+    --------------------------------------------------------------------
+	3. DW_OP_piece_end
+
+	The DW_OP_piece_end operation terminates a composition operation by
+	converting the partial composite location description on top of the
+	stack to a complete composite location description. This operation
+	is necessary only if the location description is not at the end of
+	the DWARF expression; otherwise, the conversion is implicit.
+    --------------------------------------------------------------------
+
+Add:
+
+    --------------------------------------------------------------------
+	Section 2.6.1.3 Location Description Operations
+
+	In addition to the composite operations, location descriptions may
+	be modified by the following operations:
+
+	1. DW_OP_offset
+
+	DW_OP_offset pops two stack entries. The first (top of stack) must
+	be an integral type value, which represents a byte displacement. The
+	second must be a location description. It forms a new location
+	description that describes a location at the given byte displacement
+	from the original location.
+
+	2. DW_OP_bit_offset
+
+	DW_OP_offset pops two stack entries. The first (top of stack) must
+	be an integral type value, which represents a bit displacement. The
+	second must be a location description. It forms a new location
+	description that describes a location at the given bit displacement
+	from the original location.
+    --------------------------------------------------------------------
