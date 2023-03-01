@@ -122,61 +122,61 @@ the entire description of an object or a piece of an object."
 (page 42, Section 2.6.1.2 Composite Location Descriptions) Replace:
 
     --------------------------------------------------------------------
-	Each piece is described by a composition operation, which does not
-	compute a value nor store any result on the DWARF stack. There may
-	be one or more composition operations in a single composite location
-	description. A series of such operations describes the parts of a
-	value in memory address order.
+    Each piece is described by a composition operation, which does not
+    compute a value nor store any result on the DWARF stack. There may
+    be one or more composition operations in a single composite location
+    description. A series of such operations describes the parts of a
+    value in memory address order.
     --------------------------------------------------------------------
 
 with:
 
     --------------------------------------------------------------------
-	Each piece is described by a composition operation. There may be one
-	or more composition operations in a single composite location
-	description. A series of such operations describes the parts of a
-	value in memory address order. Each composition operation pops a
-	location description from the stack and replaces it with a new
-	partial composite location description on the DWARF stack. If the
-	immediately preceding element on the stack is also a partial
-	composite location description (i.e., it is not the first piece in
-	the series), the two partial composite location descriptions are
-	combined into a single partial composite location description.
+    Each piece is described by a composition operation. There may be one
+    or more composition operations in a single composite location
+    description. A series of such operations describes the parts of a
+    value in memory address order. Each composition operation pops a
+    location description from the stack and replaces it with a new
+    partial composite location description on the DWARF stack. If the
+    immediately preceding element on the stack is also a partial
+    composite location description (i.e., it is not the first piece in
+    the series), the two partial composite location descriptions are
+    combined into a single partial composite location description.
     --------------------------------------------------------------------
 
 Add:
 
     --------------------------------------------------------------------
-	3. DW_OP_piece_end
+    3. DW_OP_piece_end
 
-	The DW_OP_piece_end operation terminates a composition operation by
-	converting the partial composite location description on top of the
-	stack to a complete composite location description. This operation
-	is necessary only if the location description is not at the end of
-	the DWARF expression; otherwise, the conversion is implicit.
+    The DW_OP_piece_end operation terminates a composition operation by
+    converting the partial composite location description on top of the
+    stack to a complete composite location description. This operation
+    is necessary only if the location description is not at the end of
+    the DWARF expression; otherwise, the conversion is implicit.
     --------------------------------------------------------------------
 
 Add:
 
     --------------------------------------------------------------------
-	Section 2.6.1.3 Location Description Operations
+    Section 2.6.1.3 Location Description Operations
 
-	In addition to the composite operations, location descriptions may
-	be modified by the following operations:
+    In addition to the composite operations, location descriptions may
+    be modified by the following operations:
 
-	1. DW_OP_offset
+    1. DW_OP_offset
 
-	DW_OP_offset pops two stack entries. The first (top of stack) must
-	be an integral type value, which represents a byte displacement. The
-	second must be a location description. It forms a new location
-	description that describes a location at the given byte displacement
-	from the original location.
+    DW_OP_offset pops two stack entries. The first (top of stack) must
+    be an integral type value, which represents a byte displacement. The
+    second must be a location description. It forms a new location
+    description that describes a location at the given byte displacement
+    from the original location.
 
-	2. DW_OP_bit_offset
+    2. DW_OP_bit_offset
 
-	DW_OP_offset pops two stack entries. The first (top of stack) must
-	be an integral type value, which represents a bit displacement. The
-	second must be a location description. It forms a new location
-	description that describes a location at the given bit displacement
-	from the original location.
+    DW_OP_offset pops two stack entries. The first (top of stack) must
+    be an integral type value, which represents a bit displacement. The
+    second must be a location description. It forms a new location
+    description that describes a location at the given bit displacement
+    from the original location.
     --------------------------------------------------------------------
