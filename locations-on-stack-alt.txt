@@ -12,7 +12,7 @@ some further modification, with two exceptions. First, if the location
 description is a memory location description, it is a simple DWARF
 expression (Section 2.5) that can be modified by further DWARF
 expression operators. Second, for any form of location description, it
-can be offset by a fixed number of bits by using a DW_OP_bit_piece
+can be offset by a fixed number of bits by using a `DW_OP_bit_piece`
 composition operator.
 
 Where do these limitations matter?
@@ -72,43 +72,12 @@ Two new operators, `DW_OP_offset` and `DW_OP_bit_offset`, are introduced
 that allow a location description on the stack to be modified by a byte
 or a bit offset.
 
-Byte offsets refer to memory order, so on a little-endian architecture,
-a byte offset of 0 applied to a location would place the value in the
-least-significant portion (right end) of the register or block of memory
-(the “container”), and a positive byte offset would shift the value left
-in that container.
-
-On a big-endian architecture, a byte offset of 0 would place the value
-in the most-significant portion (left end) of the container, and a
-positive byte offset would shift the value right. Thus, for a register
-location, the consumer needs to know the size of the container (i.e.,
-the register).
-
-Bit offsets are always relative to the least-significant bit of a
-container, and a positive bit offset shifts the value left in its
-container. Thus, for a memory location on a big-endian architecture, the
-consumer again needs to know the size of the container.
-
-One new operator, `DW_OP_container_size`, is introduced to specify
-the container size.
-
-For register locations, the container size, if not specified, will be
-taken as the width of the register as defined by the ABI. For memory
-locations, it will be taken as the width of the generic type.
-
 The composite location description operators, `DW_OP_piece` and
 `DW_OP_bit_piece`, are redefined to build up a composite location
 description, which is held in the top element of the stack. A new
 operator, `DW_OP_piece_end`, is defined for use when a composite
 location description is complete, and there is a need to continue the
 expression.
-
-The use of the offset parameter to `DW_OP_bit_piece` is deprecated in
-favor of `DW_OP_bit_offset`. If the offset parameter is non-zero,
-however, it is defined to combine with the bit offset. Because the
-behavior of the offset parameter in `DW_OP_bit_piece` is ABI dependent,
-it may operate on big-endian architectures in the opposite direction as
-`DW_OP_bit_offset`.
 
 The `DW_OP_call*` operators are now allowed to leave a location
 description on the stack.
@@ -192,45 +161,11 @@ to:
 > "...values and location descriptions left on the stack by the called
 > expression may be used as return values and location descriptions..."
 
-(page 39, Section 2.6.1 Single Location Descriptions)
-
-After the two numbered paragraphs, add:
-
-> Single location descriptions also have a “container size” attribute,
-> that specifies the width of the register or block of memory used to
-> hold the value. In most cases, the width is implicit, but it may
-> be specified with a `DW_OP_container_size` operator (see below).
-
-(page 39, Section 2.6.1.1.1 Empty Location Descriptions)
-
-Add to the end of the paragraph:
-
-> The container size of an empty location description is 0.
-
-(page 39, Section 2.6.1.1.2 Memory Location Descriptions)
-
-Add to the end of the paragraph:
-
-> The container size of a memory location description, if not otherwise
-> specified, is the width of the generic type.
-
 (page 39, Section 2.6.1.1.3 Register Location Descriptions)
-
-Add to the end of the first paragraph:
-
-> The container size of a register location description, if not otherwise
-> specified, is the width of the register as defined by the ABI.
 
 Remove the non-normative text "A register location description must
 stand alone as the entire description of an object or a piece of an
 object."
-
-(page 40, Section 2.6.1.1.4 Implicit Location Descriptions)
-
-Add to the end of the first paragraph:
-
-> The container size of an implicit location description, if not otherwise
-> specified, is the width of the value.
 
 (page 42, Section 2.6.1.2 Composite Location Descriptions)
 
@@ -253,8 +188,7 @@ with:
 > the stack is also a partial composite location description (i.e., it is
 > not the first piece in the series), the two partial composite location
 > descriptions are combined into a single partial composite location
-> description. The container size of a composite location description, if
-> not otherwise specified, is the total width of all the component pieces.
+> description.
 
 Add:
 
@@ -285,24 +219,21 @@ Add:
 > 
 > 2\. `DW_OP_bit_offset`
 > 
-> `DW_OP_offset` pops two stack entries. The first (top of stack) must
+> `DW_OP_bit_offset` pops two stack entries. The first (top of stack) must
 > be an integral type value, which represents a bit displacement. The
 > second must be a location description. It forms a new location
-> description that describes a location at the given bit displacement
-> from the original location. The bit displacement is relative to the
-> least-significant bit of the register or memory location; for
-> memory locations on a big-endian architecture, the meaning of
-> the displacement is therefore dependent on the size of the
-> container.
+> description that describes a location at the given bit displacement from
+> the original location.
 > 
-> 3\. `DW_OP_container_size`
+> On a little-endian architecture, the bit offset is relative to the
+> least-significant bit of the location, and indicates that the new
+> location is offset to the left by the given number of bits.
 > 
-> `DW_OP_container_size` pops two stack entries. The first (top of stack)
-> must be an integral type value, which is taken as the base 2 log of the
-> container size in bits (e.g., a value of 6 would indicate a container
-> size of 2^6 = 64 bits). The second must be a location description. It
-> forms a new location description with the given container size as an
-> attribute.
+> On a big-endian architecture, the bit offset is relative to the
+> most-significant bit of the location, and indicates that the new
+> location is offset to the right by the given number of bits.
+
+> _A bit offset of `n*8` is equivalent to a byte offset of `n`._
 
 (page 226, Section 7.7.1 DWARF Expression)
 
@@ -313,4 +244,3 @@ Add to Table 7.9:
 >     --------------------  ----  --------  -----
 >     DW_OP_offset          TBA      0
 >     DW_OP_bit_offset      TBA      0
->     DW_OP_container_size  TBA      0
