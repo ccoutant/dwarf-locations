@@ -17,9 +17,21 @@ EXEC register is used to select between active and inactive PC values. In order
 to represent a vector of PC values, a way to create a composite location
 description that is a vector of a single location is used.
 
-To support this, a composite location description that can be created as a
-masked select is required. In addition, an operation that creates a composite
+It may be possible to use existing DWARF to incrementally build the composite
+location description, possibly using the DWARF operations for control flow to
+create a loop. However, for the AMDGPU that would require loop iteration of 64.
+A concern is that the resulting DWARF would have a significant size and would be
+reasonably common as it is needed for every vector register that is spilled in a
+function. AMDGPU can have up to 512 vector registers. Another concern is the
+time taken to evaluate such non-trivial expressions repeatedly.
+
+To avoid these issues, a composite location description that can be created as a
+masked select is proposed. In addition, an operation that creates a composite
 location description that is a vector on another location description is needed.
+These operations generate the composite location description using a single
+DWARF operation that combines all lanes of the vector in one step. The DWARF
+expression is more compact, and can be evaluated by a consumer far more
+efficiently.
 
 PROPOSAL
 
