@@ -1,1607 +1,565 @@
-Part 5: Allow Location Descriptions on the Stack
+Location Descriptions on the DWARF Stack
+========================================
 
-This is part 5 in a series of proposals related to support for debugging
-on heterogeneous architectures. This is the core proposal of the series:
-it unifies DWARF values and location descriptions and allows the
-expression stack to operate on both. Several subsequent proposals will
-build on this foundation.
-
-The immediate benefit of this proposal is that the DW_OP_call* operators
-can now return a location description, permitting the DWARF producer
-to use DWARF procedures for complex location descriptions that might
-be shared among several variables, or shared among several entries in
-a location list.
-
-This proposal also lays the groundwork for later proposals in this series
-that add the ability to operate on location descriptions to modify them
-(e.g., to describe a sub-field of a vector register). These follow-on
-proposals are presented separately in order to keep the size of each
-one manageable and understandable.
-
-
-BACKGROUND
+Background
 ----------
 
-The changes proposed below change the DWARF expression evaluation stack
-from a stack of (typed) values only to a stack of items that can be
-either values or location descriptions. As such, the location
-description operators are no longer "terminal" and can participate in
-subsequent DWARF stack operations.
+The DWARF 5 concept of location descriptions (Section 2.6) limits their
+use to cases where the location described is final, and not subject to
+some further modification, with two exceptions. First, if the location
+description is a memory location description, it is a simple DWARF
+expression (Section 2.5) that can be modified by further DWARF
+expression operators. Second, for any form of location description, it
+can be offset by a fixed number of bits by using a `DW_OP_bit_piece`
+composition operator.
+
+Where do these limitations matter?
+
+Consider the case of a FORTRAN array (as shown in Appendix D in D.2.1)
+that has been partially promoted to a register or registers. The
+evaluation of its lower and upper bounds depends on the location of the
+array as provided by `DW_OP_push_object_address`. If the array is not
+entirely in memory, this operation is not able to provide the address of
+the object, as it can only provide a memory address. If
+`DW_OP_push_object_address` were allowed to push a composite location
+description on the stack, we could apply further operations to locate
+the bounds of the array.
+
+Similarly, consider the case of a pointer-to-member type in C++, where
+the object (or part of the object) has been promoted to a register. In
+this case, `DW_AT_use_location` is not able to provide the address of
+the object. In optimized code, it sometimes would need to provide a
+register location description or a composite location description, but
+these cannot be pushed onto the DWARF stack. If `DW_AT_use_location`
+were allowed to push a composite location description on the stack, we
+could apply further operations to determine the register location of the
+member being referenced.
+
+Also consider the case where a `DW_OP_call*` operator is used to get the
+location of a variable. If the variable happens to be in a register at
+the current PC, the call operator cannot succeed, as it cannot push
+anything but a memory location on the stack.
+
+All of these cases have a common limiting factor: that location
+descriptions cannot be pushed onto the stack, and subsequently operated
+on to produce derived location descriptions.
 
 
-PROPOSED CHANGES
+Overview
+--------
+
+This proposal removes that limitation. A DWARF expression may evaluate
+to either a value or a location. What used to be known as location
+descriptions are now simply DWARF expressions that evaluate to a
+location.
+
+The DWARF stack is extended so that it can hold elements that are either
+(typed) values or (single) locations. The operators in Section 2.6 that
+previously defined register and implicit locations are now considered
+part of a DWARF expression, and are no longer "terminal" in the sense
+that they cannot be part of a larger expression.
+
+The literal encoding operations, defined in Section 2.5.1.1, push values
+onto the stack, except for `DW_OP_addr` and `DW_OP_addrx`, which push memory locations. These latter two operations are moved to a new section.
+
+Stack operations, defined in Section 2.5.1.3, can operate on values or
+locations, or any combination of the two.
+
+Most existing arithmetic and logical operators, defined in Section 2.5.1.4,
+continue to be limited to operating on values only.
+
+The `DW_OP_deref*` and `DW_OP_xderef*` operators are extended to operate on
+any location description, and provide the value contained at that
+location, whether in memory, in a register, in implicit storage, or a
+composite value.
+
+The `DW_OP_push_object_address` operator pushes a location description,
+which may be a memory address (as before), or a register, implicit
+storage, or a composite.
+
+The `DW_AT_use_location` attribute provides an expression used to compute
+the address of a member for a pointer-to-member type, and expects the
+evaluation mechanism to provide the value of the pointer and the
+location of the object as implicitly-pushed elements on the stack. The
+latter element is now allowed to be any location description.
+
+Two new operators, `DW_OP_offset` and `DW_OP_bit_offset`, are introduced
+that allow a location description on the stack to be modified by a byte
+or a bit offset.
+
+The composite location description operators, `DW_OP_piece` and
+`DW_OP_bit_piece`, are redefined to build up a composite location
+description, which is held in the top element of the stack. A new
+operator, `DW_OP_piece_end`, is defined for use when a composite
+location description is complete, and there is a need to continue the
+expression.
+
+The `DW_OP_call*` operators are now allowed to leave a location
+description on the stack.
+
+The contents of Section 2.5 and 2.6 are reorganized as follows:
+
+- 2.5 DWARF Expressions
+    - 2.5.1 Value Operations
+        - 2.5.1.1 Literal Encodings
+        - 2.5.1.2 Register Values
+        - 2.5.1.3 Stack Operations
+        - 2.5.1.4 Arithmetic and Logical Operations
+    - 2.5.2 Location Operations
+        - 2.5.2.1 Memory Locations
+        - 2.5.2.2 Register Locations
+        - 2.5.2.3 Implicit Locations
+        - 2.5.2.4 Undefined Locations
+        - 2.5.2.5 Composite Locations
+        - 2.5.2.6 Offset Operations
+    - 2.5.3 Control Flow Operations
+    - 2.5.4 Type Conversions
+    - 2.5.5 Special Operations
+- 2.6 Expression Lists
+
+
+
+Proposed Changes
 ----------------
 
-In Section 2.5 DWARF Expressions, remove the second sentence of the
-first paragraph: "They are expressed in terms of DWARF operations that
-operate on a stack of values."
-
-Add the following paragraph after the paragraph beginning "If the
-evaluation of a DWARF expression...":
-
-    --------------------------------------------------------------------
-    If a result kind is specified, and the result of the evaluation does
-    not match the specified result kind, then the implicit conversions
-    described in 2.5.4.4.3 Memory Location Description Operations are
-    performed if valid. Otherwise, the DWARF expression is ill-formed.
-    --------------------------------------------------------------------
-
-Remove the paragraph "A DWARF expression is encoded as a stream of
-operations..."
-
-Add the following text at the end of the section:
-
-    --------------------------------------------------------------------
-    A DWARF expression can either be encoded as an operation expression
-    (see 2.5.x DWARF Operation Expressions), or as a location list
-    expression (see 2.5.x DWARF Location List Expressions).
-    --------------------------------------------------------------------
-
-In Section 2.5.1, DWARF Expression Evaluation Context, in item 8, "an
-initial stack," change "a list of values..." to "a list of values or
-location descriptions..."
-
-After Section 2.5.1, insert a new section "2.5.2 DWARF Expression Value"
-(and renumber subsequent subsections):
-
-Move paragraphs 2-5 of 2.5.x General Operations into this new section,
-and change "A value on the stack has..." to "A value has...":
-
-    --------------------------------------------------------------------
-    2.5.2 DWARF Expression Value
-
-    A value has a type and a literal value. It can represent a literal
-    value of any supported base type of the target architecture. The
-    base type specifies the size, encoding, and endianity of the literal
-    value.
-
-    There is a distinguished base type termed the generic type, which is
-    an integral type that has the size of an address in the target
-    architecture default address space, a target architecture defined
-    endianity, and unspecified signedness.
-
-    [non-normative] The generic type is the same as the unspecified type
-    used for stack operations defined in DWARF Version 4 and before.
-
-    An integral type is a base type that has an encoding of
-    DW_ATE_signed, DW_ATE_signed_char, DW_ATE_unsigned,
-    DW_ATE_unsigned_char, DW_ATE_boolean, or any target architecture
-    defined integral encoding in the inclusive range DW_ATE_lo_user to
-    DW_ATE_hi_user.
-    --------------------------------------------------------------------
-
-    > [For further discussion...]
-    > It may be desirable to add an implicit pointer base type encoding.
-    > It would be used for the type of the value that is produced when
-    > the DW_OP_deref* operation retrieves the full contents of an
-    > implicit pointer location storage created by the
-    > DW_OP_implicit_pointer operation. The literal value would record
-    > the debugging information entry and byte displacement specified by
-    > the associated DW_OP_implicit_pointer operation.
-    >
-    > It is unclear if DW_ATE_address is an integral type. GDB does not
-    > seem to consider it as integral.
-
-Rename the subsection 2.5.x General Operations:
-
-    --------------------------------------------------------------------
-    2.5.3 DWARF Operation Expressions
-    --------------------------------------------------------------------
-
-Insert the following as the first paragraph of the section:
-
-    --------------------------------------------------------------------
-    An operation expression is comprised of a stream of operations, each
-    consisting of an opcode followed by zero or more operands. The
-    number of operands is implied by the opcode.
-    --------------------------------------------------------------------
-
-Insert the following before the paragraph beginning “Operations can act
-on entries on the stack...”:
-
-    --------------------------------------------------------------------
-    Each stack entry can hold either a value or a location description.
-    --------------------------------------------------------------------
-
-Insert the following after the same paragraph:
-
-    --------------------------------------------------------------------
-    If the kind of a stack entry does not match the kind required by the
-    operation and is not implicitly convertible to the required kind
-    (see 2.x.x.x Memory Location Description Operations), then the DWARF
-    operation expression is ill-formed.
-    --------------------------------------------------------------------
-
-Change the paragraph starting "Evaluation of an expression starts with an empty
-stack..." to "Evaluation of an operation expression starts with an empty
-stack...".
-
-Near the end of the section, under the first-level bullet item that
-begins "If the current result kind specifies a location description":
-
-(1) Replace the second-level bullet item beginning "If the stack is
-empty..." with the following:
-
-    --------------------------------------------------------------------
-          * If the stack is empty, the result is a location description
-            with one undefined location description.
-
-            [non-normative] This rule is for backwards compatibility
-            with DWARF Version 5 which uses an empty operation
-            expression for this purpose.
-    --------------------------------------------------------------------
-
-(2) Replace the second-level bullet item beginning "If the stack is not
-empty..." with the following:
-
-    --------------------------------------------------------------------
-          * If the top stack entry is a location description, or can be
-            converted to one (see 2.5.4.4.3 Memory Location Description
-            Operations), then the result is that, possibly converted,
-            location description. Any other entries on the stack are
-            discarded.
-    --------------------------------------------------------------------
-
-Under the first-level bullet item beginning "If the current result kind
-specifies a value," replace the second-level bullet
-beginning "If the stack is not empty" with the following:
-
-    --------------------------------------------------------------------
-          * If the top stack entry is a value, or can be converted to
-            one (see 2.5.4.4.3 Memory Location Description Operations),
-            then the result is that, possibly converted, value. Any
-            other entries on the stack are discarded.
-    --------------------------------------------------------------------
-
-Under the first-level bullet item beginning "If the current result kind
-is not specified," replace the second-level bullet item beginning "If
-the stack is empty" with the following:
-
-    --------------------------------------------------------------------
-          * If the stack is empty, the result is a location description
-            with one undefined location description.
-
-            [non-normative] This rule is for backwards compatibility
-            with DWARF Version 5 which uses an empty operation
-            expression for this purpose.
-
-            > [For further discussion...]
-            > This rule is consistent with the rule above for when a
-            > location description is requested. However, GDB appears to
-            > report this as an error and no GDB tests appear to cause
-            > an empty stack for this case.
-    --------------------------------------------------------------------
-
-In Section 2.5.1.1 Literal Encodings, replace the description of
-DW_OP_addr with the following:
-
-    --------------------------------------------------------------------
-    DW_OP_addr has a single byte constant value operand, which has the
-    size of the generic type, that represents an address A.
-
-    It pushes a location description L with one memory location
-    description SL on the stack. SL specifies the memory location
-    storage corresponding to the target architecture default address
-    space with a bit offset equal to A scaled by 8 (the byte size).
-
-    [non-normative] If the DWARF is part of a code object, then A may
-    need to be relocated. For example, in the ELF code object format, A
-    must be adjusted by the difference between the ELF segment virtual
-    address and the virtual address at which the segment is loaded.
-    --------------------------------------------------------------------
-
-In the same section, replace the description of DW_OP_addrx with the
-following:
-
-    --------------------------------------------------------------------
-    DW_OP_addrx has a single unsigned LEB128 integer operand that
-    represents a zero-based index into the .debug_addr section relative
-    to the value of the DW_AT_addr_base attribute of the associated
-    compilation unit. The address value A in the .debug_addr section has
-    the size of the generic type.
-
-    It pushes a location description L with one memory location
-    description SL on the stack. SL specifies the memory location
-    storage corresponding to the target architecture default address
-    space with a bit offset equal to A scaled by 8 (the byte size).
-
-    [non-normative] If the DWARF is part of a code object, then A may
-    need to be relocated. For example, in the ELF code object format, A
-    must be adjusted by the difference between the ELF segment virtual
-    address and the virtual address at which the segment is loaded.
-    --------------------------------------------------------------------
-
-In Section 2.5.1.2 Register Values, replace the description of
-DW_OP_fbreg with the following:
-
-    --------------------------------------------------------------------
-    DW_OP_fbreg has a single signed LEB128 integer operand that
-    represents a byte displacement B.
-
-    The location description L for the <i>frame base</i> of the current
-    subprogram is obtained from the DW_AT_frame_base attribute of the
-    debugger information entry corresponding to the current subprogram
-    as described in 3.3.5 Low-Level Information.
-
-    The location description L is updated by bit offset B scaled by 8
-    (the byte size) and pushed on the stack.
-    --------------------------------------------------------------------
-
-In the same section, replace the description of
-DW_OP_breg0...DW_OP_breg31 with the following:
-
-    --------------------------------------------------------------------
-    The DW_OP_breg<N> operations encode the numbers of up to 32
-    registers, numbered from 0 through 31, inclusive. The register
-    number R corresponds to the N in the operation name.
-
-    They have a single signed LEB128 integer operand that represents a
-    byte displacement B.
-
-    The address space identifier AS is defined as the one corresponding
-    to the target architecture specific default address space.
-
-    The address size S is defined as the address bit size of the target
-    architecture specific address space corresponding to AS.
-
-    The contents of the register specified by R are retrieved as if a
-    DW_OP_regval_type R, DR operation was performed where DR is the
-    offset of a hypothetical debug information entry in the current
-    compilation unit for an unsigned integral base type of size S bits.
-    B is added and the least significant S bits are treated as an
-    unsigned value to be used as an address A.
-
-    They push a location description L comprising one memory location
-    description LS on the stack. LS specifies the memory location
-    storage that corresponds to AS with a bit offset equal to A scaled
-    by 8 (the byte size).
-    --------------------------------------------------------------------
-
-In the same section, in the description of DW_OP_regval_type, add the
-following:
-
-    --------------------------------------------------------------------
-    The operation is equivalent to performing DW_OP_regx R;
-    DW_OP_deref_type DR.
-    --------------------------------------------------------------------
-
-In Section 2.5.1.3 Stack Operations, insert the following at the end of
-the first paragraph, following “Operations that index the stack assume
-that the top of the stack (most recently added entry) has index 0”:
-
-    --------------------------------------------------------------------
-    They allow the stack entries to be either a value or location
-    description.
-    --------------------------------------------------------------------
-
-Insert the following new paragraph after that paragraph:
-
-    --------------------------------------------------------------------
-    If any stack entry accessed by a stack operation is an incomplete
-    composite location description (see 2.x.x Composite Location
-    Description Operations), then the DWARF expression is ill-formed.
-    --------------------------------------------------------------------
-
-    > [For further discussion...]
-    > If it is desired to also make them work with incomplete composite
-    > location descriptions, then would need to define that the
-    > composite location storage specified by the incomplete composite
-    > location description is also replicated when a copy is pushed.
-    > This ensures that each copy of the incomplete composite location
-    > description can update the composite location storage they specify
-    > independently.
-
-In the description of DW_OP_deref_type, replace the paragraph beginning
-“It pops one stack entry and treats it as an address...” with the
-following:
-
-    --------------------------------------------------------------------
-    It pops one stack entry that must be a location description L.
-
-    A value V of TS bits is retrieved from the location storage LS
-    specified by one of the single location descriptions SL of L.
-
-    [non-normative] If L, or the location description of any composite
-    location description part that is a subcomponent of L, has more than
-    one single location description, then any one of them can be
-    selected as they are required to all have the same value. For any
-    single location description SL, bits are retrieved from the
-    associated storage location starting at the bit offset specified by
-    SL. For a composite location description, the retrieved bits are the
-    concatenation of the N bits from each composite location part PL,
-    where N is limited to the size of PL.
-
-    V is pushed on the stack with the type T.
-    --------------------------------------------------------------------
-
-    > [For further discussion...]
-    > This definition makes it an evaluation error if L is a register location
-    > description that has less than TS bits remaining in the register storage.
-    > Particularly since these extensions extend location descriptions to have a
-    > bit offset, it would be odd to define this as performing sign extension
-    > based on the type, or be target architecture dependent, as the number of
-    > remaining bits could be any number. This matches the GDB implementation
-    > for DW_OP_deref_type.
-    >
-    > These extensions define DW_OP_*breg* in terms of DW_OP_regval_type.
-    > DW_OP_regval_type is defined in terms of DW_OP_regx, which uses a 0 bit
-    > offset, and DW_OP_deref_type. Therefore, it requires the register size to
-    > be greater or equal to the address size of the address space. This matches
-    > the GDB implementation for DW_OP_*breg*.
-
-Add the following to the end of the description of DW_OP_deref_type:
-
-    --------------------------------------------------------------------
-    It is an evaluation error if any bit of the value is retrieved from
-    the undefined location storage or the offset of any bit exceeds the
-    size of the location storage LS specified by any single location
-    description SL of L.
-
-    See 2.5.x.x Implicit Location Description Operations for special
-    rules concerning implicit location descriptions created by the
-    DW_OP_implicit_pointer operation.
-    --------------------------------------------------------------------
-
-In the description of DW_OP_xderef, replace the paragraph beginning “The
-value V is retrieved from the location described by L...” with the
-following:
-
-    --------------------------------------------------------------------
-    The operation is equivalent to popping A and AS, pushing L, and then
-    performing DW_OP_deref. The value V retrieved is left on the stack
-    with the generic type.
-    --------------------------------------------------------------------
-
-In the description of DW_OP_xderef_size, replace the paragraph beginning
-“The value V of size S is retrieved from the location described by L...”
-with the following:
-
-    --------------------------------------------------------------------
-    The operation is equivalent to popping A and AS, pushing L, and then
-    performing DW_OP_deref_size S. The zero-extended value V retrieved
-    is left on the stack with the generic type.
-    --------------------------------------------------------------------
-
-In the description of DW_OP_xderef_type, replace the paragraph beginning
-“The value V is retrieved from the location described by L...” with the
-following:
-
-    --------------------------------------------------------------------
-    The operation is equivalent to popping A and AS, pushing L, and then
-    performing DW_OP_deref_type DR. The value V retrieved is left on the
-    stack with the type T.
-    --------------------------------------------------------------------
-
-Replace the description of DW_OP_push_object_address with the following:
-
-    --------------------------------------------------------------------
-    DW_OP_push_object_address pushes the location description L of the
-    current object.
-
-    [non-normative] This object may correspond to an independent
-    variable that is part of a user presented expression that is being
-    evaluated. The object location description may be determined from
-    the variable’s own debugging information entry or it may be a
-    component of an array, structure, or class whose address has been
-    dynamically determined by an earlier step during user expression
-    evaluation.
-
-    [non-normative] This operation provides explicit functionality
-    (especially for arrays involving descriptors) that is analogous to
-    the implicit push of the base location description of a structure
-    prior to evaluation of a DW_AT_data_member_location to access a data
-    member of a structure.
-
-    > [For further discussion...]
-    > This operation could be removed and the object location
-    > description specified as the initial stack as for
-    > DW_AT_data_member_location.
-    >
-    > Or this operation could be used instead of needing to specify an
-    > initial stack. The latter approach is more composable as access to
-    > the object may be needed at any point of the expression, and
-    > passing it as the initial stack requires the entire expression to
-    > be aware where on the stack it is. If this were done,
-    > DW_AT_use_location would require a DW_OP_push_object2_address
-    > operation for the second object.
-    >
-    > Or a more general way to pass an arbitrary number of arguments in
-    > and an operation to get the Nth one such as DW_OP_arg N. A vector
-    > of arguments would then be passed in the expression context rather
-    > than an initial stack. This could also resolve the issues with
-    > DW_OP_call* by allowing a specific number of arguments passed in
-    > and returned to be specified. The DW_OP_call* operation could then
-    > always execute on a separate stack: the number of arguments would
-    > be specified in a new call operation and taken from the callers
-    > stack, and similarly the number of return results specified and
-    > copied from the called stack back to the callee stack when the
-    > called expression was complete.
-    >
-    > The only attribute that specifies a current object is
-    > DW_AT_data_location so the non-normative text seems to overstate
-    > how this is being used. Or are there other attributes that need to
-    > state they pass an object?
-    --------------------------------------------------------------------
-
-In the same section, replace the first paragraph of the description of
-DW_OP_form_tls_address with the following:
-
-    --------------------------------------------------------------------
-    DW_OP_form_tls_address pops one stack entry that must be an integral
-    type value and treats it as a thread-local storage address TA.
-
-    It pushes a location description L with one memory location
-    description SL on the stack. SL is the target architecture specific
-    memory location description that corresponds to the thread-local
-    storage address TA.
-
-    The meaning of the thread-local storage address TA is defined by the
-    run-time environment. If the run-time environment supports multiple
-    thread-local storage blocks for a single thread, then the block
-    corresponding to the executable or shared library containing this
-    DWARF expression is used.
-    --------------------------------------------------------------------
-
-In the same section, replace the description of DW_OP_call_frame_cfa
-with the following:
-
-    --------------------------------------------------------------------
-    DW_OP_call_frame_cfa pushes the location description L of the
-    Canonical Frame Address (CFA) of the current subprogram, obtained
-    from the call frame information on the stack. See Section 6.4 Call
-    Frame Information.
-
-    [non-normative] Although the value of the DW_AT_frame_base attribute
-    of the debugger information entry corresponding to the current
-    subprogram can be computed using a location list expression, in some
-    cases this would require an extensive location list because the
-    values of the registers used in computing the CFA change during a
-    subprogram execution. If the call frame information is present, then
-    it already encodes such changes, and it is space efficient to
-    reference that using the DW_OP_call_frame_cfa operation.
-    --------------------------------------------------------------------
-
-In Section 2.5.1.5 Control Flow Operations, in the description of
-DW_OP_call2/4/ref, replace the first paragraph:
-
-    --------------------------------------------------------------------
-    DW_OP_call2, DW_OP_call4, and DW_OP_call_ref perform DWARF procedure calls
-    during evaluation of a DWARF expression.
-    --------------------------------------------------------------------
-
-with:
-
-    --------------------------------------------------------------------
-    DW_OP_call2, DW_OP_call4, and DW_OP_call_ref perform DWARF procedure calls
-    during evaluation of a DWARF operation expression.
-    --------------------------------------------------------------------
-
-In Section 2.5.1.5 Control Flow Operations, in the description of
-DW_OP_call2/4/ref, add the following after the first bullet under "The
-call operation is evaluated by":
-
-    --------------------------------------------------------------------
-      * If D has a DW_AT_location attribute that is encoded as a loclist
-        or loclistsptr, then the specified location list expression E is
-        evaluated. The evaluation of E uses the current context, except
-        the result kind is a location description, the compilation unit
-        is the one that contains D, and the initial stack is empty. The
-        location description result is pushed on the stack.
-
-        > [For further discussion...]
-        > This rule avoids having to define how to execute a matched location
-        > list entry operation expression on the same stack as the call when
-        > there are multiple matches. But it allows the call to obtain the
-        > location description for a variable or formal parameter which may use
-        > a location list expression.
-        >
-        > An alternative is to treat the case when D has a DW_AT_location
-        > attribute that is encoded as a loclist or loclistsptr, and the
-        > specified location list expression E' matches a single location list
-        > entry with operation expression E, the same as the exprloc case and
-        > evaluate on the same stack.
-        >
-        > But this is not attractive as if the attribute is for a variable that
-        > happens to end with a non-singleton stack, it will not simply put a
-        > location description on the stack. Presumably the intent of using
-        > DW_OP_call* on a variable or formal parameter debugger information
-        > entry is to push just one location description on the stack. That
-        > location description may have more than one single location
-        > description.
-        >
-        > The previous rule for exprloc also has the same problem, as normally a
-        > variable or formal parameter location expression may leave multiple
-        > entries on the stack and only return the top entry.
-        >
-        > GDB implements DW_OP_call* by always executing E on the same stack. If
-        > the location list has multiple matching entries, it simply picks the
-        > first one and ignores the rest. This seems fundamentally at odds with
-        > the desire to support multiple places for variables.
-        >
-        > So, it feels like DW_OP_call* should both support pushing a location
-        > description on the stack for a variable or formal parameter, and also
-        > support being able to execute an operation expression on the same
-        > stack. Being able to specify a different operation expression for
-        > different program locations seems a desirable feature to retain.
-        >
-        > A solution to that is to have a distinct DW_AT_proc attribute for the
-        > DW_TAG_dwarf_procedure debugging information entry. Then the
-        > DW_AT_location attribute expression is always executed separately and
-        > pushes a location description (that may have multiple single location
-        > descriptions), and the DW_AT_proc attribute expression is always
-        > executed on the same stack and can leave anything on the stack.
-        >
-        > The DW_AT_proc attribute could have the new classes exprproc,
-        > loclistproc, and loclistsptrproc to indicate that the expression is
-        > executed on the same stack. exprproc is the same encoding as exprloc.
-        > loclistproc and loclistsptrproc are the same encoding as their
-        > non-proc counterparts, except the DWARF is ill-formed if the location
-        > list does not match exactly one location list entry and a default
-        > entry is required. These forms indicate explicitly that the matched
-        > single operation expression must be executed on the same stack. This
-        > is better than ad hoc special rules for loclistproc and
-        > loclistsptrproc which are currently clearly defined to always return a
-        > location description. The producer then explicitly indicates the
-        > intent through the attribute classes.
-        >
-        > Such a change would be a breaking change for how GDB implements
-        > DW_OP_call*. However, are the breaking cases actually occurring in
-        > practice? GDB could implement the current approach for DWARF Version
-        > 5, and the new semantics for DWARF Version 6 which has been done for
-        > some other features.
-        >
-        > Another option is to limit the execution to be on the same stack only
-        > to the evaluation of an expression E that is the value of a
-        > DW_AT_location attribute of a DW_TAG_dwarf_procedure debugging
-        > information entry. The DWARF would be ill-formed if E is a location
-        > list expression that does not match exactly one location list entry.
-        > In all other cases the evaluation of an expression E that is the value
-        > of a DW_AT_location attribute would evaluate E with the current
-        > context, except the result kind is a location description, the
-        > compilation unit is the one that contains D, and the initial stack is
-        > empty. The location description result is pushed on the stack.
-  
-      * If D has a DW_AT_const_value attribute with a value V, then it
-        is as if a DW_OP_implicit_value V operation was executed.
-
-        [non-normative] This allows a call operation to be used to
-        compute the location description for any variable or formal
-        parameter regardless of whether the producer has optimized it to
-        a constant. This is consistent with the DW_OP_implicit_pointer
-        operation.
-
-        > [For further discussion...]
-        > Alternatively, could deprecate using DW_AT_const_value for
-        > DW_TAG_variable and DW_TAG_formal_parameter debugger information
-        > entries that are constants and instead use DW_AT_location with an
-        > operation expression that results in a location description with one
-        > implicit location description. Then this rule would not be required.
-    --------------------------------------------------------------------
-
-In Section 2.6.1.1.2 Memory Location Descriptions (now 2.6.2), delete the first
-paragraph "A memory location description consists of a non-empty DWARF
-expression", and add the following paragraphs to the end of the section:
-
-    --------------------------------------------------------------------
-    If a stack entry is required to be a location description, but it is
-    a value V with the generic type, then it is implicitly converted to
-    a location description L with one memory location description SL. SL
-    specifies the memory location storage that corresponds to the target
-    architecture default address space with a bit offset equal to V
-    scaled by 8 (the byte size).
-
-    > [For further discussion...]
-    > If it is wanted to allow any integral type value to be implicitly
-    > converted to a memory location description in the target
-    > architecture default address space:
-    >
-    >   If a stack entry is required to be a location description, but
-    >   is a value V with an integral type, then it is implicitly
-    >   converted to a location description L with a one memory
-    >   location description SL. If the type size of V is less than
-    >   the generic type size, then the value V is zero extended to
-    >   the size of the generic type. The least significant generic
-    >   type size bits are treated as an unsigned value to be used as
-    >   an address A. SL specifies memory location storage
-    >   corresponding to the target architecture default address space
-    >   with a bit offset equal to A scaled by 8 (the byte size).
-    >
-    > The implicit conversion could also be defined as target
-    > architecture specific. For example, GDB checks if V is an integral
-    > type. If it is not it gives an error. Otherwise, GDB zero-extends
-    > V to 64 bits. If the GDB target defines a hook function, then it
-    > is called. The target specific hook function can modify the 64-bit
-    > value, possibly sign extending based on the original value type.
-    > Finally, GDB treats the 64-bit value V as a memory location
-    > address.
-
-    If a stack entry is required to be a location description, but it is
-    an implicit pointer value IPV with the target architecture default
-    address space, then it is implicitly converted to a location
-    description with one single location description specified by IPV.
-    See 2.5.4.4.5 Implicit Location Description Operations.
-
-    If a stack entry is required to be a value, but it is a location
-    description L with one memory location description SL in the target
-    architecture default address space with a bit offset B that is a
-    multiple of 8, then it is implicitly converted to a value equal to B
-    divided by 8 (the byte size) with the generic type.
-    --------------------------------------------------------------------
-
-In Section 2.6.1.1.3 (now 2.6.3) Register Location Descriptions, rename
-the section "Register Location Description Operations."
-
-Replace the first four paragraphs of the section with the following:
-
-    --------------------------------------------------------------------
-    There is a register location storage that corresponds to each of the
-    target architecture registers. The size of each register location
-    storage corresponds to the size of the corresponding target
-    architecture register.
-
-    A register location description specifies a register location
-    storage. The bit offset corresponds to a bit position within the
-    register. Bits accessed using a register location description access
-    the corresponding target architecture register starting at the
-    specified bit offset.
-    --------------------------------------------------------------------
-
-Replace the description of DW_OP_regx with the following:
-
-    --------------------------------------------------------------------
-    DW_OP_regx has a single unsigned LEB128 integer operand that
-    represents a target architecture register number R.
-
-    If the current call frame is the top call frame, it pushes a
-    location description L that specifies one register location
-    description SL on the stack. SL specifies the register location
-    storage that corresponds to R with a bit offset of 0 for the current
-    thread.
-
-    If the current call frame is not the top call frame, call frame
-    information (see 6.4 Call Frame Information) is used to determine
-    the location description that holds the register for the current
-    call frame and current program location of the current thread. The
-    resulting location description L is pushed.
-
-    [non-normative] Note that if call frame information is used, the
-    resulting location description may be register, memory, or
-    undefined.
-
-    [non-normative] An implementation may evaluate the call frame
-    information immediately, or may defer evaluation until L is accessed
-    by an operation. If evaluation is deferred, R and the current
-    context can be recorded in L. When accessed, the recorded context is
-    used to evaluate the call frame information, not the current context
-    of the access operation.
-    --------------------------------------------------------------------
-
-Replace the last paragraph with:
-
-    --------------------------------------------------------------------
-    [non-normative] These operations obtain a register location. To fetch the
-    contents of a register, it is necessary to use DW_OP_regval_type, use one of
-    the DW_OP_breg* register-based addressing operations, or use DW_OP_deref* on
-    a register location description.
-    --------------------------------------------------------------------
-
-In Section 2.6.1.1.4 (now 2.6.4) Implicit Location Descriptions, rename the
-section "Implicit Location Description Operations."
-
-Replace the first paragraph with:
-
-    --------------------------------------------------------------------
-    Implicit location storage represents a piece or all of an object which has
-    no actual location in the program but whose contents are nonetheless known,
-    either as a constant or can be computed from other locations and values in
-    the program.
-
-    An implicit location description specifies an implicit location
-    storage. The bit offset corresponds to a bit position within the
-    implicit location storage. Bits accessed using an implicit location
-    description, access the corresponding implicit storage value
-    starting at the bit offset.
-    --------------------------------------------------------------------
-
-Delete the following paragraph that begins with "The following DWARF operations
-may be used...".
-
-Replace the description of DW_OP_implicit_value with the following:
-
-    --------------------------------------------------------------------
-    DW_OP_implicit_value has two operands. The first is an unsigned
-    LEB128 integer that represents a byte size S. The second is a block
-    of bytes with a length equal to S treated as a literal value V.
-
-    An implicit location storage LS is created with the literal value V
-    and a size of S.
-
-    It pushes location description L with one implicit location
-    description SL on the stack. SL specifies LS with a bit offset of 0.
-    --------------------------------------------------------------------
-
-Replace the description of DW_OP_stack_value with the following:
-
-    --------------------------------------------------------------------
-    DW_OP_stack_value pops one stack entry that must be a value V.
-
-    An implicit location storage LS is created with the literal value V
-    using the size, encoding, and endianity specified by V’s base type.
-
-    It pushes a location description L with one implicit location
-    description SL on the stack. SL specifies LS with a bit offset of 0.
-
-    [non-normative] The DW_OP_stack_value operation specifies that the
-    object does not exist in memory, but its value is nonetheless known.
-    In this form, the location description specifies the actual value of
-    the object, rather than specifying the memory or register storage
-    that holds the value.
-
-    See DW_OP_implicit_pointer (following) for special rules concerning
-    implicit pointer values produced by dereferencing implicit location
-    descriptions created by the DW_OP_implicit_pointer operation.
-
-    Note: Since location descriptions are allowed on the stack, the
-    DW_OP_stack_value operation no longer terminates the DWARF operation
-    expression execution as in DWARF Version 5.
-    --------------------------------------------------------------------
-
-Replace the description of DW_OP_implicit_pointer with the following:
-
-    --------------------------------------------------------------------
-    [unchanged] [non-normative] An optimizing compiler may eliminate a
-    pointer, while still retaining the value that the pointer addressed.
-    DW_OP_implicit_pointer allows a producer to describe this value.
-
-    [non-normative] DW_OP_implicit_pointer specifies an object is a
-    pointer to the target architecture default address space that cannot
-    be represented as a real pointer, even though the value it would
-    point to can be described. In this form, the location description
-    specifies a debugging information entry that represents the actual
-    location description of the object to which the pointer would point.
-    Thus, a consumer of the debug information would be able to access
-    the dereferenced pointer, even when it cannot access the pointer
-    itself.
-
-    DW_OP_implicit_pointer has two operands. The first operand is a
-    4-byte unsigned value in the 32-bit DWARF format, or an 8-byte
-    unsigned value in the 64-bit DWARF format, that represents the byte
-    offset DR of a debugging information entry D relative to the
-    beginning of the .debug_info section that contains the current
-    compilation unit. The second operand is a signed LEB128 integer that
-    represents a byte displacement B.
-
-    [non-normative] Note that D might not be in the current compilation
-    unit.
-
-    [non-normative] The first operand interpretation is exactly like
-    that for DW_FORM_ref_addr.
-
-    The address space identifier AS is defined as the one corresponding
-    to the target architecture specific default address space.
-
-    The address size S is defined as the address bit size of the target
-    architecture specific address space corresponding to AS.
-
-    An implicit location storage LS is created with the debugging
-    information entry D, address space AS, and size of S.
-
-    It pushes a location description L that comprises one implicit
-    location description SL on the stack. SL specifies LS with a bit
-    offset of 0.
-
-    It is an evaluation error if a DW_OP_deref* operation pops a
-    location description L’, and retrieves S bits, such that any
-    retrieved bits come from an implicit location storage that is the
-    same as LS, unless both the following conditions are met:
-
-     1. All retrieved bits come from an implicit location description
-        that refers to an implicit location storage that is the same as
-        LS.
-
-        [non-normative] Note that all bits do not have to come from the
-        same implicit location description, as L’ may involve composite
-        location descriptions.
-
-     2. The bits come from consecutive ascending offsets within their
-        respective implicit location storage.
-
-    [non-normative] These rules are equivalent to retrieving the
-    complete contents of LS.
-
-    If both the above conditions are met, then the value V pushed by the
-    DW_OP_deref* operation is an implicit pointer value IPV with a
-    target architecture specific address space of AS, a debugging
-    information entry of D, and a base type of T. If AS is the target
-    architecture default address space, then T is the generic type.
-    Otherwise, T is a target architecture specific integral type with a
-    bit size equal to S.
-
-    If IPV is implicitly converted to a location description (only done if AS is
-    the target architecture default address space), then the resulting location
-    description RL is:
-
-      * If D has a DW_AT_location attribute, the DWARF expression E from
-        the DW_AT_location attribute is evaluated with the current
-        context, except that the result kind is a location description,
-        the compilation unit is the one that contains D, the object is
-        unspecified, and the initial stack is empty. RL is the
-        expression result.
-
-        [non-normative] Note that E is evaluated with the context of the
-        expression accessing IPV, and not the context of the expression
-        that contained the DW_OP_implicit_pointer operation that created
-        L.
-
-      * If D has a DW_AT_const_value attribute, then an implicit
-        location storage RLS is created from the DW_AT_const_value
-        attribute’s value with a size matching the size of the
-        DW_AT_const_value attribute’s value. RL comprises one implicit
-        location description SRL. SRL specifies RLS with a bit offset of
-        0.
-
-        > [For further discussion...]
-        > If using DW_AT_const_value for variables and formal parameters
-        > is deprecated and instead DW_AT_location is used with an
-        > implicit location description, then this rule would not be
-        > required.
-
-      * Otherwise, it is an evaluation error.
-
-    The location description RL is updated by bit offset B scaled by 8
-    (the byte size).
-
-    If a DW_OP_stack_value operation pops a value that is the same as
-    IPV, then it pushes a location description that is the same as L.
-
-    It is an evaluation error if LS or IPV is accessed in any other
-    manner.
-
-    [non-normative] The restrictions on how an implicit pointer location
-    description created by DW_OP_implicit_pointer can be used are to
-    simplify the DWARF consumer. Similarly, for an implicit pointer
-    value created by DW_OP_deref* and DW_OP_stack_value.
-    --------------------------------------------------------------------
-
-Add the following paragraphs after the description of DW_OP_implicit_pointer:
-
-    --------------------------------------------------------------------
-    [non-normative] Typically a DW_OP_implicit_pointer operation is used
-    in a DWARF expression E1 of a DW_TAG_variable or
-    DW_TAG_formal_parameter debugging information entry D1’s
-    DW_AT_location attribute. The debugging information entry referenced
-    by the DW_OP_implicit_pointer operation is typically itself a
-    DW_TAG_variable or DW_TAG_formal_parameter debugging information
-    entry D2 whose DW_AT_location attribute gives a second DWARF
-    expression E2.
-
-    [non-normative] D1 and E1 are describing the location of a pointer
-    type object. D2 and E2 are describing the location of the object
-    pointed to by that pointer object.
-
-    [non-normative] However, D2 may be any debugging information entry
-    that contains a DW_AT_location or DW_AT_const_value attribute (for
-    example, DW_TAG_dwarf_procedure). By using E2, a consumer can
-    reconstruct the value of the object when asked to dereference the
-    pointer described by E1 which contains the DW_OP_implicit_pointer
-    operation.
-    --------------------------------------------------------------------
-
-Delete the final paragraph:
-
-    --------------------------------------------------------------------
-    [non-normative] DWARF location descriptions are intended to yield the
-    location of a value rather than the value itself. An optimizing compiler may
-    perform a number of code transformations where it becomes impossible to give
-    a location for a value, but it remains possible to describe the value
-    itself. Section 2.6.1.1.3 on page 39 describes operators that can be used to
-    describe the location of a value when that value exists in a register but
-    not in memory. The operations in this section are used to describe values
-    that exist neither in memory nor in a single register.
-    --------------------------------------------------------------------
-
-In Section 2.6.1.2 (now 2.6.5) Composite Location Descriptions, rename
-the section and replace its contents with the following:
-
-    --------------------------------------------------------------------
-    2.6.5 Composite Location Description Operations
-
-    A composite location storage represents an object or value which may
-    be contained in part of another location storage or contained in
-    parts of more than one location storage.
-
-    Each part has a part location description L and a part bit size S. L
-    can have one or more single location descriptions SL. If there are
-    more than one SL then that indicates that part is located in more
-    than one place. The bits of each place of the part comprise S
-    contiguous bits from the location storage LS specified by SL
-    starting at the bit offset specified by SL. All the bits must be
-    within the size of LS or the DWARF expression is ill-formed.
-
-    A composite location storage can have zero or more parts. The parts
-    are contiguous such that the zero-based location storage bit index
-    will range over each part with no gaps between them. Therefore, the
-    size of a composite location storage is the sum of the size of its
-    parts. The DWARF expression is ill-formed if the size of the
-    contiguous location storage is larger than the size of the memory
-    location storage corresponding to the largest target architecture
-    specific address space.
-
-    A composite location description specifies a composite location
-    storage. The bit offset corresponds to a bit position within the
-    composite location storage.
-
-    There are operations that create a composite location storage.
-
-    There are other operations that allow a composite location storage
-    to be incrementally created. Each part is created by a separate
-    operation. There may be one or more operations to create the final
-    composite location storage. A series of such operations describes
-    the parts of the composite location storage that are in the order
-    that the associated part operations are executed.
-
-    To support incremental creation, a composite location storage can be
-    in an incomplete state. When an incremental operation operates on an
-    incomplete composite location storage, it adds a new part.
-
-    A composite location description that specifies a composite location
-    storage that is incomplete is termed an incomplete composite
-    location description. A composite location description that
-    specifies a composite location storage that is complete is termed a
-    complete composite location description.
-
-    If the top stack entry is a location description that has one
-    incomplete composite location description SL after the execution of
-    an operation expression has completed, SL is converted to a complete
-    composite location description.
-
-    [non-normative] Note that this conversion does not happen after the
-    completion of an operation expression that is evaluated on the same
-    stack by the DW_OP_call* operations. Such executions are not a
-    separate evaluation of an operation expression, but rather the
-    continued evaluation of the same operation expression that contains
-    the DW_OP_call* operation.
-
-    If a stack entry is required to be a location description L, but L
-    has an incomplete composite location description, then the DWARF
-    expression is ill-formed. The exception is for the operations
-    involved in incrementally creating a composite location description
-    as described below.
-
-    [non-normative] Note that a DWARF operation expression may
-    arbitrarily compose composite location descriptions from any other
-    location description, including those that have multiple single
-    location descriptions, and those that have composite location
-    descriptions.
-
-    [non-normative] The incremental composite location description
-    operations are defined to be compatible with the definitions in
-    DWARF Version 5.
-
-     1. DW_OP_piece
-
-        DW_OP_piece has a single unsigned LEB128 integer that represents
-        a byte size S.
-
-        The action is based on the context:
-
-          * If the stack is empty, then a location description L
-            comprised of one incomplete composite location description
-            SL is pushed on the stack.
-
-            An incomplete composite location storage LS is created with
-            a single part P. P specifies a location description PL and
-            has a bit size of S scaled by 8 (the byte size). PL is
-            comprised of one undefined location description PSL.
-
-            SL specifies LS with a bit offset of 0.
-
-          * Otherwise, if the top stack entry is a location description
-            L comprised of one incomplete composite location description
-            SL, then the incomplete composite location storage LS that
-            SL specifies is updated to append a new part P. P specifies
-            a location description PL and has a bit size of S scaled by
-            8 (the byte size). PL is comprised of one undefined location
-            description PSL. L is left on the stack.
-
-          * Otherwise, if the top stack entry is a location description
-            or can be converted to one, then it is popped and treated as
-            a part location description PL. Then:
-
-              * If the top stack entry (after popping PL) is a location
-                description L comprised of one incomplete composite
-                location description SL, then the incomplete composite
-                location storage LS that SL specifies is updated to
-                append a new part P. P specifies the location
-                description PL and has a bit size of S scaled by 8 (the
-                byte size). L is left on the stack.
-
-              * Otherwise, a location description L comprised of one
-                incomplete composite location description SL is pushed
-                on the stack.
-
-                An incomplete composite location storage LS is created
-                with a single part P. P specifies the location
-                description PL and has a bit size of S scaled by 8 (the
-                byte size).
-
-                SL specifies LS with a bit offset of 0.
-
-          * Otherwise, the DWARF expression is ill-formed
-
-        [non-normative] Many compilers store a single variable in sets
-        of registers or store a variable partially in memory and
-        partially in registers. DW_OP_piece provides a way of describing
-        where a part of a variable is located.
-
-        [non-normative] The evaluation rules for the DW_OP_piece
-        operation allow it to be compatible with the DWARF Version 5
-        definition.
-
-        > [For further discussion...]
-        > Since these extensions allow location descriptions to be
-        > entries on the stack, a simpler operation to create composite
-        > location descriptions could be defined. For example, just one
-        > operation that specifies how many parts, and pops pairs of
-        > stack entries for the part size and location description. Not
-        > only would this be a simpler operation and avoid the
-        > complexities of incomplete composite location descriptions,
-        > but it may also have a smaller encoding in practice. However,
-        > the desire for compatibility with DWARF Version 5 is likely a
-        > stronger consideration.
-
-     2. DW_OP_bit_piece
-
-        DW_OP_bit_piece has two operands. The first is an unsigned
-        LEB128 integer that represents the part bit size S. The second
-        is an unsigned LEB128 integer that represents a bit displacement
-        B.
-
-        The action is the same as for DW_OP_piece, except that any part
-        created has the bit size S, and the location description PL of
-        any created part is updated by a bit offset B.
-
-        [non-normative] DW_OP_bit_piece is used instead of DW_OP_piece
-        when the piece to be assembled is not byte-sized or is not at
-        the start of the part location description.
-    --------------------------------------------------------------------
-
-In Section 2.6.2 (now 2.6.6) Location Lists, rename the section "2.6.6
-Location List Expressions," and insert the following at the beginning of
-the section:
-
-    --------------------------------------------------------------------
-    [non-normative] To meet the needs of recent computer architectures
-    and optimization techniques, debugging information must be able to
-    describe the location of an object whose location changes over the
-    object’s lifetime, and may reside at multiple locations during parts
-    of an object’s lifetime. Location list expressions are used in place
-    of operation expressions whenever the object whose location is being
-    described has these requirements.
-    --------------------------------------------------------------------
-
-Remove the first three paragraphs ("Location lists are used in place
-of...," “A location list is indicated by...,” and “This location list
-representation, the loclist class, ...”).
-
-Change the beginning of the following paragraph from "A location list
-consists..." to "A location list expression consists...".
-
-Replace the text of Item 1, Bounded location description, with the
-following:
-
-    --------------------------------------------------------------------
-    This kind of location list entry provides an operation expression
-    that evaluates to the location description of an object that is
-    valid over a lifetime bounded by a starting and ending address. The
-    starting address is the lowest address of the address range over
-    which the location is valid. The ending address is the address of
-    the first location past the highest address of the address range.
-
-    The location list entry matches when the current program location is
-    within the given range.
-
-    There are several kinds of bounded location description entries
-    which differ in the way that they specify the starting and ending
-    addresses.
-    --------------------------------------------------------------------
-
-Replace the text of Item 2, Default location description, with the following:
-
-    --------------------------------------------------------------------
-    This kind of location list entry provides an operation expression that
-    evaluates to the location description of an object that is valid when no
-    bounded location description entry applies.
-
-    The location list entry matches when the current program location is not
-    within the range of any bounded location description entry.
-    --------------------------------------------------------------------
-
-Replace the text of Item 3, Base address, with the following:
-
-    --------------------------------------------------------------------
-    This kind of location list entry provides an address to be used as the base
-    address for beginning and ending address offsets given in certain kinds of
-    bounded location description entries. The applicable base address of a
-    bounded location description entry is the address specified by the closest
-    preceding base address entry in the same location list. If there is no
-    preceding base address entry, then the applicable base address defaults to
-    the base address of the compilation unit (see section 3.1.1).
-
-    In the case of a compilation unit where all of the machine code is contained
-    in a single contiguous section, no base address entry is needed.
-    --------------------------------------------------------------------
-
-Replace the text of Item 4, End-of-list, with the following:
-
-    --------------------------------------------------------------------
-    This kind of location list entry marks the end of the location list
-    expression.
-    --------------------------------------------------------------------
-
-Remove the paragraph beginning "A location list consists of a sequence
-of..."
-
-Insert the following in its place:
-
-    --------------------------------------------------------------------
-    The address ranges defined by the bounded location description
-    entries of a location list expression may overlap. When they do,
-    they describe a situation in which an object exists simultaneously
-    in more than one place.
-
-    If all of the address ranges in a given location list expression do
-    not collectively cover the entire range over which the object in
-    question is defined, and there is no following default location
-    description entry, it is assumed that the object is not available
-    for the portion of the range that is not covered.
-
-    The result of the evaluation of a DWARF location list expression is:
-
-      * If the current program location is not specified, then it is an
-        evaluation error.
-
-        > [For further discussion...]
-        > If the location list only has a single default entry, should
-        > that be considered a match if there is no program location? If
-        > there are non-default entries then it seems it has to be an
-        > evaluation error when there is no program location as that
-        > indicates the location depends on the program location which
-        > is not known.
-
-      * If there are no matching location list entries, then the result
-        is a location description that comprises one undefined location
-        description.
-
-      * Otherwise, the operation expression E of each matching location
-        list entry is evaluated with the current context, except that
-        the result kind is a location description, the object is
-        unspecified, and the initial stack is empty. The location list
-        entry result is the location description returned by the
-        evaluation of E.
-
-        The result is a location description that is comprised of the
-        union of the single location descriptions of the location
-        description result of each matching location list entry.
-
-    A location list expression can only be used as the value of a
-    debugger information entry attribute that is encoded using class
-    loclist or loclistsptr (see 7.5.5 Classes and Forms). The value of
-    the attribute provides an index into a separate object file section
-    called .debug_loclists or .debug_loclists.dwo (for split DWARF
-    object files) that contains the location list entries.
-
-    A DW_OP_call* and DW_OP_implicit_pointer operation can be used to
-    specify a debugger information entry attribute that has a location
-    list expression. Several debugger information entry attributes allow
-    DWARF expressions that are evaluated with an initial stack that
-    includes a location description that may originate from the
-    evaluation of a location list expression.
-
-    [non-normative] This location list representation, the loclist and
-    loclistsptr class, and the related DW_AT_loclists_base attribute are
-    new in DWARF Version 5. Together they eliminate most, or all of the
-    code object relocations previously needed for location list
-    expressions.
-    --------------------------------------------------------------------
-
-In Section 3.3.5 Low Level Information, replace the first paragraph
-(re. DW_AT_return_addr) with the following:
-
-    --------------------------------------------------------------------
-    A DW_TAG_subprogram, DW_TAG_inlined_subroutine, or
-    DW_TAG_entry_point debugger information entry may have a
-    DW_AT_return_addr attribute, whose value is a DWARF expression E.
-
-    The result of the attribute is obtained by evaluating E with a
-    context that has a result kind of a location description, an
-    unspecified object, the compilation unit that contains E, an empty
-    initial stack, and other context elements corresponding to the
-    source language thread of execution upon which the user is focused,
-    if any. The result of the evaluation is the location description L
-    of the place where the return address for the current call frame’s
-    subprogram or entry point is stored.
-
-    The DWARF is ill-formed if L is not comprised of one memory location
-    description for one of the target architecture specific address
-    spaces.
-    --------------------------------------------------------------------
-
-    > [For further discussion...]
-    > NOTE: It is unclear why DW_TAG_inlined_subroutine has a
-    > DW_AT_return_addr attribute but not a DW_AT_frame_base or
-    > DW_AT_static_link attribute. Seems it would either have all of
-    > them or none. Since inlined subprograms do not have a call frame
-    > it seems they would have none of these attributes.
-
-Replace the second and third paragraphs (re. DW_AT_frame_base) with the
-following:
-
-    --------------------------------------------------------------------
-    A DW_TAG_subprogram or DW_TAG_entry_point debugger information entry
-    may have a DW_AT_frame_base attribute, whose value is a DWARF
-    expression E.
-
-    The result of the attribute is obtained by evaluating E with a
-    context that has a result kind of a location description, an
-    unspecified object, the compilation unit that contains E, an empty
-    initial stack, and other context elements corresponding to the
-    source language thread of execution upon which the user is focused,
-    if any.
-
-    The DWARF is ill-formed if E contains a DW_OP_fbreg operation, or
-    the resulting location description L is not comprised of one single
-    location description SL.
-
-    If SL is a register location description for register R, then L is
-    replaced with the result of evaluating a DW_OP_bregx R, 0 operation.
-    This computes the frame base memory location description in the
-    target architecture default address space.
-
-    [non-normative] This allows the more compact DW_OP_reg* to be used instead
-    of DW_OP_breg* 0.
-
-    > [For further discussion...]
-    > This rule could be removed and require the producer to create the
-    > required location description directly using DW_OP_call_frame_cfa
-    > or DW_OP_breg*. This would also then allow a target to implement
-    > the call frames within a large register.
-
-    Otherwise, the DWARF is ill-formed if SL is not a memory location
-    description in any of the target architecture specific address
-    spaces.
-
-    The resulting L is the <i>frame base</i> for the subprogram or entry point.
-
-    [non-normative] Typically, E will use the DW_OP_call_frame_cfa operation or
-    be a stack pointer register plus or minus some offset.
-    --------------------------------------------------------------------
-
-Replace the paragraph beginning "If a subroutine or entry point is
-nested, ..." with the following:
-
-    --------------------------------------------------------------------
-    If a DW_TAG_subprogram or DW_TAG_entry_point debugger information
-    entry is lexically nested, it may have a DW_AT_static_link
-    attribute, whose value is a DWARF expression E.
-
-    The result of the attribute is obtained by evaluating E with a
-    context that has a result kind of a location description, an
-    unspecified object, the compilation unit that contains E, an empty
-    initial stack, and other context elements corresponding to the
-    source language thread of execution upon which the user is focused,
-    if any. The result of the evaluation is the location description L
-    of the <i>canonical frame address</i> (see 6.4 Call Frame Information) of
-    the relevant call frame of the subprogram instance that immediately
-    lexically encloses the current call frame’s subprogram or entry
-    point.
-
-    The DWARF is ill-formed if L is not comprised of one memory
-    location description for one of the target architecture specific
-    address spaces.
-    --------------------------------------------------------------------
-
-
-In Section 3.4.2 Call Site Parameters, replace the contents of the section
-starting from the second paragraph ("Each DW_TAG_call_site_parameter entry...")
-up to the forth paragraph ("For parameters passed by reference, ...") inclusive,
-with the following...
-
-    --------------------------------------------------------------------
-    A DW_TAG_call_site_parameter debugger information entry may have a
-    DW_AT_call_value attribute, whose value is a DWARF operation
-    expression E1.
-
-    The result of the DW_AT_call_value attribute is obtained by
-    evaluating E1 with a context that has a result kind of a value, an
-    unspecified object, the compilation unit that contains E, an empty
-    initial stack, and other context elements corresponding to the
-    source language thread of execution upon which the user is focused,
-    if any. The resulting value V1 is the value of the parameter at the
-    time of the call made by the call site.
-
-    For parameters passed by reference, where the code passes a pointer
-    to a location which contains the parameter, or for reference type
-    parameters, the DW_TAG_call_site_parameter debugger information
-    entry may also have a DW_AT_call_data_location attribute whose value
-    is a DWARF operation expression E2, and a DW_AT_call_data_value
-    attribute whose value is a DWARF operation expression E3.
-
-    The value of the DW_AT_call_data_location attribute is obtained by
-    evaluating E2 with a context that has a result kind of a location
-    description, an unspecified object, the compilation unit that
-    contains E, an empty initial stack, and other context elements
-    corresponding to the source language thread of execution upon which
-    the user is focused, if any. The resulting location description L2
-    is the location where the referenced parameter lives during the call
-    made by the call site. If E2 would just be a
-    DW_OP_push_object_address, then the DW_AT_call_data_location
-    attribute may be omitted.
-
-    > [For further discussion...]
-    > The DWARF Version 5 implies that DW_OP_push_object_address may be
-    > used but does not state what object must be specified in the
-    > context. Either DW_OP_push_object_address cannot be used, or the
-    > object to be passed in the context must be defined.
-
-    The value of the DW_AT_call_data_value attribute is obtained by
-    evaluating E3 with a context that has a result kind of a value, an
-    unspecified object, the compilation unit that contains E, an empty
-    initial stack, and other context elements corresponding to the
-    source language thread of execution upon which the user is focused,
-    if any. The resulting value V3 is the value in L2 at the time of the
-    call made by the call site.
-
-    The result of these attributes is undefined if the current call
-    frame is not for the subprogram containing the
-    DW_TAG_call_site_parameter debugger information entry or the current
-    program location is not for the call site containing the
-    DW_TAG_call_site_parameter debugger information entry in the current
-    call frame.
-
-    [non-normative] The consumer may have to virtually unwind to the
-    call site (see 6.4 Call Frame Information) in order to evaluate
-    these attributes. This will ensure the source language thread of
-    execution upon which the user is focused corresponds to the call
-    site needed to evaluate the expression.
-
-    If it is not possible to avoid the expressions of these attributes
-    from accessing registers or memory locations that might be clobbered
-    by the subprogram being called by the call site, then the associated
-    attribute should not be provided.
-
-    [non-normative] The reason for the restriction is that the parameter
-    may need to be accessed during the execution of the callee. The
-    consumer may virtually unwind from the called subprogram back to the
-    caller and then evaluate the attribute expressions. The call frame
-    information (see 6.4 Call Frame Information) will not be able to
-    restore registers that have been clobbered, and clobbered memory
-    will no longer have the value at the time of the call.
-    --------------------------------------------------------------------
-
-In Section 4.1 Data Object Entries, replace the first paragraph of item 4
-(DW_AT_location) with the following:
-
-    --------------------------------------------------------------------
-    A DW_AT_location attribute, whose value is a DWARF expression E that
-    describes the location of a variable or parameter at run-time.
-
-    The result of the attribute is obtained by evaluating E with a
-    context that has a result kind of a location description, an
-    unspecified object, the compilation unit that contains E, an empty
-    initial stack, and other context elements corresponding to the
-    source language thread of execution upon which the user is focused,
-    if any. The result of the evaluation is the location description of
-    the base of the data object.
-
-    See 2.5.4.2 Control Flow Operations for special evaluation rules
-    used by the DW_OP_call* operations.
-
-    > [For further discussion...]
-    > NOTE: Delete the description of how the DW_OP_call* operations
-    > evaluate a DW_AT_location attribute as that is now described in
-    > the operations.
-    >
-    > NOTE: See the discussion about the DW_AT_location attribute in the
-    > DW_OP_call* operation. Having each attribute only have a single
-    > purpose and single execution semantics seems desirable. It makes
-    > it easier for the consumer that no longer have to track the
-    > context. It makes it easier for the producer as it can rely on a
-    > single semantics for each attribute.
-    >
-    > For that reason, limiting the DW_AT_location attribute to only
-    > supporting evaluating the location description of an object, and
-    > using a different attribute and encoding class for the evaluation
-    > of DWARF expression procedures on the same operation expression
-    > stack seems desirable.
-    --------------------------------------------------------------------
-
-> [For further discussion]
-> With respect to item 10 (DW_AT_const_value): Could deprecate using the
-> DW_AT_const_value attribute for DW_TAG_variable or
-> DW_TAG_formal_parameter debugger information entries that have been
-> optimized to a constant. Instead, DW_AT_location could be used with a
-> DWARF expression that produces an implicit location description now
-> that any location description can be used within a DWARF expression.
-> This allows the DW_OP_call* operations to be used to push the location
-> description of any variable regardless of how it is optimized.
-
-In Section 4.2 Common Block Entries, replace the paragraph:
-
-    --------------------------------------------------------------------
-    A common block entry also has a DW_AT_location attribute whose value
-    describes the location of the beginning of the common block.
-    --------------------------------------------------------------------
-
-with:
-
-    --------------------------------------------------------------------
-    A common block entry also has a DW_AT_location attribute whose value is a
-    DWARF expression E that describes the location of the common block at
-    run-time. The result of the attribute is obtained by evaluating E with a
-    context that has a result kind of a location description, an unspecified
-    object, the compilation unit that contains E, an empty initial stack, and
-    other context elements corresponding to the source language thread of
-    execution upon which the user is focused, if any. The result of the
-    evaluation is the location description of the base of the common block. See
-    2.5.4.2 Control Flow Operations for special evaluation rules used by the
-    DW_OP_call* operations.
-    --------------------------------------------------------------------
-
-In Section 5.7.3 Derived or Extended Structures, Classes and Interfaces,
-in the paragraph about DW_AT_data_member_location, replace the second
-sentence through the end of the paragraph with the following:
-
-    --------------------------------------------------------------------
-    There are two cases:
-
-     1. If the attribute is an integer constant B, it provides the
-        offset in bytes from the beginning of the containing entity.
-
-        The result of the attribute is obtained by updating the bit
-        offset of the location description of the beginning of the
-        containing entity by B scaled by 8 (the byte size). The result
-        is the location description of the base of the member entry.
-
-        [non-normative] If the beginning of the containing entity is not
-        byte aligned, then the beginning of the member entry has the
-        same bit displacement within a byte.
-
-     2. Otherwise, the attribute must be a DWARF expression E which is
-        evaluated with a context that has a result kind of a location
-        description, an unspecified object, the compilation unit that
-        contains E, an initial stack comprising the location description
-        of the beginning of the containing entity, and other context
-        elements corresponding to the source language thread of
-        execution upon which the user is focused, if any. The result of
-        the evaluation is the location description of the base of the
-        member entry.
-
-        > [For further discussion...]
-        > The beginning of the containing entity can now be any location
-        > description, including those with more than one single
-        > location description, and those with single location
-        > descriptions that are of any kind and have any bit offset.
-    --------------------------------------------------------------------
-
-In Section 5.7.8 Member Function Entries, replace the sixth paragraph,
-about DW_AT_vtable_elem_location, with the following:
-
-    --------------------------------------------------------------------
-    An entry for a virtual function also has a
-    DW_AT_vtable_elem_location attribute whose value is a DWARF
-    expression E. The result of the attribute is obtained by evaluating
-    E with a context that has a result kind of a location description, an
-    unspecified object, the compilation unit that contains E, an initial
-    stack comprising the location description of the object of the
-    enclosing type, and other context elements corresponding to the
-    source language thread of execution upon which the user is focused,
-    if any. The result of the evaluation is the location description of
-    the slot for the function within the virtual function table for the
-    enclosing class.
-    --------------------------------------------------------------------
-
-In Section 5.14 Pointer to Member Type Entries, replace the sixth
-through eighth paragraphs, about DW_AT_use_location, with the following:
-
-    --------------------------------------------------------------------
-    The DW_TAG_ptr_to_member_type debugging information entry has a
-    DW_AT_use_location attribute whose value is a DWARF expression E. It
-    is used to compute the location description of the member of the
-    class to which the pointer to member entry points.
-
-    [non-normative] The method used to find the location description of
-    a given member of a class, structure, or union is common to any
-    instance of that class, structure, or union and to any instance of
-    the pointer to member type. The method is thus associated with the
-    pointer to member type, rather than with each object that has a
-    pointer to member type.
-
-    The DW_AT_use_location DWARF expression is used in conjunction with
-    the location description for a particular object of the given
-    pointer to member type and for a particular structure or class
-    instance.
-
-    The result of the attribute is obtained by evaluating E with a
-    context that has a result kind of a location description, an
-    unspecified object, the compilation unit that contains E, an initial
-    stack comprising two entries, and other context elements
-    corresponding to the source language thread of execution upon which
-    the user is focused, if any. The first stack entry is the value of
-    the pointer to member object itself. The second stack entry is the
-    location description of the base of the entire class, structure, or
-    union instance containing the member whose location is being
-    calculated. The result of the evaluation is the location description
-    of the member of the class to which the pointer to member entry points.
-    --------------------------------------------------------------------
-
-In Section 5.18.1 Data Location, replace the second and third paragraphs with:
-
-    --------------------------------------------------------------------
-    The DW_AT_data_location attribute may be used with any type that
-    provides one or more levels of hidden indirection and/or run-time
-    parameters in its representation. Its value is a DWARF operation
-    expression E which computes the location description of the data for
-    an object. When this attribute is omitted, the location description
-    of the data is the same as the location description of the object.
-
-    The result of the attribute is obtained by evaluating E with a
-    context that has a result kind of a location description, an object
-    that is the location description of the data descriptor, the
-    compilation unit that contains E, an empty initial stack, and other
-    context elements corresponding to the source language thread of
-    execution upon which the user is focused, if any. The result of the
-    evaluation is the location description of the base of the member
-    entry.
-
-    [non-normative] E will typically involve an operation expression
-    that begins with a DW_OP_push_object_address operation which loads
-    the location description of the object which can then serve as a
-    descriptor in subsequent calculation.
-
-    > [For further discussion...]
-    > NOTE: Since DW_AT_data_member_location, DW_AT_use_location, and
-    > DW_AT_vtable_elem_location allow both operation expressions and
-    > location list expressions, why does DW_AT_data_location not allow
-    > both? In all cases they apply to data objects so less likely that
-    > optimization would cause different operation expressions for
-    > different program location ranges. But if supporting for some then
-    > should be for all.
-    >
-    > It seems odd this attribute is not the same as
-    > DW_AT_data_member_location in having an initial stack with the
-    > location description of the object since the expression has to
-    > need it.
-    --------------------------------------------------------------------
-
-In Section 7.7.1 "DWARF Expressions", change the first paragraph from:
-
-    --------------------------------------------------------------------
-    A DWARF expression is stored...
-    --------------------------------------------------------------------
+### Section 2.2 Attribute Types
+
+[Page 24]
+In Table 2.3, Classes of attribute value, in the row for "locdesc,"
+replace the reference to Section 2.6 with a reference to Section 2.5.
+
+
+### Section 2.5 DWARF Expressions
+
+[Page 26]
+Replace the contents of the preamble to this section with:
+
+> DWARF expressions describe how to compute a value or specify a
+> location. They are expressed in terms of DWARF operations that
+> operate on a stack. Each element on the stack may be
+> either a value or a location.
+
+> Values on the stack are typed, and can represent a value of any
+> supported base type of the target machine, or of the generic type,
+> which is an integral type that has the size of an address on the
+> target machine and unspecified signedness.
+
+> _The generic type is the same as the unspecified type used for stack
+> operations defined in DWARF Version 4 and before._
+
+> Locations represent a place where a value is stored, which may
+> be any of the following:
+
+> - Memory locations, for values that are stored in memory, starting
+>   at a given address within a given address space.
+> 
+> - Register locations, for values that are stored in registers.
+> 
+> - Undefined locations, for values that are unavailable
+>   (perhaps due to optimization).
+> 
+> - Implicit locations, for values that are not stored anywhere (like
+>   undefined locations), but whose values can be reconstructed.
+> 
+> - Composite locations, for values that are stored in a combination
+>   of storage (e.g., aggregate values where certain components have
+>   been promoted to registers).
+
+> A DWARF expression is encoded as a stream of operations, each consisting of an
+> opcode followed by zero or more literal operands. The number of operands is
+> implied by the opcode.
+
+> The result of a DWARF expression is the value or location on the top
+> of the stack after evaluating the operations.
+
+> A DWARF expression is evaluated in a context that determines whether
+> its result is expected to be a value or a location. Expressions that are
+> expected to produce a location are called "location descriptions."
+
+> Implicit conversions between memory addresses and values may happen
+> during the execution of any operation or when evaluation of the
+> expression is completed. If a location is expected, but the result is
+> a value, the value is implicitly treated as a memory address in the
+> default address space, and converted to a memory location. If a value
+> is expected, but the result is a memory location in the default
+> address space, the address is implicitly converted to a value.
+
+
+### Section 2.5.1 General Operations
+
+[Page 26]
+In the first paragraph, delete all but the first sentence of the first
+two paragraphs, leaving only this:
+
+> Each general operation represents a postfix operation on a simple
+> stack machine.
+
+(These deleted sentences have been moved up to Section 2.5.)
+
+
+### Section 2.5.1.1 Literal Encodings
+
+Move `DW_OP_addr` and `DW_OP_addrx` to Section 2.5.2.2.
+
+
+### Section 2.5.1.3 Stack Operations
+
+[Pages 30-31]
+Under `DW_OP_deref`, `DW_OP_deref_size`, and `DW_OP_deref_type`,
+replace the descriptions with:
+
+> 7\. `DW_OP_deref`  
+> The `DW_OP_deref` operation pops the top stack entry and treats it as
+> a location. The first `S` bytes, where `S` is the size of an address on
+> the target machine, are retrieved from the location and pushed onto
+> the stack as a value of the generic type.
+
+> 8\. `DW_OP_deref_size`  
+> The `DW_OP_deref_size` takes a single 1-byte unsigned integral operand
+> that specifies the size `S`, in bytes, of the value to be retrieved. The
+> operation behaves like the `DW_OP_deref` operation: it
+> pops the top stack entry and treats it as a location. The first `S` bytes
+> are retrieved from the location, zero extended to the size of an
+> address on the target machine, and pushed onto the stack as a value of
+> the generic type.
+
+> 9\. `DW_OP_deref_type`  
+> The `DW_OP_deref_type` operation takes two operands. The first operand
+> is a 1-byte unsigned integer that specifies the size `S` of the type
+> given by the second operand. The second operand is an unsigned LEB128
+> integer that represents the offset of a debugging information entry in
+> the current compilation unit, which must be a `DW_TAG_base_type` entry
+> that provides the type `T` of the value to be retrieved. This operation
+> pops the top stack entry and treats it as a location. The first `S`
+> bytes are retrieved from the location and pushed onto the stack as a
+> value of type `T`.
+> 
+> _While the size of the pushed value could be inferred from the base type
+> definition, it is encoded explicitly into the operation so that the
+> operation can be parsed easily without reference to the `.debug\_info`
+> section._
+
+Move items 13 (`DW_OP_push_object_address`), 14 (`DW_OP_form_tls_address`),
+and 15 (`DW_OP_call_frame_cfa`) to (new) Section 2.5.2 Location Operations.
+
+
+### Section 2.5.2 Location Operations [NEW]
+
+Insert the following (adapted from parts of Section 2.6) into this new section:
+
+> Information about the location of program objects is provided by
+> location descriptions. Location descriptions can be either of two forms:
+> 
+> 1. Single location descriptions, which are a language-independent
+> representation of addressing rules of arbitrary complexity built from
+> DWARF expressions. They are sufficient for describing the location of
+> any object as long as its lifetime is either static or the same as the
+> lexical block that owns it, and it does not move during its lifetime.
+> 
+> 2. Location lists, which are used to describe objects that have a
+> limited lifetime or change their location during their lifetime.
+> Location lists are described in Section 2.6.
+> 
+> Location descriptions are distinguished in a context-sensitive manner.
+> As the value of an attribute, a single location description is encoded
+> using class `locdesc`, and a location list is encoded using class `loclist`
+> (which serves as an index into a separate section containing location
+> lists).
+
+The following operation can be used to push a location onto the stack:
+
+> 1. `DW_OP_push_object_address` [moved from Section 2.5.1.3]  
+> The DW_OP_push_object_address operation pushes the location of the
+> object currently being evaluated as part of evaluation of a user
+> presented expression. This object may correspond to an independent
+> variable described by its own debugging information entry or it may be a
+> component of an array, structure, or class whose address has been
+> dynamically determined by an earlier step during user expression
+> evaluation. This operator provides explicit functionality (especially
+> for arrays involving descriptors) that is analogous to the implicit push
+> of the base address of a structure prior to evaluation of a
+> DW_AT_data_member_location to access a data member of a structure. For
+> an example, see Appendix D.2 on page 304.
+
+
+### Section 2.5.2.1 Memory Locations
+
+Insert the following (adapted from Section 2.6.1.1.2):
+
+> A memory location represents the location of a piece or all of an
+> object or other entity in memory. On architectures that support
+> multiple address spaces, a memory location contains a component
+> that identifies the address space (which may be provided by the `DW_OP_xderef` operation). A memory location is considered _unbounded_, as the
+> size of the location storage is only implied by the type of object
+> stored at that location.
+> 
+> In contexts that expect a location, a value of the generic type
+> may be implicitly converted to a memory location in the default
+> address space.
+> 
+> The following operations push memory locations onto the DWARF stack:
+> 
+> 1. `DW_OP_addr` [moved from Section 2.5.1.1]  
+> The `DW_OP_addr` operation has a single operand that encodes a
+> machine address and whose size is the size of an address on the
+> target machine. The value of this operand is treated as an address
+> in the default address space and pushed onto the stack.
+> 
+> 2. `DW_OP_addrx` [moved from Section 2.5.1.1]  
+> The `DW_OP_addrx` operation has a single operand that encodes an
+> unsigned LEB128 value, which is a zero-based index into the `.debug\_addr`
+> section, where a machine address is stored. This index is relative to the
+> value of the `DW_AT_addr_base` attribute of the associated compilation
+> unit. The address obtained is treated as an address in the default address
+> space and pushed onto the stack.
+>
+> 3. `DW_OP_form_tls_address`... [moved from Section 2.5.1.3]
+> 
+> 4. `DW_OP_call_frame_cfa`... [moved from Section 2.5.1.3]
+
+
+### Section 2.5.2.2 Register Locations
+
+Move the contents of Section 2.6.1.1.3 here, replacing the term
+"location description" with "location" throughout.
+
+[page 39] Remove the non-normative text:
+
+> A register location description must stand alone as the entire
+> description of an object or a piece of an object.
+
+
+### Section 2.5.2.3 Implicit Locations
+
+Move the contents of Section 2.6.1.1.4 here, replacing the term
+"location description" with "location" throughout.
+
+
+### Section 2.5.2.4 Undefined Locations
+
+Insert the following (adapted from Section 2.6.1.1.1):
+
+> An undefined location represents a piece or all of an object that is
+> present in the source but not in the object code (perhaps due to
+> optimization). The `DW_OP_undefined` operation pushes an undefined
+> location onto the stack. A DWARF expression containing no operations or
+> that leaves no elements on the stack also produces an undefined
+> location.
+
+
+### Section 2.5.2.5 Composite Locations
+
+Insert the following (adapted from Section 2.6.1.2):
+
+> The above kinds of locations are considered "simple" locations.
+
+> A composite location describes an object or value which
+> may be contained in part of a register or stored in more than one
+> location. Each piece is described by a composition operation. There
+> may be one or more composition operations in a single composite
+> location description. A series of such operations describes the parts
+> of a value in memory address order. Each composition operation pops a
+> location description from the stack and replaces it with a new
+> composite location description on the DWARF stack. If the immediately
+> preceding element on the stack is also a composite location
+> description (i.e., it is not the first piece in the series), the two
+> composite location descriptions are combined into a single composite
+> location description.
+
+> A composite location may be formed from several simple locations by
+> the composition operations described in this section. Each simple
+> location description describes the location of one piece of the
+> object; each composition operation describes which part of the object
+> is located there.
+
+1. `DW_OP_piece`
+
+    The `DW_OP_piece` operation takes a single operand, which is an unsigned
+    LEB128 number. The number describes the size `S`, in bytes, of the piece
+    of the object referenced by the location `A` on the top of the stack. If
+    the piece is located in a register, but does not occupy the entire
+    register, the placement of the piece within that register is defined by
+    the ABI. Many compilers store a single variable in sets of registers, or
+    store a variable partially in memory and partially in registers.
+    `DW_OP_piece` provides a way of describing how large a part of a
+    variable a particular DWARF location description refers to.
+
+2. `DW_OP_bit_piece`
+
+    The DW_OP_bit_piece operation takes two operands. The first is an
+    unsigned LEB128 number that gives the size `S`, in bits, of the piece.
+    The second is an unsigned LEB128 number that gives the offset in bits
+    from the location defined by the location `A` on the top of the stack.
+
+    Interpretation of the offset depends on the location description. If the
+    location is an undefined location (see Section 2.5.2.4), the
+    `DW_OP_bit_piece` operation describes a piece consisting of the given
+    number of bits whose values are undefined, and the offset is ignored. If
+    the location is a memory address (see Section 2.5.2.1), the
+    DW_OP_bit_piece operation describes a sequence of bits relative to the
+    location whose address is on the top of the DWARF stack using the bit
+    numbering and direction conventions that are appropriate to the current
+    language on the target system. In all other cases, the source of the
+    piece is given by either a register location (see Section 2.5.2.2) or an
+    implicit value description (see Section 2.5.2.3); the offset is from the
+    least significant bit of the source value.
+
+For both of the above operations, when the second stack entry `B` is a
+composite location, the operation forms a new composite location by
+concatenating the two locations, appending the `S` bytes (or bits)
+described by `A` to the composite location `B`, and replacing the top
+two stack entries with the new composite location.
+
+When there is only one element on the stack, or the second entry is not
+a composite location, the operation converts the location on the top of
+the stack to a composite covering the `S` bytes (or bits).
+
+_`DW_OP_bit_piece` is used instead of `DW_OP_piece` when the piece to be
+assembled into a value or assigned to is not byte-sized or is not at the
+start of a register or addressable unit of memory._
+
+_Whether or not a `DW_OP_piece` operation is equivalent to any
+`DW_OP_bit_piece` operation with an offset of 0 is ABI dependent._
+
+
+### Section 2.5.2.6 Offset Operations
+
+Add:
+
+> In addition to the composite operations, location
+> descriptions may be modified by the following operations:
+> 
+> 1\. `DW_OP_offset`
+> 
+>     `DW_OP_offset` pops two stack entries. The first (top of stack) must
+>     be an integral type value, which represents a byte displacement. The
+>     second must be a location description. It forms a new location
+>     description that describes a location at the given byte displacement
+>     from the original location.
+> 
+> 2\. `DW_OP_bit_offset`
+> 
+>     `DW_OP_bit_offset` pops two stack entries. The first
+>     (top of stack) must be an integral type value, which represents a bit
+>     displacement. The second must be a location description. It forms a new
+>     location description that describes a location at the given bit
+>     displacement from the original location.
+> 
+>     _A bit offset of `n*8` is equivalent to a byte offset of `n`._
+
+
+### Section 2.5.3  Control Flow Operations
+
+Move and renumber Section 2.5.1.5 to here.
+
+Under `DW_OP_call2`, etc., change:
+
+> Execution of the DWARF expression of a `DW_AT_location` attribute may
+> add to and/or remove from values on the stack. Execution returns to
+> the point following the call when the end of the attribute is reached.
+> Values on the stack at the time of the call may be used as parameters
+> by the called expression and values left on the stack by the called
+> expression may be used as return values by prior agreement between the
+> calling and called expressions.
 
 to:
 
-    --------------------------------------------------------------------
-    A DWARF operation expression is stored...
-    --------------------------------------------------------------------
+> Execution of the DWARF expression of a `DW_AT_location` attribute may
+> pop elements from the stack and/or push values or locations onto the
+> stack. Execution returns to the point following the call when the end
+> of the attribute is reached. Values and location descriptions on the
+> stack at the time of the call may be used as parameters by the called
+> expression, and elements (values or locations) left on the stack by
+> the called expression may be used as return values by prior agreement
+> between the calling and called expressions.
+
+### Section 2.5.4 Type Conversions
+
+Move and renumber Section 2.5.1.6 to here.
+
+
+### Section 2.5.5 Special Operations
+
+Move and renumber Section 2.5.1.7 to here.
+
+
+### Section 2.6 Location Descriptions
+
+The parts of this section dealing with single location descriptions
+is moved to Section 2.5.2 Location Operations.
+
+The remainder of this section deals with location lists.
+Rename the section to "Location Lists".
+
+
+### Section 5.7.6 Data Member Entries
+
+[Page 118] In the description for `DW_AT_data_member_location`, change
+the second bullet to:
+
+> 2\. Otherwise, the value must be a location description. In this case,
+> the beginning of the containing entity must be byte aligned. The
+> location of the containing entity is pushed on the DWARF stack before
+> the location description is evaluated; the result of the evaluation is
+> the location of the member entry.
+
+
+### Section 5.14 Pointer to Member Type Entries
+
+[Page 131] Replace the paragraph beginning "The `DW_AT_use_location` description..." with:
+
+> The `DW_AT_use_location` description is used in conjunction with the
+> location descriptions for a particular object of the given pointer to
+> member type and for a particular structure or class instance. The
+> `DW_AT_use_location` attribute expects two values to be pushed onto the
+> DWARF expression stack before the `DW_AT_use_location` description is
+> evaluated. The first value pushed is the value of the pointer to member
+> object itself. The second value pushed is the location of the
+> entire structure or union instance containing the member whose address
+> is being calculated.
+
+
+### Section 6.4 Call Frame Information
+
+[Page 181]
+For the "expression(E)" register rule, change the description to:
+
+> The previous value of this register is located at the location produced
+> by executing the location description E (see Section 2.5).
+
+
+### Section 7.7.1 DWARF Expressions
+
+[Page 226]
+Add to Table 7.9:
+
+>                                 No. of
+>     Operation             Code  Operands  Notes
+>     --------------------  ----  --------  -----
+>     DW_OP_offset          TBA      0
+>     DW_OP_bit_offset      TBA      0
+
+### Section D.2.1 Fortran Simple Array Example
+
+[Page 296]
+In Figure D.4, change `DW_OP_plus` to `DW_OP_offset` in the following
+places:
+
+* In the `DW_AT_associated` attribute at `1$`.
+
+* In the `DW_AT_lower_bound` and `DW_AT_upper_bound` attributes at `2$`.
+
+* In the `DW_AT_allocated` and `DW_AT_data_location` attributes at `6$`.
+
+* In the `DW_AT_lower_bound` and `DW_AT_upper_bound` attributes at `7$`.
+
+### Section D.2.3 Fortran 2008 Assumed-rank Array Example
+
+[Page 302]
+In Figure D.13, change `DW_OP_plus` to `DW_OP_offset` in the following
+places:
+
+* In the `DW_AT_rank` and `DW_AT_data_location` attributes at `10$`.
+
+* In the `DW_AT_lower_bound` and `DW_AT_upper_bound` attributes at `11$`
+(immediately following `DW_OP_push_object_address`).
