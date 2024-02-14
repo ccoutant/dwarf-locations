@@ -60,7 +60,9 @@ part of a DWARF expression, and are no longer "terminal" in the sense
 that they cannot be part of a larger expression.
 
 The literal encoding operations, defined in Section 2.5.1.1, push values
-onto the stack, except for `DW_OP_addr` and `DW_OP_addrx`, which push memory locations. These latter two operations are moved to a new section.
+onto the stack, except for `DW_OP_addr` and `DW_OP_addrx`, which push
+memory locations. These latter two operations are moved to a new
+section.
 
 Stack operations, defined in Section 2.5.1.3, can operate on values or
 locations, or any combination of the two.
@@ -430,7 +432,7 @@ Add:
 > In addition to the composite operations, location
 > descriptions may be modified by the following operations:
 > 
-> 1\. `DW_OP_offset`
+> 1. `DW_OP_offset`
 > 
 >     `DW_OP_offset` pops two stack entries. The first (top of stack) must
 >     be an integral type value, which represents a byte displacement. The
@@ -438,7 +440,7 @@ Add:
 >     description that describes a location at the given byte displacement
 >     from the original location.
 > 
-> 2\. `DW_OP_bit_offset`
+> 2. `DW_OP_bit_offset`
 > 
 >     `DW_OP_bit_offset` pops two stack entries. The first
 >     (top of stack) must be an integral type value, which represents a bit
