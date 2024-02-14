@@ -1,5 +1,3 @@
-DWARF Proposal
-
 Location Descriptions on the DWARF Stack
 ========================================
 
@@ -17,22 +15,32 @@ composition operator.
 
 Where do these limitations matter?
 
-Consider the case of a pointer-to-member type in C++, where the object
-(or part of the object) has been promoted to a register. In this case,
-`DW_AT_use_location` is not able to provide the address of the object, as
-it can only push a memory address. In optimized code, it sometimes would
-need to provide a register location description or a composite location
-description, but these cannot be pushed onto the DWARF stack. If
-`DW_AT_use_location` were allowed to push a composite location description
-on the stack, we could apply further operations to determine the
-register location of the member being referenced.
+Consider the case of a FORTRAN array (as shown in Appendix D in D.2.1)
+that has been partially promoted to a register or registers. The
+evaluation of its lower and upper bounds depends on the location of the
+array as provided by `DW_OP_push_object_address`. If the array is not
+entirely in memory, this operation is not able to provide the address of
+the object, as it can only provide a memory address. If
+`DW_OP_push_object_address` were allowed to push a composite location
+description on the stack, we could apply further operations to locate
+the bounds of the array.
 
-Consider the case where a `DW_OP_call*` operator is used to get the
+Similarly, consider the case of a pointer-to-member type in C++, where
+the object (or part of the object) has been promoted to a register. In
+this case, `DW_AT_use_location` is not able to provide the address of
+the object. In optimized code, it sometimes would need to provide a
+register location description or a composite location description, but
+these cannot be pushed onto the DWARF stack. If `DW_AT_use_location`
+were allowed to push a composite location description on the stack, we
+could apply further operations to determine the register location of the
+member being referenced.
+
+Also consider the case where a `DW_OP_call*` operator is used to get the
 location of a variable. If the variable happens to be in a register at
 the current PC, the call operator cannot succeed, as it cannot push
 anything but a memory location on the stack.
 
-Both of these cases have a common limiting factor: that location
+All of these cases have a common limiting factor: that location
 descriptions cannot be pushed onto the stack, and subsequently operated
 on to produce derived location descriptions.
 
@@ -86,157 +94,228 @@ description on the stack.
 Proposed Changes
 ----------------
 
-(page 26, Section 2.5 DWARF Expressions, first paragraph)
+### Section 2.5 DWARF Expressions
 
-Change:
+[Page 26]
+Change the first paragraph as follows:
 
-> "[They are expressed in terms of DWARF operations] that operate on a
-> stack of values"
+> They are expressed in terms of DWARF operations] that operate on a stack
+> of <span class="del">values</span> <span class="add">elements. Each
+> element in the stack may be either a value or a location description.
+> Values on the stack are typed, and can represent a
+> value of any supported base type of the target machine. Location
+> descriptions on the stack can represent any of the single location
+> descriptions described in Section 2.6.1.</span>
 
-to:
+After the second paragraph, add:
 
-> "... that operate on a stack. Each element in the stack may
-> be either a value or a location description (see Section 2.6)."
+> <span class="add">The result of a DWARF expression is the value or
+> location description on the top of the stack after evaluating the
+> operations.</span>
 
-(page 26, Section 2.5.1 General Operations, first paragraph)
+### Section 2.5.1 General Operations
 
-Change:
+[Page 26]
+Change the first paragraph as follows:
 
-> "Each element of the stack has a type and a value, and can represent [a
-> value of any supported base type of the target machine]"
+> Each general operation represents a postfix operation on a simple stack
+> machine. <span class="del">Each element of the stack has a type and a
+> value, and can represent a value of any supported base type of the target
+> machine.</span>
 
-to:
+### Section 2.5.1.3 Stack Operations
 
-> "Most operations operate on values on the stack, which are typed, and
-> can represent ...."
-
-(page 30, Section 2.5.1.3 Stack Operations)
-
+[Page 30]
 Under `DW_OP_deref`, change:
 
-> "...and treats it as an address..."
-
-to:
-
-> "...and treats it as a location description...". Delete "The popped
-> value must have an integral type."
+> The `DW_OP_deref` operation pops the top stack entry and treats it as
+> <span class="del">an address</span> <span class="add">a location
+> description</span>. <span class="del">The popped value must have an
+> integral type.</span>
 
 Under `DW_OP_deref_size` and `DW_OP_deref_type`, make the same changes.
 
-(page 32, same section)
-
+[Page 32]
 Under `DW_OP_push_object_address`, change:
 
-> "...pushes the address of the object..."
+> The `DW_OP_push_object_address` operation pushes the <span
+> class="del">address</span> <span class="add">location description</span>
+> of the object currently being evaluated...
 
-to:
+### Section 2.5.1.5 Control Flow Operations
 
-> "...pushes the location description of the object...".
-
-(page 36, Section 2.5.1.5 Control Flow Operations)
-
+[Page 36]
 Under `DW_OP_call2`, etc., change:
 
-> "...may add to and/or remove from values on the stack"
+> Execution of the DWARF expression of a `DW_AT_location` attribute may
+> <span class="del">add to and/or remove</span> <span class="add">pop
+> elements from the stack and/or push values or location descriptions onto
+> the stack</span>.
+> Execution returns to the point following the call when the end of the
+> attribute is reached. Values <span class="add">and location
+> descriptions</span> on the stack at the time of the call may be used as
+> parameters by the called expression<span class="add">,</span> and values
+> <span class="add">and location descriptions</span> left on the stack by
+> the called expression may be used as return values by prior agreement
+> between the calling and called expressions.
 
-to:
+### Section 2.6.1 Single Location Descriptions
 
-> "...may add or remove values of location descriptions on the stack."
-
-Change:
-
-> "Values on the stack [at the time of the call]"
-
-to:
-
-> "Values and/or location descriptions on the stack..."
-
-Change:
-
-> "...values left on the stack by the called expression may be used as
-> return values..."
-
-to:
-
-> "...values and location descriptions left on the stack by the called
-> expression may be used as return values and location descriptions..."
-
-(page 39, Section 2.6.1.1.3 Register Location Descriptions)
-
-Remove the non-normative text "A register location description must
-stand alone as the entire description of an object or a piece of an
-object."
-
-(page 42, Section 2.6.1.2 Composite Location Descriptions)
-
+[Page 39]
 Replace:
 
-> Each piece is described by a composition operation, which does not
-> compute a value nor store any result on the DWARF stack. There may
-> be one or more composition operations in a single composite location
-> description. A series of such operations describes the parts of a
-> value in memory address order.
+> 2\. A composite location description<span class="add">,</span> <span
+> class="del">consisting of one or more simple location descriptions, each
+> of which is followed by one composition operation.</span> <span
+> class="add">formed from simple location descriptions by the composition
+> operations described in Section 2.6.1.2.</span> Each simple location
+> description describes the location of one piece of the object; each
+> composition operation describes which part of the object is located
+> there. <span class="del">Each simple location description that is a
+> DWARF expression is evaluated independently of any others.</span>
 
-with:
+### Section 2.6.1.1.2 Memory Location Descriptions
 
-> Each piece is described by a composition operation. There may be one or
-> more composition operations in a single composite location description.
-> A series of such operations describes the parts of a value in memory
-> address order. Each composition operation pops a location description
-> from the stack and replaces it with a new partial composite location
+[Page 39]
+Change:
+
+> A memory location description consists of a non-empty DWARF expression
+> (see Section 2.5 on page 26), whose <span class="del">value</span> <span class="add">result</span> is the address of a piece or
+> all of an object or other entity in memory.
+
+Add:
+
+> <span class="add">A value of integral type may be treated as a memory
+> location description. A memory location description may also be treated
+> as a value of the generic type.</span>
+> 
+> <span class="add">The following DWARF operations can also be used to
+> specify a memory location:</span>
+> 
+> <span class="add">1\. `DW_OP_addr`... [move here from Section
+> 2.5.1.1]</span>
+> 
+> <span class="add">2\. `DW_OP_addrx`... [move here from Section
+> 2.5.1.1]</span>
+> 
+> <span class="add">3\. `DW_OP_push_object_address`... [move here from
+> Section 2.5.1.3]</span>
+> 
+> <span class="add">4\. `DW_OP_form_tls_address`... [move here from
+> Section 2.5.1.3]</span>
+> 
+> <span class="add">5\. `DW_OP_call_frame_cfa`... [move here from Section
+> 2.5.1.3]</span>
+
+### Section 2.6.1.1.3 Register Location Descriptions
+
+[page 39]
+Remove the non-normative text:
+
+> <span class="del">A register location description must
+> stand alone as the entire description of an object or a piece of an
+> object.</span>
+
+### Section 2.6.1.2 Composite Location Descriptions
+
+[Page 42]
+Change:
+
+> A composite location description describes an object or value which may
+> be contained in part of a register or stored in more than one location.
+> Each piece is described by a composition operation<span class="del">,
+> which does not compute a value nor store any result on the DWARF
+> stack</span>. There may be one or more composition operations in a
+> single composite location description. A series of such operations
+> describes the parts of a value in memory address order. <span
+> class="add">Each composition operation pops a location description from
+> the stack and replaces it with a new partial composite location
 > description on the DWARF stack. If the immediately preceding element on
 > the stack is also a partial composite location description (i.e., it is
 > not the first piece in the series), the two partial composite location
 > descriptions are combined into a single partial composite location
-> description.
+> description.</span>
 
 Add:
 
-> 3\. `DW_OP_piece_end`
+> <span class="add">3\. `DW_OP_piece_end`</span>
 > 
-> The `DW_OP_piece_end` operation terminates a composition operation by
+> <span class="add">The `DW_OP_piece_end` operation terminates a composition operation by
 > converting the partial composite location description on top of the
 > stack to a complete composite location description. This operation
 > is necessary only if the location description is not at the end of
-> the DWARF expression; otherwise, the conversion is implicit.
+> the DWARF expression; otherwise, the conversion is implicit.</span>
+
+### Section 2.6.1.3 Location Description Operations [new section]
 
 Add:
 
-> Section 2.6.1.3 Location Description Operations
+> <span class="add">In addition to the composite operations, location
+> descriptions may be modified by the following operations:</span>
 > 
-> In addition to the composite operations, location descriptions may
-> be modified by the following operations:
+> <span class="add">1\. `DW_OP_offset`</span>
 > 
-> 1\. `DW_OP_offset`
+> <span class="add">`DW_OP_offset` pops two stack entries. The first (top
+> of stack) must be an integral type value, which represents a byte
+> displacement. The second must be a location description. It forms a new
+> location description that describes a location at the given byte
+> displacement from the original location. For a register location, the
+> byte displacement is relative to the least-significant byte on a
+> little-endian architecture, and to the most-significant byte on a
+> big-endian architecture.</span>
 > 
-> `DW_OP_offset` pops two stack entries. The first (top of stack) must be
-> an integral type value, which represents a byte displacement. The second
-> must be a location description. It forms a new location description that
-> describes a location at the given byte displacement from the original
-> location. For a register location, the byte displacement is relative to
-> the least-significant byte on a little-endian architecture, and to the
-> most-significant byte on a big-endian architecture.
+> <span class="add">2\. `DW_OP_bit_offset`</span>
 > 
-> 2\. `DW_OP_bit_offset`
+> <span class="add">`DW_OP_bit_offset` pops two stack entries. The first
+> (top of stack) must be an integral type value, which represents a bit
+> displacement. The second must be a location description. It forms a new
+> location description that describes a location at the given bit
+> displacement from the original location.</span>
 > 
-> `DW_OP_bit_offset` pops two stack entries. The first (top of stack) must
-> be an integral type value, which represents a bit displacement. The
-> second must be a location description. It forms a new location
-> description that describes a location at the given bit displacement from
-> the original location.
+> <span class="add">On a little-endian architecture, the bit offset is
+> relative to the least-significant bit of the location, and indicates
+> that the new location is offset to the left by the given number of bits.
+> </span>
 > 
-> On a little-endian architecture, the bit offset is relative to the
-> least-significant bit of the location, and indicates that the new
-> location is offset to the left by the given number of bits.
+> <span class="add">On a big-endian architecture, the bit offset is
+> relative to the most-significant bit of the location, and indicates that
+> the new location is offset to the right by the given number of
+> bits.</span>
 > 
-> On a big-endian architecture, the bit offset is relative to the
-> most-significant bit of the location, and indicates that the new
-> location is offset to the right by the given number of bits.
+> <span class="add">_A bit offset of `n*8` is equivalent to a byte offset of `n`._</span>
 
-> _A bit offset of `n*8` is equivalent to a byte offset of `n`._
+### Section 5.7.6 Data Member Entries
 
-(page 226, Section 7.7.1 DWARF Expression)
+[Page 118]
+In the description for `DW_AT_data_member_location`, change:
 
+> 2\. Otherwise, the value must be a location description. In this case,
+> the beginning of the containing entity must be byte aligned. The <span
+> class="del">beginning address</span> <span class="add">location
+> description of the containing entity</span> is pushed on the DWARF stack
+> before the location description is evaluated; the result of the
+> evaluation is <span class="del">the base address of</span> <span
+> class="add">a location description for</span> the member entry.
+
+### Section 5.14 Pointer to Member Type Entries
+
+[Page 131]
+Change:
+
+> The `DW_AT_use_location` description is used in conjunction with the
+> location descriptions for a particular object of the given pointer to
+> member type and for a particular structure or class instance. The
+> `DW_AT_use_location` attribute expects two values to be pushed onto the
+> DWARF expression stack before the `DW_AT_use_location` description is
+> evaluated. The first value pushed is the value of the pointer to member
+> object itself. The second value pushed is the <span class="del">base
+> address</span> <span class="add">location description</span> of the
+> entire structure or union instance containing the member whose address
+> is being calculated.
+
+### Section 7.7.1 DWARF Expressions
+
+[Page 226]
 Add to Table 7.9:
 
 >                                 No. of
@@ -244,3 +323,28 @@ Add to Table 7.9:
 >     --------------------  ----  --------  -----
 >     DW_OP_offset          TBA      0
 >     DW_OP_bit_offset      TBA      0
+
+### Section D.2.1 Fortran Simple Array Example
+
+[Page 296]
+In Figure D.4, change `DW_OP_plus` to `DW_OP_offset` in the following
+places:
+
+* In the `DW_AT_associated` attribute at `1$`.
+
+* In the `DW_AT_lower_bound` and `DW_AT_upper_bound` attributes at `2$`.
+
+* In the `DW_AT_allocated` and `DW_AT_data_location` attributes at `6$`.
+
+* In the `DW_AT_lower_bound` and `DW_AT_upper_bound` attributes at `7$`.
+
+### Section D.2.3 Fortran 2008 Assumed-rank Array Example
+
+[Page 302]
+In Figure D.13, change `DW_OP_plus` to `DW_OP_offset` in the following
+places:
+
+* In the `DW_AT_rank` and `DW_AT_data_location` attributes at `10$`.
+
+* In the `DW_AT_lower_bound` and `DW_AT_upper_bound` attributes at `11$`
+(immediately following `DW_OP_push_object_address`).
