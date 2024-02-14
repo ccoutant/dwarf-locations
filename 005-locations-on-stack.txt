@@ -91,10 +91,7 @@ or a bit offset.
 
 The composite location description operators, `DW_OP_piece` and
 `DW_OP_bit_piece`, are redefined to build up a composite location
-description, which is held in the top element of the stack. A new
-operator, `DW_OP_piece_end`, is defined for use when a composite
-location description is complete, and there is a need to continue the
-expression.
+description, which is held in the top element of the stack.
 
 The `DW_OP_call*` operators are now allowed to leave a location
 description on the stack.
