@@ -138,18 +138,18 @@ Replace the contents of the preamble to this section with:
 > location. They are expressed in terms of DWARF operations that
 > operate on a stack. Each element on the stack may be
 > either a value or a location.
-
+> 
 > Values on the stack are typed, and can represent a value of any
 > supported base type of the target machine, or of the generic type,
 > which is an integral type that has the size of an address on the
 > target machine and unspecified signedness.
-
+> 
 > _The generic type is the same as the unspecified type used for stack
 > operations defined in DWARF Version 4 and before._
-
+> 
 > Locations represent a place where a value is stored, which may
 > be any of the following:
-
+> 
 > - Memory locations, for values that are stored in memory, starting
 >   at a given address within a given address space.
 > 
@@ -164,18 +164,18 @@ Replace the contents of the preamble to this section with:
 > - Composite locations, for values that are stored in a combination
 >   of storage (e.g., aggregate values where certain components have
 >   been promoted to registers).
-
+> 
 > A DWARF expression is encoded as a stream of operations, each consisting of an
 > opcode followed by zero or more literal operands. The number of operands is
 > implied by the opcode.
-
+> 
 > The result of a DWARF expression is the value or location on the top
 > of the stack after evaluating the operations.
-
+> 
 > A DWARF expression is evaluated in a context that determines whether
 > its result is expected to be a value or a location. Expressions that are
 > expected to produce a location are called "location descriptions."
-
+> 
 > Implicit conversions between memory addresses and values may happen
 > during the execution of any operation or when evaluation of the
 > expression is completed. If a location is expected, but the result is
@@ -213,7 +213,7 @@ replace the descriptions with:
 > a location. The first `S` bytes, where `S` is the size of an address on
 > the target machine, are retrieved from the location and pushed onto
 > the stack as a value of the generic type.
-
+> 
 > 8\. `DW_OP_deref_size`  
 > The `DW_OP_deref_size` takes a single 1-byte unsigned integral operand
 > that specifies the size `S`, in bytes, of the value to be retrieved. The
@@ -222,7 +222,7 @@ replace the descriptions with:
 > are retrieved from the location, zero extended to the size of an
 > address on the target machine, and pushed onto the stack as a value of
 > the generic type.
-
+> 
 > 9\. `DW_OP_deref_type`  
 > The `DW_OP_deref_type` operation takes two operands. The first operand
 > is a 1-byte unsigned integer that specifies the size `S` of the type
@@ -265,9 +265,9 @@ Insert the following (adapted from parts of Section 2.6) into this new section:
 > using class `locdesc`, and a location list is encoded using class `loclist`
 > (which serves as an index into a separate section containing location
 > lists).
-
-The following operation can be used to push a location onto the stack:
-
+> 
+> The following operation can be used to push a location onto the stack:
+> 
 > 1. `DW_OP_push_object_address` [moved from Section 2.5.1.3]  
 > The DW_OP_push_object_address operation pushes the location of the
 > object currently being evaluated as part of evaluation of a user
@@ -288,10 +288,11 @@ Insert the following (adapted from Section 2.6.1.1.2):
 
 > A memory location represents the location of a piece or all of an
 > object or other entity in memory. On architectures that support
-> multiple address spaces, a memory location contains a component
-> that identifies the address space (which may be provided by the `DW_OP_xderef` operation). A memory location is considered _unbounded_, as the
-> size of the location storage is only implied by the type of object
-> stored at that location.
+> multiple address spaces, a memory location contains a component that
+> identifies the address space (which may be provided by the
+> `DW_OP_xderef` operation). A memory location is considered
+> _unbounded_, as the size of the location storage is only implied by
+> the type of object stored at that location.
 > 
 > In contexts that expect a location, a value of the generic type
 > may be implicitly converted to a memory location in the default
@@ -352,7 +353,7 @@ Insert the following (adapted from Section 2.6.1.1.1):
 Insert the following (adapted from Section 2.6.1.2):
 
 > The above kinds of locations are considered "simple" locations.
-
+> 
 > A composite location describes an object or value which
 > may be contained in part of a register or stored in more than one
 > location. Each piece is described by a composition operation. There
@@ -365,61 +366,61 @@ Insert the following (adapted from Section 2.6.1.2):
 > description (i.e., it is not the first piece in the series), the two
 > composite location descriptions are combined into a single composite
 > location description.
-
+>
 > A composite location may be formed from several simple locations by
 > the composition operations described in this section. Each simple
 > location description describes the location of one piece of the
 > object; each composition operation describes which part of the object
 > is located there.
-
-1. `DW_OP_piece`
-
-    The `DW_OP_piece` operation takes a single operand, which is an unsigned
-    LEB128 number. The number describes the size `S`, in bytes, of the piece
-    of the object referenced by the location `A` on the top of the stack. If
-    the piece is located in a register, but does not occupy the entire
-    register, the placement of the piece within that register is defined by
-    the ABI. Many compilers store a single variable in sets of registers, or
-    store a variable partially in memory and partially in registers.
-    `DW_OP_piece` provides a way of describing how large a part of a
-    variable a particular DWARF location description refers to.
-
-2. `DW_OP_bit_piece`
-
-    The DW_OP_bit_piece operation takes two operands. The first is an
-    unsigned LEB128 number that gives the size `S`, in bits, of the piece.
-    The second is an unsigned LEB128 number that gives the offset in bits
-    from the location defined by the location `A` on the top of the stack.
-
-    Interpretation of the offset depends on the location description. If the
-    location is an undefined location (see Section 2.5.2.4), the
-    `DW_OP_bit_piece` operation describes a piece consisting of the given
-    number of bits whose values are undefined, and the offset is ignored. If
-    the location is a memory address (see Section 2.5.2.1), the
-    DW_OP_bit_piece operation describes a sequence of bits relative to the
-    location whose address is on the top of the DWARF stack using the bit
-    numbering and direction conventions that are appropriate to the current
-    language on the target system. In all other cases, the source of the
-    piece is given by either a register location (see Section 2.5.2.2) or an
-    implicit value description (see Section 2.5.2.3); the offset is from the
-    least significant bit of the source value.
-
-For both of the above operations, when the second stack entry `B` is a
-composite location, the operation forms a new composite location by
-concatenating the two locations, appending the `S` bytes (or bits)
-described by `A` to the composite location `B`, and replacing the top
-two stack entries with the new composite location.
-
-When there is only one element on the stack, or the second entry is not
-a composite location, the operation converts the location on the top of
-the stack to a composite covering the `S` bytes (or bits).
-
-_`DW_OP_bit_piece` is used instead of `DW_OP_piece` when the piece to be
-assembled into a value or assigned to is not byte-sized or is not at the
-start of a register or addressable unit of memory._
-
-_Whether or not a `DW_OP_piece` operation is equivalent to any
-`DW_OP_bit_piece` operation with an offset of 0 is ABI dependent._
+> 
+> 1. `DW_OP_piece`
+> 
+>     The `DW_OP_piece` operation takes a single operand, which is an unsigned
+>     LEB128 number. The number describes the size `S`, in bytes, of the piece
+>     of the object referenced by the location `A` on the top of the stack. If
+>     the piece is located in a register, but does not occupy the entire
+>     register, the placement of the piece within that register is defined by
+>     the ABI. Many compilers store a single variable in sets of registers, or
+>     store a variable partially in memory and partially in registers.
+>     `DW_OP_piece` provides a way of describing how large a part of a
+>     variable a particular DWARF location description refers to.
+> 
+> 2. `DW_OP_bit_piece`
+> 
+>     The DW_OP_bit_piece operation takes two operands. The first is an
+>     unsigned LEB128 number that gives the size `S`, in bits, of the piece.
+>     The second is an unsigned LEB128 number that gives the offset in bits
+>     from the location defined by the location `A` on the top of the stack.
+> 
+>     Interpretation of the offset depends on the location description. If the
+>     location is an undefined location (see Section 2.5.2.4), the
+>     `DW_OP_bit_piece` operation describes a piece consisting of the given
+>     number of bits whose values are undefined, and the offset is ignored. If
+>     the location is a memory address (see Section 2.5.2.1), the
+>     DW_OP_bit_piece operation describes a sequence of bits relative to the
+>     location whose address is on the top of the DWARF stack using the bit
+>     numbering and direction conventions that are appropriate to the current
+>     language on the target system. In all other cases, the source of the
+>     piece is given by either a register location (see Section 2.5.2.2) or an
+>     implicit value description (see Section 2.5.2.3); the offset is from the
+>     least significant bit of the source value.
+> 
+> For both of the above operations, when the second stack entry `B` is a
+> composite location, the operation forms a new composite location by
+> concatenating the two locations, appending the `S` bytes (or bits)
+> described by `A` to the composite location `B`, and replacing the top
+> two stack entries with the new composite location.
+> 
+> When there is only one element on the stack, or the second entry is not
+> a composite location, the operation converts the location on the top of
+> the stack to a composite covering the `S` bytes (or bits).
+> 
+> _`DW_OP_bit_piece` is used instead of `DW_OP_piece` when the piece to be
+> assembled into a value or assigned to is not byte-sized or is not at the
+> start of a register or addressable unit of memory._
+> 
+> _Whether or not a `DW_OP_piece` operation is equivalent to any
+> `DW_OP_bit_piece` operation with an offset of 0 is ABI dependent._
 
 
 ### Section 2.5.2.6 Offset Operations
