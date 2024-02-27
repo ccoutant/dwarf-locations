@@ -9,7 +9,7 @@ more manageable proposals, in a form acceptable to the DWARF committee.
 
 Issues ready to submit to DWARF committee:
 
-* [Locations on the Stack](005-locations-on-stack.txt)
+* [Locations on the Stack](005-locations-on-stack.md)
 
 Issues in progress:
 
