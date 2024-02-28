@@ -2,7 +2,8 @@
 
 Depends on: [Location Descriptions on the DWARF Stack][1]
 
-[1]: 230524.1.html
+[1x]: 230524.1.html
+[1]: 005-locations-on-stack.md
 
 
 ## PROBLEM DESCRIPTION
