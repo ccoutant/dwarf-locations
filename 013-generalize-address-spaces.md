@@ -429,10 +429,10 @@ to the list:
 In Appendix A "Attributes by Tag Value (Informative)", add the following to
 Table A.1 Attributes by tag value":
 
-    Table A.1: Attributes by tag value
-
-    Tag Name                       | Applicable Attributes
-    ------------------------------ | ---------------------
-    `DW_TAG_pointer_type`          | `DW_AT_address_space`
-    `DW_TAG_reference_type`        | `DW_AT_address_space`
-    `DW_TAG_rvalue_reference_type` | `DW_AT_address_space`
+> Table A.1: Attributes by tag value
+> 
+> Tag Name                       | Applicable Attributes
+> ------------------------------ | ---------------------
+> `DW_TAG_pointer_type`          | `DW_AT_address_space`
+> `DW_TAG_reference_type`        | `DW_AT_address_space`
+> `DW_TAG_rvalue_reference_type` | `DW_AT_address_space`
