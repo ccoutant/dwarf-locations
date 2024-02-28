@@ -10,11 +10,12 @@ more manageable proposals, in a form acceptable to the DWARF committee.
 Issues ready to submit to DWARF committee:
 
 * [Locations on the Stack](005-locations-on-stack.md)
+* [General Support for Address Spaces](013-generalize-address-spaces.md)
 
 Issues in progress:
 
+* [General Support for Address Spaces](013-generalize-address-spaces.orig.txt) (Original)
 * [Generalize Offsetting of Location Descriptions](010-generalize-offsetting.txt)
-* [General Support for Address Spaces](013-generalize-address-spaces.txt)
 * [Generalize Creation of Undefined Location Descriptions](011-generalize-undefined.txt)
 * [Generalize Creation of Composite Location Descriptions](012-generalize-composite.txt)
 * [Support for Vector Base Types](014-vector-base-types.txt)
