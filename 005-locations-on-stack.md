@@ -90,9 +90,8 @@ or a bit offset.
 
 The composite location operators, `DW_OP_piece` and `DW_OP_bit_piece`,
 are redefined to build up a composite location, which is held in the top
-element of the stack. A new operator, `DW_OP_piece_end`, is defined for
-use when a composite location description is complete, and there is a
-need to continue the expression.
+element of the stack. A new operator, `DW_OP_composite`, is added
+to begin a new (empty) composite location.
 
 The `DW_OP_call*` operators are now allowed to leave a location
 on the stack.
@@ -350,7 +349,8 @@ Insert the following (adapted from Section 2.6.1.1.1):
 
 ### Section 2.5.2.5 Composite Locations
 
-Insert the following (adapted from Section 2.6.1.2):
+Insert the following (adapted from Section 2.6.1.2, and with the new
+`DW_OP_composite` operator):
 
 > The above kinds of locations are considered "simple" locations.
 > 
@@ -358,19 +358,13 @@ Insert the following (adapted from Section 2.6.1.2):
 > contained in part of a register or stored in more than one location.
 > Each piece is described by a composition operation. There may be one
 > or more composition operations in a single composite location
-> description. A composite location may be either _partial_ or
-> _complete_. While under construction, it is _partial_, and is
-> converted to a _complete_ composite location explicitly by a
-> `DW_OP_piece_end` operator, or implicitly at the end of the DWARF
-> expression.
+> description.
 >
-> A series of piece operations describes the parts of a value in memory
-> address order. Each piece operation pops a location `A` from the stack
-> and updates the partial composite location `B` in the preceding
-> element of the stack by appending the new piece described by `A`. If
-> `A` is the only element on the stack, or the second element `B` on the
-> stack is not a partial composite location, however, a new partial
-> location is pushed onto the stack with `A` as the first piece.
+> A series of piece operations (`DW_OP_piece` or `DW_OP_bit_piece`)
+> describes the parts of a value in memory address order. Each piece
+> operation pops a location `A` from the stack and updates the composite
+> location `B` in the preceding element of the stack by appending the
+> new piece described by `A`.
 >
 > A composite location may be formed from several simple locations by
 > the composition operations described in this section. Each simple
@@ -378,8 +372,17 @@ Insert the following (adapted from Section 2.6.1.2):
 > composition operation describes which part of the object is located
 > there.
 > 
-> 1. `DW_OP_piece`
+> 1. `DW_OP_composite`
+>
+>     The `DW_OP_composite` operator has no operands. It pushes a new, empty,
+>     composite location onto the stack.
+>
+>     _This operator is provided so that a new series of piece operations
+>     can be started to form a composite location when the state of the
+>     stack is unknown (e.g., following a `DW_OP_call*` operation)._
 > 
+> 2. `DW_OP_piece`
+>
 >     The `DW_OP_piece` operation takes a single operand, which is an unsigned
 >     LEB128 number. The number describes the size `S`, in bytes, of the piece
 >     of the object referenced by the location `A` on the top of the stack. If
@@ -390,8 +393,8 @@ Insert the following (adapted from Section 2.6.1.2):
 >     `DW_OP_piece` provides a way of describing how large a part of a
 >     variable a particular location refers to.
 >
-> 2. `DW_OP_bit_piece`
-> 
+> 3. `DW_OP_bit_piece`
+>
 >     The DW_OP_bit_piece operation takes two operands. The first is an
 >     unsigned LEB128 number that gives the size `S`, in bits, of the piece.
 >     The second is an unsigned LEB128 number that gives the offset in bits
@@ -410,21 +413,38 @@ Insert the following (adapted from Section 2.6.1.2):
 >     implicit value location (see Section 2.5.2.3); the offset is from the
 >     least significant bit of the source value.
 > 
-> 3. `DW_OP_piece_end`
-> 
->     The `DW_OP_piece_end` operation terminates a composition operation by
->     converting the partial composite location description on top of the
->     stack to a complete composite location description. This operation
->     is necessary only if the location description is not at the end of
->     the DWARF expression; otherwise, the conversion is implicit.
+>     _`DW_OP_bit_piece` is used instead of `DW_OP_piece` when the piece to be
+>     assembled into a value or assigned to is not byte-sized or is not at the
+>     start of a register or addressable unit of memory._
 >
-> 
-> _`DW_OP_bit_piece` is used instead of `DW_OP_piece` when the piece to be
-> assembled into a value or assigned to is not byte-sized or is not at the
-> start of a register or addressable unit of memory._
-> 
-> _Whether or not a `DW_OP_piece` operation is equivalent to any
-> `DW_OP_bit_piece` operation with an offset of 0 is ABI dependent._
+>     _Whether or not a `DW_OP_piece` operation is equivalent to any
+>     `DW_OP_bit_piece` operation with an offset of 0 is ABI dependent._
+>
+> For compatibility with DWARF Version 5 and earlier, the following
+> additional rules apply to piece operations:
+>
+> - If a piece operation is processed while the stack is empty, a new
+> empty composite and an undefined location are pushed implicitly (as if
+> `DW_OP_composite DW_OP_undefined` had been processed immediately prior
+> to the piece operation). The result is a composite with a single
+> undefined piece.
+>
+> - Otherwise, if the top of the stack `A` is a composite, and is the only
+> element on the stack (i.e., `B` does not exist), an undefined location
+> is pushed implicitly (as if `DW_OP_undefined` had been processed
+> immediately prior to the piece operation), whereupon the composite `A`
+> becomes `B` and the undefined location is now `A`. The result is the
+> addition of an undefined piece to the existing composite location.
+>
+> - Otherwise, if the top of the stack `A` is a location, or convertible
+> to a location, and the preceding element is not a composite location,
+> one or more elements below `A` are popped and discarded until the
+> preceding element `B` is a composite location, or until `A` is the
+> only element on the stack. If `A` is the only remaining element, a new
+> empty composite is inserted before it (as if `DW_OP_composite
+> DW_OP_swap` had been processed immediately prior to the piece
+> operation), and the result is a new composite location with the single
+> piece `A`.
 
 
 ### Section 2.5.2.6 Offset Operations
