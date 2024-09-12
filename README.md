@@ -10,6 +10,8 @@ more manageable proposals, in a form acceptable to the DWARF committee.
 Issues ready to submit to DWARF committee:
 
 * [Locations on the Stack](005-locations-on-stack.md)
+* [Clarifications for Memory Location Descriptions](004-clarifications-mem.txt)
+* [Clarifications for Location Descriptions](002-clarifications-loc.txt)
 * [General Support for Address Spaces](013-generalize-address-spaces.md)
 
 Issues in progress:
@@ -29,9 +31,7 @@ Issues in progress:
 Clarifications and editorial reorganization:
 
 * [Clarifications for Expression Evaluation](001-clarifications-eval.txt)
-* [Clarifications for Location Descriptions](002-clarifications-loc.txt)
 * [Clarifications for CFI](003-clarifications-cfi.txt)
-* [Clarifications for Memory Location Descriptions](004-clarifications-mem.txt)
 * [Editorial Reorganization](006-editorial.txt)
 
 Independent issues not part of this series:
