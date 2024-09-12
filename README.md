@@ -36,7 +36,6 @@ Clarifications and editorial reorganization:
 
 Independent issues not part of this series:
 
-* [Correction to `DW_OP_call_ref` and `DW_FORM_ref_addr`](call-ref.txt)
 * [Clarifications for `DW_OP_entry_value`](entry-value.txt)
 
 [amd]: https://llvm.org/docs/AMDGPUDwarfExtensionAllowLocationDescriptionOnTheDwarfExpressionStack/AMDGPUDwarfExtensionAllowLocationDescriptionOnTheDwarfExpressionStack.html#a-2-general-description
