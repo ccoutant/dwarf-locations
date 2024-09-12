@@ -18,7 +18,6 @@ Issues in progress:
 * [Generalize Offsetting of Location Descriptions](010-generalize-offsetting.txt)
 * [Generalize Creation of Undefined Location Descriptions](011-generalize-undefined.txt)
 * [Generalize Creation of Composite Location Descriptions](012-generalize-composite.txt)
-* [Support for Vector Base Types](014-vector-base-types.txt)
 * [DWARF Operations to Create Vector Composite Location Descriptions](015-vector-composite-location-descriptions.txt)
 * [DWARF Operation to Create Runtime Overlay Composite Location Description](016-overlay-composite-location-descriptions.txt)
 * [DWARF Operation to Access Call Frame Entry Registers](017-call-frame-entry-registers.txt)
