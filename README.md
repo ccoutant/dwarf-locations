@@ -9,14 +9,13 @@ more manageable proposals, in a form acceptable to the DWARF committee.
 
 Issues ready to submit to DWARF committee:
 
-* [Locations on the Stack](005-locations-on-stack.md)
-* [Clarifications for Memory Location Descriptions](004-clarifications-mem.txt)
-* [Clarifications for Location Descriptions](002-clarifications-loc.txt)
-* [General Support for Address Spaces](013-generalize-address-spaces.md)
+* [Locations on the Stack](005-locations-on-stack.md) (Issue [230524.1][230524.1])
+* [Clarifications for Location Descriptions](002-clarifications-loc.txt) (Issue [230120.2][230120.2])
+* [Clarifications for Memory Location Descriptions](004-clarifications-mem.txt) (Issue [230120.3][230120.3])
+* [General Support for Address Spaces](013-generalize-address-spaces.md) ([Original text](013-generalize-address-spaces.orig.txt))
 
 Issues in progress:
 
-* [General Support for Address Spaces](013-generalize-address-spaces.orig.txt) (Original)
 * [Generalize Offsetting of Location Descriptions](010-generalize-offsetting.txt)
 * [Generalize Creation of Undefined Location Descriptions](011-generalize-undefined.txt)
 * [Generalize Creation of Composite Location Descriptions](012-generalize-composite.txt)
@@ -39,4 +38,7 @@ Independent issues not part of this series:
 * [Clarifications for `DW_OP_entry_value`](entry-value.txt)
 
 [amd]: https://llvm.org/docs/AMDGPUDwarfExtensionAllowLocationDescriptionOnTheDwarfExpressionStack/AMDGPUDwarfExtensionAllowLocationDescriptionOnTheDwarfExpressionStack.html#a-2-general-description
-[dwarf5]: https://dwarfstd.org/Dwarf5Std.php
+[dwarf5]: https://dwarfstd.org/dwarf5std.html
+[230524.1]: https://dwarfstd.org/issues/230524.1.html
+[230120.2]: https://dwarfstd.org/issues/230120.2.html
+[230120.3]: https://dwarfstd.org/issues/230120.3.html
