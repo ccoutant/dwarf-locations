@@ -10,8 +10,8 @@ more manageable proposals, in a form acceptable to the DWARF committee.
 Issues ready to submit to DWARF committee:
 
 * [Locations on the Stack](005-locations-on-stack.md) (Issue [230524.1][230524.1])
-* [Clarifications for Location Descriptions](002-clarifications-loc.txt) (Issue [230120.2][230120.2])
 * [Clarifications for Memory Location Descriptions](004-clarifications-mem.txt) (Issue [230120.3][230120.3])
+* [Clarifications for Location Descriptions](002-clarifications-loc.txt) (Issue [230120.2][230120.2])
 * [General Support for Address Spaces](013-generalize-address-spaces.md) ([Original text](013-generalize-address-spaces.orig.txt))
 
 Issues in progress:
