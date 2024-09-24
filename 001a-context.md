@@ -137,6 +137,10 @@ subsections):
 >     unit that contains E and not the one that contains the
 >     `DW_OP_call*` operation expression.
 > 
+>     [non-normative] The DWARF expressions for call frame information (see
+>     6.4 Call Frame Information) operations are restricted to those that
+>     do not require the compilation unit context to be specified.
+> 
 > 7. A current target architecture
 > 
 >     The target architecture.
@@ -217,10 +221,6 @@ subsections):
 > variable may be able to be evaluated without such context. If the
 > expression evaluates with an error then it may indicate the variable
 > has been optimized and so requires more context.
-> 
-> [non-normative] The DWARF expressions for call frame information (see
-> 6.4 Call Frame Information) operations are restricted to those that
-> do not require the compilation unit context to be specified.
 > 
 > The DWARF is ill-formed if all the address_size fields in the
 > headers of all the entries in the `.debug_info`, `.debug_addr`,
