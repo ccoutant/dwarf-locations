@@ -23,7 +23,6 @@ Issues in progress:
 * [DWARF Operations to Create Vector Composite Location Descriptions](015-vector-composite-location-descriptions.txt)
 * [DWARF Operation to Create Runtime Overlay Composite Location Description](016-overlay-composite-location-descriptions.txt)
 * [DWARF Operation to Access Call Frame Entry Registers](017-call-frame-entry-registers.txt)
-* [Support for Source Languages Mapped to SIMT Hardware](018-simt-hardware.txt)
 * [Support for Source Language Optimizations that Result in Concurrent Iteration Execution](020-simd-hardware.txt)
 * [Support for Divergent Control Flow of SIMT Hardware](021-divergent-control-flow.txt)
 * [Support for Source Language Memory Spaces](022-memory-spaces.txt)
