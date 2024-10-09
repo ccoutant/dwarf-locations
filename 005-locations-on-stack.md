@@ -100,21 +100,21 @@ The contents of Section 2.5 and 2.6 are reorganized as follows:
 
 - 2.5 DWARF Expressions
     - 2.5.1 Values and Locations
-    - 2.5.2 Value Operations
-        - 2.5.2.1 Literal Encodings
-        - 2.5.2.2 Register Values
-        - 2.5.2.3 Stack Operations
-        - 2.5.2.4 Arithmetic and Logical Operations
-    - 2.5.3 Location Operations
-        - 2.5.3.1 Memory Locations
-        - 2.5.3.2 Register Locations
-        - 2.5.3.3 Implicit Locations
-        - 2.5.3.4 Undefined Locations
-        - 2.5.3.5 Composite Locations
-        - 2.5.3.6 Offset Operations
-    - 2.5.4 Control Flow Operations
-    - 2.5.5 Type Conversions
-    - 2.5.6 Special Operations
+    - 2.5.2 Stack Operations
+    - 2.5.3 Value Operations
+        - 2.5.3.1 Literal Encodings
+        - 2.5.3.2 Register Values
+        - 2.5.3.3 Arithmetic and Logical Operations
+    - 2.5.4 Location Operations
+        - 2.5.4.1 Memory Locations
+        - 2.5.4.2 Register Locations
+        - 2.5.4.3 Implicit Locations
+        - 2.5.4.4 Undefined Locations
+        - 2.5.4.5 Composite Locations
+        - 2.5.4.6 Offset Operations
+    - 2.5.5 Control Flow Operations
+    - 2.5.6 Type Conversions
+    - 2.5.7 Special Operations
 - 2.6 Expression Lists
   - 2.6.1 Value Lists
   - 2.6.2 Location Lists
@@ -125,14 +125,12 @@ Proposed Changes
 
 ### Section 2.2 Attribute Types
 
-[Page 24]
 In Table 2.3, Classes of attribute value, in the row for "locdesc,"
 replace the reference to Section 2.6 with a reference to Section 2.5.
 
 
 ### Section 2.5 DWARF Expressions
 
-[Page 26]
 Replace the contents of the preamble to this section with:
 
 > DWARF expressions describe how to compute a value or specify a
@@ -147,10 +145,10 @@ Replace the contents of the preamble to this section with:
 > The result of a DWARF expression is the value or location on the top
 > of the stack after evaluating the operations.
 
-Add the following subsection:
+### Section 2.5.1 Values and Locations [NEW]
 
-> 2.5.1 Values and Locations
-> 
+Add the following as a new subsection:
+
 > A DWARF expression is evaluated in a context that determines whether
 > its result is expected to be a value or a location. Expressions that are
 > expected to produce a location are called "location descriptions."
@@ -260,37 +258,198 @@ Add the following subsection:
 > refer to location storage that has the same value), but must write any
 > changed value to all the single locations.
 
+### Section 2.5.2 Stack Operations [was: 2.5.1.3 Stack Operations]
 
-### Section 2.5.2 Value Operations (was: 2.5.1 General Operations)
+Move the contents of 2.5.1.3 Stack Operations to this new subsection.
+Change the first sentence to:
 
-[Page 26]
+> The following operations manipulate the DWARF stack, and may
+> operate on both values and locations.
+
+Change the second paragraph to:
+
+> Each entry on the stack is either a value (with an associated type) or
+> a location. When operating on a value, the associated type is always
+> included with the value.
+
+Include the descriptions for the following operations:
+
+- `DW_OP_dup`
+- `DW_OP_drop`
+- `DW_OP_pick`
+- `DW_OP_over`
+- `DW_OP_swap`
+- `DW_OP_rot`
+
+For the above operations, remove all occurrences of "including its type identifier".
+
+> The `DW_OP_dup` operation duplicates the entry at the top of the stack.
+
+For `DW_OP_drop`, change the description to:
+
+> The `DW_OP_drop` operation pops the entry at the top of the stack.
+
+The following operations that were in section 2.5.1.3 are moved to other sections:
+
+- `DW_OP_deref`, `DW_OP_deref_size`, `DW_OP_deref_type`,
+  `DW_OP_xderef`, `DW_OP_xderef_size`, `DW_OP_xderef_type`, `DW_OP_form_tls_address`,
+  (to 2.5.4.1 Memory Locations)
+- `DW_OP_push_object_address`, `DW_OP_call_frame_cfa` (to 2.5.4 Location Operations)
+- `DW_OP_push_lane` (to 2.5.3.1 Literal Encodings)
+
+
+### Section 2.5.3 Value Operations [was: 2.5.1 General Operations]
+
 In the first paragraph, delete all but the first sentence of the first
 two paragraphs, leaving only this:
 
-> Each general operation represents a postfix operation on a simple
+> Each value operation represents a postfix operation on a simple
 > stack machine.
 
-(These deleted sentences have been moved up to Section 2.5.)
+(The deleted sentences have been moved up to the introduction to Section 2.5.)
 
 
-### Section 2.5.2.1 Literal Encodings
+### Section 2.5.3.1 Literal Encodings [was: 2.5.1.1]
 
-Move `DW_OP_addr` and `DW_OP_addrx` to Section 2.5.2.1.
+Place the contents of old section 2.5.1.1 here.
+
+Include the descriptions of the following operations:
+
+- `DW_OP_lit0`, ..., `DW_OP_lit31`
+- `DW_OP_const1u`, etc.
+- `DW_OP_const1s`, etc.
+- `DW_OP_constu`
+- `DW_OP_consts`
+- `DW_OP_constx`
+- `DW_OP_const_type`
+- `DW_OP_push_lane` (moved from old section 2.5.1.3)
+
+The following operations that were in 2.5.1.1 are moved to Section 2.5.4.1 Memory Locations:
+
+- `DW_OP_addr`
+- `DW_OP_addrx`
 
 
-### Section 2.5.2.3 Stack Operations
+### Section 2.5.3.2 Register Values [was: 2.5.1.2]
 
-[Pages 30-31]
-Under `DW_OP_deref`, `DW_OP_deref_size`, and `DW_OP_deref_type`,
-replace the descriptions with:
+Place the contents of old section 2.5.1.1 here.
 
-> 7\. `DW_OP_deref`  
+Include the descriptions of the following operations:
+
+- `DW_OP_regval_type`
+- `DW_OP_regval_bits`
+
+The following operations that were in 2.5.1.2 are moved to other sections:
+
+- `DW_OP_fbreg` (to 2.5.4 Location Operations)
+- `DW_OP_breg0`, ..., `DW_OP_breg31` (to 2.5.4.1 Memory Locations)
+- `DW_OP_bregx` (to 2.5.4.1 Memory Locations)
+
+
+### Section 2.5.3.3 Arithmetic and Logical Operations [was: 2.5.1.4]
+
+Place the contents of old section 2.5.1.4 here.
+
+Include the descriptions of the following operations:
+
+- `DW_OP_abs`
+- `DW_OP_and`
+- `DW_OP_div`
+- `DW_OP_minus`
+- `DW_OP_mod`
+- `DW_OP_mul`
+- `DW_OP_neg`
+- `DW_OP_not`
+- `DW_OP_or`
+- `DW_OP_plus`
+- `DW_OP_plus_uconst`
+- `DW_OP_shl`
+- `DW_OP_shr`
+- `DW_OP_shra`
+- `DW_OP_xor`
+
+
+### Section 2.5.4 Location Operations [NEW]
+
+Insert the following (adapted from parts of section 2.6) into this new section:
+
+> Information about the location of program objects is provided by
+> location descriptions. Location descriptions can be either of two forms:
+> 
+> - Single location descriptions, which are a language-independent
+> representation of addressing rules of arbitrary complexity built from
+> DWARF expressions. They are sufficient for describing the location of
+> any object as long as its lifetime is either static or the same as the
+> lexical block that owns it, and it does not move during its lifetime.
+> 
+> - Location lists, which are used to describe objects that have a
+> limited lifetime or change their location during their lifetime.
+> Location lists are described in Section 2.6.
+> 
+> Location descriptions are distinguished in a context-sensitive manner.
+> As the value of an attribute, a single location description is encoded
+> using class `locdesc`, and a location list is encoded using class `loclist`
+> (which serves as an index into a separate section containing location
+> lists).
+> 
+> The following operations can be used to push a location onto the stack:
+> 
+> 1. `DW_OP_push_object_address` [moved from section 2.5.1.3]  
+> The DW_OP_push_object_address operation pushes the location of the
+> object currently being evaluated as part of evaluation of a user
+> presented expression. This object may correspond to an independent
+> variable described by its own debugging information entry or it may be a
+> component of an array, structure, or class whose address has been
+> dynamically determined by an earlier step during user expression
+> evaluation. This operator provides explicit functionality (especially
+> for arrays involving descriptors) that is analogous to the implicit push
+> of the base address of a structure prior to evaluation of a
+> DW_AT_data_member_location to access a data member of a structure. For
+> an example, see Appendix D.2 on page 304.
+> 
+> 2. `DW_OP_call_frame_cfa`... [moved unchanged from section 2.5.1.3]
+
+
+### Section 2.5.4.1 Memory Locations [adapted from 2.6.1.1.2]
+
+Insert the following:
+
+> A memory location represents the location of a piece or all of an
+> object or other entity in memory. On architectures that support
+> multiple address spaces, a memory location contains a component that
+> identifies the address space.
+> 
+> In contexts that expect a location, a value of the generic type
+> may be implicitly converted to a memory location in the default
+> address space.
+> 
+> The following operations push memory locations onto the DWARF stack:
+> 
+> 1. `DW_OP_addr` [moved from section 2.5.1.1]  
+> The `DW_OP_addr` operation has a single operand that encodes a
+> machine address and whose size is the size of an address on the
+> target machine. The value of this operand is treated as an address
+> in the default address space and pushed onto the stack.
+> 
+> 2. `DW_OP_addrx` [moved from section 2.5.1.1]  
+> The `DW_OP_addrx` operation has a single operand that encodes an
+> unsigned LEB128 value, which is a zero-based index into the `.debug\_addr`
+> section, where a machine address is stored. This index is relative to the
+> value of the `DW_AT_addr_base` attribute of the associated compilation
+> unit. The address obtained is treated as an address in the default address
+> space and pushed onto the stack.
+>
+> 3. `DW_OP_form_tls_address`... [moved unchanged from section 2.5.1.3]
+> 
+> 4. `DW_OP_call_frame_cfa`... [moved unchanged from section 2.5.1.3]
+> 
+> 5. `DW_OP_deref` [moved from section 2.5.1.3]  
 > The `DW_OP_deref` operation pops the top stack entry and treats it as
 > a location. The first `S` bytes, where `S` is the size of an address on
 > the target machine, are retrieved from the location and pushed onto
 > the stack as a value of the generic type.
 > 
-> 8\. `DW_OP_deref_size`  
+> 6. `DW_OP_deref_size` [moved from section 2.5.1.3]  
 > The `DW_OP_deref_size` takes a single 1-byte unsigned integral operand
 > that specifies the size `S`, in bytes, of the value to be retrieved. 
 > The size `S` must be no larger than the size of the generic type. The
@@ -300,7 +459,7 @@ replace the descriptions with:
 > address on the target machine, and pushed onto the stack as a value of
 > the generic type.
 > 
-> 9\. `DW_OP_deref_type`  
+> 7. `DW_OP_deref_type` [moved from section 2.5.1.3]  
 > The `DW_OP_deref_type` operation takes two operands. The first operand
 > is a 1-byte unsigned integer that specifies the size `S` of the type
 > given by the second operand. The second operand is an unsigned LEB128
@@ -316,109 +475,47 @@ replace the descriptions with:
 > definition, it is encoded explicitly into the operation so that the
 > operation can be parsed easily without reference to the `.debug\_info`
 > section._
-
-Move items 13 (`DW_OP_push_object_address`), 14 (`DW_OP_form_tls_address`),
-and 15 (`DW_OP_call_frame_cfa`) to (new) Section 2.5.2 Location Operations.
-
-
-### Section 2.5.3 Location Operations [NEW]
-
-Insert the following (adapted from parts of Section 2.6) into this new section:
-
-> Information about the location of program objects is provided by
-> location descriptions. Location descriptions can be either of two forms:
 > 
-> 1. Single location descriptions, which are a language-independent
-> representation of addressing rules of arbitrary complexity built from
-> DWARF expressions. They are sufficient for describing the location of
-> any object as long as its lifetime is either static or the same as the
-> lexical block that owns it, and it does not move during its lifetime.
+> 8. `DW_OP_xderef`... [moved unchanged from section 2.5.1.3]
 > 
-> 2. Location lists, which are used to describe objects that have a
-> limited lifetime or change their location during their lifetime.
-> Location lists are described in Section 2.6.
+> 9. `DW_OP_xderef_size`... [moved unchanged from section 2.5.1.3]
 > 
-> Location descriptions are distinguished in a context-sensitive manner.
-> As the value of an attribute, a single location description is encoded
-> using class `locdesc`, and a location list is encoded using class `loclist`
-> (which serves as an index into a separate section containing location
-> lists).
+> 10. `DW_OP_xderef_type`... [moved unchanged from section 2.5.1.3]
 > 
-> The following operation can be used to push a location onto the stack:
-> 
-> 1. `DW_OP_push_object_address` [moved from Section 2.5.1.3]  
-> The DW_OP_push_object_address operation pushes the location of the
-> object currently being evaluated as part of evaluation of a user
-> presented expression. This object may correspond to an independent
-> variable described by its own debugging information entry or it may be a
-> component of an array, structure, or class whose address has been
-> dynamically determined by an earlier step during user expression
-> evaluation. This operator provides explicit functionality (especially
-> for arrays involving descriptors) that is analogous to the implicit push
-> of the base address of a structure prior to evaluation of a
-> DW_AT_data_member_location to access a data member of a structure. For
-> an example, see Appendix D.2 on page 304.
+> 11. `DW_OP_form_tls_address`... [moved unchanged from section 2.5.1.3]
 
 
-### Section 2.5.3.1 Memory Locations
+### Section 2.5.4.2 Register Locations [adapted from 2.6.1.1.3]
 
-Insert the following (adapted from Section 2.6.1.1.2):
+Place the contents of old section 2.6.1.1.3 here.
 
-> A memory location represents the location of a piece or all of an
-> object or other entity in memory. On architectures that support
-> multiple address spaces, a memory location contains a component that
-> identifies the address space.
-> 
-> In contexts that expect a location, a value of the generic type
-> may be implicitly converted to a memory location in the default
-> address space.
-> 
-> The following operations push memory locations onto the DWARF stack:
-> 
-> 1. `DW_OP_addr` [moved from Section 2.5.1.1]  
-> The `DW_OP_addr` operation has a single operand that encodes a
-> machine address and whose size is the size of an address on the
-> target machine. The value of this operand is treated as an address
-> in the default address space and pushed onto the stack.
-> 
-> 2. `DW_OP_addrx` [moved from Section 2.5.1.1]  
-> The `DW_OP_addrx` operation has a single operand that encodes an
-> unsigned LEB128 value, which is a zero-based index into the `.debug\_addr`
-> section, where a machine address is stored. This index is relative to the
-> value of the `DW_AT_addr_base` attribute of the associated compilation
-> unit. The address obtained is treated as an address in the default address
-> space and pushed onto the stack.
->
-> 3. `DW_OP_form_tls_address`... [moved from Section 2.5.1.3]
-> 
-> 4. `DW_OP_call_frame_cfa`... [moved from Section 2.5.1.3]
+*Remove* the non-normative text:
 
+> _A register location description must stand alone as the entire
+> description of an object or a piece of an object._
 
-### Section 2.5.3.2 Register Locations
+Include the descriptions of the following operations:
 
-Move the contents of Section 2.6.1.1.3 here, replacing the term
-"location description" with "location" throughout.
+- `DW_OP_reg0`, ..., `DW_OP_reg31`
 
-[page 39] Remove the non-normative text:
-
-> A register location description must stand alone as the entire
-> description of an object or a piece of an object.
-
-
-### Section 2.5.3.3 Implicit Locations
+### Section 2.5.4.3 Implicit Locations [adapted from 2.6.1.1.4]
 
 Move the contents of Section 2.6.1.1.4 here, replacing the term
 "location description" with "location" throughout, except for the last
 non-normative paragraph, which should remain as is:
 
-> DWARF locations descriptions are intended ...
+> DWARF location descriptions are intended ...
 
-[Page 41] Under `DW_OP_stack_value`, remove the sentence:
+In the first paragraph, change "but whose contents are nonetheless
+either known or known to be undefined" to "but whose contents are
+nonetheless known".
+
+Under `DW_OP_stack_value`, remove the sentence:
 
 > The `DW_OP_stack_value` operation terminates the expression.
 
 
-### Section 2.5.3.4 Undefined Locations
+### Section 2.5.4.4 Undefined Locations [adapted from 2.6.1.1.1]
 
 Insert the following (adapted from Section 2.6.1.1.1):
 
@@ -430,7 +527,7 @@ Insert the following (adapted from Section 2.6.1.1.1):
 > location.
 
 
-### Section 2.5.3.5 Composite Locations
+### Section 2.5.4.5 Composite Locations [adapted from 2.6.1.2]
 
 Insert the following (adapted from Section 2.6.1.2, and with the new
 `DW_OP_composite` operator):
@@ -444,7 +541,7 @@ Insert the following (adapted from Section 2.6.1.2, and with the new
 > description.
 >
 > A series of piece operations (`DW_OP_piece` or `DW_OP_bit_piece`)
-> describes the parts of a value in memory address order. Each piece
+> describes the parts of a value in storage order. Each piece
 > operation pops a location `A` from the stack and updates the composite
 > location `B` in the preceding element of the stack by appending the
 > new piece described by `A`.
@@ -460,9 +557,10 @@ Insert the following (adapted from Section 2.6.1.2, and with the new
 >     The `DW_OP_composite` operator has no operands. It pushes a new, empty,
 >     composite location onto the stack.
 >
->     _This operator is provided so that a new series of piece operations
->     can be started to form a composite location when the state of the
->     stack is unknown (e.g., following a `DW_OP_call*` operation)._
+>     [non-normative] This operator is provided so that a new series of
+>     piece operations can be started to form a composite location when
+>     the state of the stack is unknown (e.g., following a `DW_OP_call*`
+>     operation).
 > 
 > 2. `DW_OP_piece`
 >
@@ -484,24 +582,26 @@ Insert the following (adapted from Section 2.6.1.2, and with the new
 >     from the location defined by the location `A` on the top of the stack.
 >
 >     Interpretation of the offset depends on the type of location. If the
->     location is an undefined location (see Section 2.5.3.4), the
+>     location is an undefined location (see Section 2.5.4.4), the
 >     `DW_OP_bit_piece` operation describes a piece consisting of the given
 >     number of bits whose values are undefined, and the offset is ignored. If
->     the location is a memory address (see Section 2.5.3.1), the
+>     the location is a memory address (see Section 2.5.4.1), the
 >     `DW_OP_bit_piece` operation describes a sequence of bits relative to the
 >     location whose address is on the top of the DWARF stack using the bit
 >     numbering and direction conventions that are appropriate to the current
 >     language on the target system. In all other cases, the source of the
->     piece is given by either a register location (see Section 2.5.3.2) or an
->     implicit value location (see Section 2.5.3.3); the offset is from the
+>     piece is given by either a register location (see Section 2.5.4.2) or an
+>     implicit value location (see Section 2.5.4.3); the offset is from the
 >     least significant bit of the source value.
 > 
->     _`DW_OP_bit_piece` is used instead of `DW_OP_piece` when the piece to be
->     assembled into a value or assigned to is not byte-sized or is not at the
->     start of a register or addressable unit of memory._
+>     [non-normative] `DW_OP_bit_piece` is used instead of `DW_OP_piece`
+>     when the piece to be assembled into a value or assigned to is not
+>     byte-sized or is not at the start of a register or addressable
+>     unit of memory.
 >
->     _Whether or not a `DW_OP_piece` operation is equivalent to any
->     `DW_OP_bit_piece` operation with an offset of 0 is ABI dependent._
+>     [non-normative] Whether or not a `DW_OP_piece` operation is
+>     equivalent to any `DW_OP_bit_piece` operation with an offset of 0
+>     is ABI dependent.
 >
 > For compatibility with DWARF Version 5 and earlier, the following
 > additional rules apply to piece operations:
@@ -530,7 +630,7 @@ Insert the following (adapted from Section 2.6.1.2, and with the new
 > piece `A`.
 
 
-### Section 2.5.3.6 Offset Operations
+### Section 2.5.4.6 Offset Operations [NEW]
 
 Add:
 
@@ -558,9 +658,16 @@ Add:
 >     _A bit offset of `n*8` is equivalent to a byte offset of `n`._
 
 
-### Section 2.5.4  Control Flow Operations
+### Section 2.5.5  Control Flow Operations [was: 2.5.1.5]
 
-Move and renumber Section 2.5.1.5 to here.
+Move the contents of old section 2.5.1.5 here.
+
+Include the descriptions of the following operations:
+
+- `DW_OP_le`, ... `DW_OP_ne`
+- `DW_OP_skip`
+- `DW_OP_bra`
+- `DW_OP_call2`, `DW_OP_call4`, `DW_OP_call_ref`
 
 Under `DW_OP_call2`, etc., change:
 
@@ -583,32 +690,51 @@ to:
 > the called expression may be used as return values by prior agreement
 > between the calling and called expressions.
 
-### Section 2.5.5 Type Conversions
+
+### Section 2.5.6 Type Conversions [was: 2.5.1.6]
 
 Move and renumber Section 2.5.1.6 to here.
 
+Include the descriptions of the following operations:
 
-### Section 2.5.6 Special Operations
+- `DW_OP_convert`
+- `DW_OP_reinterpret`
+
+
+### Section 2.5.7 Special Operations [was: 2.5.1.7]
 
 Move and renumber Section 2.5.1.7 to here.
 
+Include the descriptions of the following operations:
 
-### Section 2.6 (was: Location Descriptions)
+- `DW_OP_nop`
+- `DW_OP_entry_value`
+- `DW_OP_extended`
+- `DW_OP_user_extended`
 
-The parts of this section dealing with single location descriptions
-is moved to Section 2.5.3 Location Operations.
+
+### Section 2.6 Expression Lists [was: Location Descriptions]
+
+The parts of this section dealing with single location descriptions (was 2.6.1)
+is moved to Section 2.5.4 Location Operations.
 
 The remainder of this section deals with value lists and location lists.
 Rename the section to "Expression Lists".
 
-Move Section 2.5.2 Value Lists here and renumber 2.6.1.
+Add the following two subsections:
 
-Move Section 2.6.2 Location Lists here.
+### Section 2.6.1 Value Lists [was: 2.5.2]
+
+Place the contents of old section 2.5.2 Value Lists here.
+
+### Section 2.6.2 Location Lists [was: 2.6.2]
+
+Place the contents of old Section 2.6.2 Location Lists here.
 
 
 ### Section 5.7.6 Data Member Entries
 
-[Page 118] In the description for `DW_AT_data_member_location`, change
+In the description for `DW_AT_data_member_location`, change
 the second bullet to:
 
 > 2\. Otherwise, the value must be a location description. In this case,
@@ -620,7 +746,7 @@ the second bullet to:
 
 ### Section 5.14 Pointer to Member Type Entries
 
-[Page 131] Replace the paragraph beginning "The `DW_AT_use_location` description..." with:
+Replace the paragraph beginning "The `DW_AT_use_location` description..." with:
 
 > The `DW_AT_use_location` description is used in conjunction with the
 > location descriptions for a particular object of the given pointer to
@@ -635,7 +761,6 @@ the second bullet to:
 
 ### Section 6.4 Call Frame Information
 
-[Page 181]
 For the "expression(E)" register rule, change the description to:
 
 > The previous value of this register is located at the location produced
@@ -644,7 +769,6 @@ For the "expression(E)" register rule, change the description to:
 
 ### Section 7.7.1 DWARF Expressions
 
-[Page 226]
 Add to Table 7.9:
 
 >                                 No. of
@@ -653,19 +777,20 @@ Add to Table 7.9:
 >     DW_OP_offset          TBA      0
 >     DW_OP_bit_offset      TBA      0
 
+
 ### Section D.2.1 Fortran Simple Array Example
 
-[Page 296]
 In Figure D.4, change `DW_OP_plus` to `DW_OP_offset` in the following
 places:
 
-* In the `DW_AT_associated` attribute at `1$`.
+- In the `DW_AT_associated` attribute at `1$`.
 
-* In the `DW_AT_lower_bound` and `DW_AT_upper_bound` attributes at `2$`.
+- In the `DW_AT_lower_bound` and `DW_AT_upper_bound` attributes at `2$`.
 
-* In the `DW_AT_allocated` and `DW_AT_data_location` attributes at `6$`.
+- In the `DW_AT_allocated` and `DW_AT_data_location` attributes at `6$`.
 
-* In the `DW_AT_lower_bound` and `DW_AT_upper_bound` attributes at `7$`.
+- In the `DW_AT_lower_bound` and `DW_AT_upper_bound` attributes at `7$`.
+
 
 ### Section D.2.3 Fortran 2008 Assumed-rank Array Example
 
@@ -673,7 +798,7 @@ places:
 In Figure D.13, change `DW_OP_plus` to `DW_OP_offset` in the following
 places:
 
-* In the `DW_AT_rank` and `DW_AT_data_location` attributes at `10$`.
+- In the `DW_AT_rank` and `DW_AT_data_location` attributes at `10$`.
 
-* In the `DW_AT_lower_bound` and `DW_AT_upper_bound` attributes at `11$`
+- In the `DW_AT_lower_bound` and `DW_AT_upper_bound` attributes at `11$`
 (immediately following `DW_OP_push_object_address`).
