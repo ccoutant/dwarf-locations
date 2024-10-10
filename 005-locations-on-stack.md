@@ -500,7 +500,9 @@ Place the contents of old section 2.6.1.1.3 here.
 
 Include the descriptions of the following operations:
 
-- `DW_OP_reg0`, ..., `DW_OP_reg31`
+> 1. `DW_OP_reg0`, ..., `DW_OP_reg31`
+>
+> 2. `DW_OP_regx
 
 ### Section 2.5.4.3 Implicit Locations [adapted from 2.6.1.1.4]
 
