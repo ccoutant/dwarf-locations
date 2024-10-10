@@ -488,9 +488,6 @@ Insert the following:
 > 8. `DW_OP_xderef_size`... [moved unchanged from section 2.5.1.3]
 > 
 > 9. `DW_OP_xderef_type`... [moved unchanged from section 2.5.1.3]
-> 
-> 10. `DW_OP_form_tls_address`... [moved unchanged from section 2.5.1.3]
-
 
 ### Section 2.5.4.2 Register Locations [adapted from 2.6.1.1.3]
 
