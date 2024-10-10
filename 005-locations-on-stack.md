@@ -416,6 +416,7 @@ Insert the following (adapted from parts of section 2.6) into this new section:
 > an example, see Appendix D.2 on page 304.
 > 
 > 2. `DW_OP_call_frame_cfa`... [moved unchanged from section 2.5.1.3]
+> 3. `DW_OP_fbreg` ... [move unchanged from section 2.5.1.2]
 
 
 ### Section 2.5.4.1 Memory Locations [adapted from 2.6.1.1.2]
