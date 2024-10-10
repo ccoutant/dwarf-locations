@@ -158,8 +158,8 @@ Add the following as a new subsection:
 > which is an integral type that has the size of an address on the
 > target machine and unspecified signedness.
 > 
-> _The generic type is the same as the unspecified type used for stack
-> operations defined in DWARF Version 4 and before._
+> [non-normative] The generic type is the same as the unspecified type
+> used for stack operations defined in DWARF Version 4 and before.
 > 
 > [non-normative] Debugging information must provide consumers a way to
 > find the location of program variables, determine the bounds of dynamic
@@ -289,6 +289,13 @@ For `DW_OP_drop`, change the description to:
 
 > The `DW_OP_drop` operation pops the entry at the top of the stack.
 
+For `DW_OP_pick`, change the description to:
+
+> The single operand of the DW_OP_pick operation provides a 1-byte
+> index. A copy of the stack entry with the specified index (0 through
+> 255, inclusive) is pushed onto the stack. The top of the stack (most
+> recently added entry) has index 0.
+
 The following operations that were in section 2.5.1.3 are moved to other sections:
 
 - `DW_OP_deref`, `DW_OP_deref_size`, `DW_OP_deref_type`,
@@ -380,7 +387,8 @@ Insert the following (adapted from parts of section 2.6) into this new section:
 > representation of addressing rules of arbitrary complexity built from
 > DWARF expressions. They are sufficient for describing the location of
 > any object as long as its lifetime is either static or the same as the
-> lexical block that owns it, and it does not move during its lifetime.
+> lexical block that owns it, excluding any prologue or epilogue ranges,
+> and it does not move during its lifetime.
 > 
 > - Location lists, which are used to describe objects that have a
 > limited lifetime or change their location during their lifetime.
@@ -408,6 +416,7 @@ Insert the following (adapted from parts of section 2.6) into this new section:
 > an example, see Appendix D.2 on page 304.
 > 
 > 2. `DW_OP_call_frame_cfa`... [moved unchanged from section 2.5.1.3]
+> 3. `DW_OP_fbreg` ... [move unchanged from section 2.5.1.2]
 
 
 ### Section 2.5.4.1 Memory Locations [adapted from 2.6.1.1.2]
@@ -441,15 +450,13 @@ Insert the following:
 >
 > 3. `DW_OP_form_tls_address`... [moved unchanged from section 2.5.1.3]
 > 
-> 4. `DW_OP_call_frame_cfa`... [moved unchanged from section 2.5.1.3]
-> 
-> 5. `DW_OP_deref` [moved from section 2.5.1.3]  
+> 4. `DW_OP_deref` [moved from section 2.5.1.3]  
 > The `DW_OP_deref` operation pops the top stack entry and treats it as
 > a location. The first `S` bytes, where `S` is the size of an address on
 > the target machine, are retrieved from the location and pushed onto
 > the stack as a value of the generic type.
 > 
-> 6. `DW_OP_deref_size` [moved from section 2.5.1.3]  
+> 5. `DW_OP_deref_size` [moved from section 2.5.1.3]  
 > The `DW_OP_deref_size` takes a single 1-byte unsigned integral operand
 > that specifies the size `S`, in bytes, of the value to be retrieved. 
 > The size `S` must be no larger than the size of the generic type. The
@@ -459,7 +466,7 @@ Insert the following:
 > address on the target machine, and pushed onto the stack as a value of
 > the generic type.
 > 
-> 7. `DW_OP_deref_type` [moved from section 2.5.1.3]  
+> 6. `DW_OP_deref_type` [moved from section 2.5.1.3]  
 > The `DW_OP_deref_type` operation takes two operands. The first operand
 > is a 1-byte unsigned integer that specifies the size `S` of the type
 > given by the second operand. The second operand is an unsigned LEB128
@@ -476,14 +483,11 @@ Insert the following:
 > operation can be parsed easily without reference to the `.debug\_info`
 > section._
 > 
-> 8. `DW_OP_xderef`... [moved unchanged from section 2.5.1.3]
+> 7. `DW_OP_xderef`... [moved unchanged from section 2.5.1.3]
 > 
-> 9. `DW_OP_xderef_size`... [moved unchanged from section 2.5.1.3]
+> 8. `DW_OP_xderef_size`... [moved unchanged from section 2.5.1.3]
 > 
-> 10. `DW_OP_xderef_type`... [moved unchanged from section 2.5.1.3]
-> 
-> 11. `DW_OP_form_tls_address`... [moved unchanged from section 2.5.1.3]
-
+> 9. `DW_OP_xderef_type`... [moved unchanged from section 2.5.1.3]
 
 ### Section 2.5.4.2 Register Locations [adapted from 2.6.1.1.3]
 
@@ -496,7 +500,9 @@ Place the contents of old section 2.6.1.1.3 here.
 
 Include the descriptions of the following operations:
 
-- `DW_OP_reg0`, ..., `DW_OP_reg31`
+> 1. `DW_OP_reg0`, ..., `DW_OP_reg31`
+>
+> 2. `DW_OP_regx
 
 ### Section 2.5.4.3 Implicit Locations [adapted from 2.6.1.1.4]
 
