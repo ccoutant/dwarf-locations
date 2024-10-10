@@ -158,8 +158,8 @@ Add the following as a new subsection:
 > which is an integral type that has the size of an address on the
 > target machine and unspecified signedness.
 > 
-> _The generic type is the same as the unspecified type used for stack
-> operations defined in DWARF Version 4 and before._
+> [non-normative] The generic type is the same as the unspecified type
+> used for stack operations defined in DWARF Version 4 and before.
 > 
 > [non-normative] Debugging information must provide consumers a way to
 > find the location of program variables, determine the bounds of dynamic
