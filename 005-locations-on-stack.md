@@ -289,6 +289,13 @@ For `DW_OP_drop`, change the description to:
 
 > The `DW_OP_drop` operation pops the entry at the top of the stack.
 
+For `DW_OP_pick`, change the description to:
+
+> The single operand of the DW_OP_pick operation provides a 1-byte
+> index. A copy of the stack entry with the specified index (0 through
+> 255, inclusive) is pushed onto the stack. The top of the stack (most
+> recently added entry) has index 0.
+
 The following operations that were in section 2.5.1.3 are moved to other sections:
 
 - `DW_OP_deref`, `DW_OP_deref_size`, `DW_OP_deref_type`,
