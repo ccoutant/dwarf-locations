@@ -387,7 +387,8 @@ Insert the following (adapted from parts of section 2.6) into this new section:
 > representation of addressing rules of arbitrary complexity built from
 > DWARF expressions. They are sufficient for describing the location of
 > any object as long as its lifetime is either static or the same as the
-> lexical block that owns it, and it does not move during its lifetime.
+> lexical block that owns it, excluding any prologue or epilogue ranges,
+> and it does not move during its lifetime.
 > 
 > - Location lists, which are used to describe objects that have a
 > limited lifetime or change their location during their lifetime.
