@@ -176,35 +176,35 @@ Add the following as a new subsection:
 > Location descriptions can consist of one or more single location
 > descriptions.
 > 
-> A single location description specifies the location storage that holds
-> a program object and a position within the location storage where the
-> program object starts. The position within the location storage is
-> expressed as a bit offset relative to the start of the location storage.
+> A single location description specifies the storage bank that holds
+> a program object and a position within that storage bank where the
+> program object starts. The position within the storage bank is
+> expressed as a bit offset relative to the start of the storage bank.
 > 
-> A location storage is a linear stream of bits that can hold values. Each
-> location storage has a size in bits and can be accessed using a
-> zero-based bit offset. The ordering of bits within a location storage
+> A storage bank is a linear stream of bits that can hold values. Each
+> storage bank has a size in bits and can be accessed using a
+> zero-based bit offset. The ordering of bits within a storage bank
 > uses the bit numbering and direction conventions that are appropriate to
 > the current language on the target architecture.
 > 
-> There are five kinds of location storage:
+> There are five kinds of storage banks:
 > 
-> - Memory location storage.
+> - Memory storage.
 >   Corresponds to the target architecture memory address spaces.
 > 
-> - Register location storage.
+> - Register storage.
 >   Corresponds to the target architecture registers.
 > 
-> - Implicit location storage.
+> - Implicit storage.
 >   Corresponds to fixed values that can only be read.
 > 
-> - Undefined location storage.
+> - Undefined storage.
 >   Indicates no value is available and therefore cannot be read or written.
 > 
-> - Composite location storage.
->   Allows a mixture of these where some bits come from one location
->   storage and some from another location storage, or from disjoint parts
->   of the same location storage.
+> - Composite storage.
+>   Allows a mixture of these where some bits come from one storage
+>   bank and some from another storage bank, or from disjoint parts
+>   of the same storage bank.
 > 
 > Implicit conversions between memory locations and values may happen
 > during the execution of any operation or when evaluation of the
@@ -256,7 +256,7 @@ Add the following as a new subsection:
 >
 > A consumer of a multiple location description can read the object’s
 > value from any of the single location descriptions (since they all
-> refer to location storage that has the same value), but must write any
+> refer to storage that has the same value), but must write any
 > changed value to all the single locations.
 
 ### Section 2.5.2 Stack Operations [was: 2.5.1.3 Stack Operations]
