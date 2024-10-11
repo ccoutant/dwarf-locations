@@ -284,6 +284,8 @@ Include the descriptions for the following operations:
 
 For the above operations, remove all occurrences of "including its type identifier".
 
+For `DW_OP_dup`, change the description to:
+
 > The `DW_OP_dup` operation duplicates the entry at the top of the stack.
 
 For `DW_OP_drop`, change the description to:
