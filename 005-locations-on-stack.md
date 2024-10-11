@@ -158,8 +158,8 @@ Add the following as a new subsection:
 > which is an integral type that has the size of an address on the
 > target machine and unspecified signedness.
 > 
-> _The generic type is the same as the unspecified type used for stack
-> operations defined in DWARF Version 4 and before._
+> [non-normative] The generic type is the same as the unspecified type used for stack
+> operations defined in DWARF Version 4 and before.
 > 
 > [non-normative] Debugging information must provide consumers a way to
 > find the location of program variables, determine the bounds of dynamic
@@ -217,20 +217,21 @@ Add the following as a new subsection:
 > 
 > [begin non-normative]
 > 
-> _Location descriptions are a language independent representation of
-> addressing rules._
+> Location descriptions are a language independent representation of
+> addressing rules.
 > 
-> _They can be the result of evaluating a debugger information entry
+> They can be the result of evaluating a debugger information entry
 > attribute that specifies an operation expression of arbitrary
 > complexity. In this usage they can describe the location of an object
 > as long as its lifetime is either static or the same as the lexical
-> block that owns it, and it does not move during its lifetime._
+> block that owns it, excluding any prologue or epilogue ranges, and it
+> does not move during its lifetime.
 > 
-> _They can be the result of evaluating a debugger information entry
+> They can be the result of evaluating a debugger information entry
 > attribute that specifies a location list expression. In this usage they
 > can describe the location of an object that has a limited lifetime,
 > changes its location during its lifetime, or has multiple locations over
-> part or all of its lifetime._
+> part or all of its lifetime.
 > 
 > [end non-normative]  
 > 
@@ -293,8 +294,8 @@ The following operations that were in section 2.5.1.3 are moved to other section
 
 - `DW_OP_deref`, `DW_OP_deref_size`, `DW_OP_deref_type`,
   `DW_OP_xderef`, `DW_OP_xderef_size`, `DW_OP_xderef_type`, `DW_OP_form_tls_address`,
-  (to 2.5.4.1 Memory Locations)
-- `DW_OP_push_object_address`, `DW_OP_call_frame_cfa` (to 2.5.4 Location Operations)
+  `DW_OP_call_frame_cfa` (to 2.5.4.1 Memory Locations)
+- `DW_OP_push_object_address`  (to 2.5.4 Location Operations)
 - `DW_OP_push_lane` (to 2.5.3.1 Literal Encodings)
 
 
@@ -392,9 +393,11 @@ Insert the following (adapted from parts of section 2.6) into this new section:
 > (which serves as an index into a separate section containing location
 > lists).
 > 
-> The following operations can be used to push a location onto the stack:
+> The following operation can be used to push a location onto the stack:
 > 
-> 1. `DW_OP_push_object_address` [moved from section 2.5.1.3]  
+> 1. `DW_OP_fbreg`... [moved unchanged from section 2.5.1.2]
+> 
+> 2. `DW_OP_push_object_address` [moved from section 2.5.1.3]  
 > The DW_OP_push_object_address operation pushes the location of the
 > object currently being evaluated as part of evaluation of a user
 > presented expression. This object may correspond to an independent
@@ -406,8 +409,6 @@ Insert the following (adapted from parts of section 2.6) into this new section:
 > of the base address of a structure prior to evaluation of a
 > DW_AT_data_member_location to access a data member of a structure. For
 > an example, see Appendix D.2 on page 304.
-> 
-> 2. `DW_OP_call_frame_cfa`... [moved unchanged from section 2.5.1.3]
 
 
 ### Section 2.5.4.1 Memory Locations [adapted from 2.6.1.1.2]
@@ -433,7 +434,7 @@ Insert the following:
 > 
 > 2. `DW_OP_addrx` [moved from section 2.5.1.1]  
 > The `DW_OP_addrx` operation has a single operand that encodes an
-> unsigned LEB128 value, which is a zero-based index into the `.debug\_addr`
+> unsigned LEB128 value, which is a zero-based index into the `.debug_addr`
 > section, where a machine address is stored. This index is relative to the
 > value of the `DW_AT_addr_base` attribute of the associated compilation
 > unit. The address obtained is treated as an address in the default address
@@ -471,25 +472,23 @@ Insert the following:
 > as a location. The first `S` bytes are retrieved from the location and
 > pushed onto the stack as a value of type `T`.
 > 
-> _While the size of the pushed value could be inferred from the base type
+> [non-normative] While the size of the pushed value could be inferred from the base type
 > definition, it is encoded explicitly into the operation so that the
-> operation can be parsed easily without reference to the `.debug\_info`
-> section._
+> operation can be parsed easily without reference to the `.debug_info`
+> section.
 > 
 > 8. `DW_OP_xderef`... [moved unchanged from section 2.5.1.3]
 > 
 > 9. `DW_OP_xderef_size`... [moved unchanged from section 2.5.1.3]
 > 
 > 10. `DW_OP_xderef_type`... [moved unchanged from section 2.5.1.3]
-> 
-> 11. `DW_OP_form_tls_address`... [moved unchanged from section 2.5.1.3]
 
 
 ### Section 2.5.4.2 Register Locations [adapted from 2.6.1.1.3]
 
 Place the contents of old section 2.6.1.1.3 here.
 
-*Remove* the non-normative text:
+_Remove_ the non-normative text:
 
 > _A register location description must stand alone as the entire
 > description of an object or a piece of an object._
@@ -497,6 +496,8 @@ Place the contents of old section 2.6.1.1.3 here.
 Include the descriptions of the following operations:
 
 - `DW_OP_reg0`, ..., `DW_OP_reg31`
+- `DW_OP_regx`
+
 
 ### Section 2.5.4.3 Implicit Locations [adapted from 2.6.1.1.4]
 
@@ -655,7 +656,7 @@ Add:
 >     component of the original location and pushes the updated location
 >     onto the stack.
 > 
->     _A bit offset of `n*8` is equivalent to a byte offset of `n`._
+>     [non-normative] A bit offset of `n*8` is equivalent to a byte offset of `n`.
 
 
 ### Section 2.5.5  Control Flow Operations [was: 2.5.1.5]
