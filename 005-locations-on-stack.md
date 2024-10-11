@@ -220,14 +220,14 @@ Add the following as a new subsection:
 > Location descriptions are a language independent representation of
 > addressing rules.
 > 
-> They can be the result of evaluating a debugger information entry
+> They can be the result of evaluating a debugging information entry
 > attribute that specifies an operation expression of arbitrary
 > complexity. In this usage they can describe the location of an object
 > as long as its lifetime is either static or the same as the lexical
 > block that owns it, excluding any prologue or epilogue ranges, and it
 > does not move during its lifetime.
 > 
-> They can be the result of evaluating a debugger information entry
+> They can be the result of evaluating a debugging information entry
 > attribute that specifies a location list expression. In this usage they
 > can describe the location of an object that has a limited lifetime,
 > changes its location during its lifetime, or has multiple locations over
