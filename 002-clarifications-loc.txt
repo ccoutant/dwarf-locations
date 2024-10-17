@@ -86,20 +86,20 @@ With the following:
         > [For further discussion...]
         > It may be better to add an implicit pointer location storage
         > kind used by the DW_OP_implicit_pointer operation. It would
-        > specify the debugger information entry and byte offset
+        > specify the debugging information entry and byte offset
         > provided by the operations.
 
     [non-normative] Location descriptions are a language independent
     representation of addressing rules.
 
-      * [non-normative] They can be the result of evaluating a debugger
+      * [non-normative] They can be the result of evaluating a debugging
         information entry attribute that specifies an operation expression of
         arbitrary complexity. In this usage they can describe the
         location of an object as long as its lifetime is either static
         or the same as the lexical block (see 3.5 Lexical Block Entries)
         that owns it, and it does not move during its lifetime.
 
-      * [non-normative] They can be the result of evaluating a debugger
+      * [non-normative] They can be the result of evaluating a debugging
         information entry attribute that specifies a location list expression.
         In this usage they can describe the location of an object that has
         a limited lifetime, changes its location during its lifetime, or
