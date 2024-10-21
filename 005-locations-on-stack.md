@@ -171,10 +171,24 @@ Add the following as a new subsection:
 > lifetime.
 > 
 > Information about the location of program objects is provided by
-> location descriptions.
+> location descriptions. Location descriptions can be either of two forms:
 > 
-> Location descriptions can consist of one or more single location
-> descriptions.
+> - Single location descriptions, which are a language-independent
+> representation of addressing rules of arbitrary complexity built from
+> DWARF expressions. They are sufficient for describing the location of
+> any object as long as its lifetime is either static or the same as the
+> lexical block that owns it, excluding any prologue or epilogue ranges,
+> and it does not move during its lifetime.
+> 
+> - Location lists, which are used to describe objects that have a
+> limited lifetime or change their location during their lifetime.
+> Location lists are described in Section 2.6.
+> 
+> Location descriptions are distinguished in a context-sensitive manner.
+> As the value of an attribute, a single location description is encoded
+> using class `locdesc`, and a location list is encoded using class `loclist`
+> (which serves as an index into a separate section containing location
+> lists).
 > 
 > A single location description specifies the storage bank that holds
 > a program object and a position within that storage bank where the
@@ -211,9 +225,9 @@ Add the following as a new subsection:
 > expression is completed. If a location is expected, but the result is
 > a value, the value is implicitly treated as a memory address in the
 > default address space, and converted to a memory location. If a value
-> is expected, but the result is a memory location in the default
-> address space, the address is implicitly converted to a value of the
-> generic type.
+> is expected, but the result is an addressable memory location in the
+> default address space, the address is implicitly converted to a value
+> of the generic type.
 > 
 > [begin non-normative]
 > 
@@ -374,29 +388,9 @@ Include the descriptions of the following operations:
 
 ### Section 2.5.4 Location Operations [NEW]
 
-Insert the following (adapted from parts of section 2.6) into this new section:
+Insert the following into this new section:
 
-> Information about the location of program objects is provided by
-> location descriptions. Location descriptions can be either of two forms:
-> 
-> - Single location descriptions, which are a language-independent
-> representation of addressing rules of arbitrary complexity built from
-> DWARF expressions. They are sufficient for describing the location of
-> any object as long as its lifetime is either static or the same as the
-> lexical block that owns it, excluding any prologue or epilogue ranges,
-> and it does not move during its lifetime.
-> 
-> - Location lists, which are used to describe objects that have a
-> limited lifetime or change their location during their lifetime.
-> Location lists are described in Section 2.6.
-> 
-> Location descriptions are distinguished in a context-sensitive manner.
-> As the value of an attribute, a single location description is encoded
-> using class `locdesc`, and a location list is encoded using class `loclist`
-> (which serves as an index into a separate section containing location
-> lists).
-> 
-> The following operation can be used to push a location onto the stack:
+> The following operations can be used to push a location onto the stack:
 > 
 > 1. `DW_OP_fbreg`... [moved unchanged from section 2.5.1.2]
 > 
@@ -747,6 +741,21 @@ the second bullet to:
 > the location description is evaluated; the result of the evaluation is
 > the location of the member entry.
 
+Replace the following non-normative paragraph with:
+
+> > [non-normative] The push on the DWARF expression stack of the location
+> > of the containing construct is equivalent to execution of the
+> > `DW_OP_push_object_address` operation (see Section 2.5.4);
+> > `DW_OP_push_object_address` therefore is not needed at the beginning of
+> > a location description for a data member. The result of the evaluation
+> > is a location, not an offset to the member.
+
+Remove the second non-normative paragraph:
+
+> > [non-normative] A `DW_AT_data_member_location` attribute that has the
+> > form of a location description is not valid for a data member contained
+> > in an entity that is not byte aligned because DWARF operations do not
+> > allow for manipulating or computing bit offsets.
 
 ### Section 5.14 Pointer to Member Type Entries
 
