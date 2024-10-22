@@ -349,7 +349,7 @@ The following operations that were in 2.5.1.1 are moved to Section 2.5.4.1 Memor
 
 ### Section 2.5.3.2 Register Values [was: 2.5.1.2]
 
-Place the contents of old section 2.5.1.1 here.
+Place the contents of old section 2.5.1.2 here.
 
 Include the descriptions of the following operations:
 
@@ -436,28 +436,43 @@ Insert the following:
 > value of the `DW_AT_addr_base` attribute of the associated compilation
 > unit. The address obtained is treated as an address in the default address
 > space and pushed onto the stack.
+> 
+> 3. `DW_OP_breg0`, ..., `DW_OP_breg31` [moved from section 2.5.1.2]  
+> The single operand of the `DW_OP_breg<n>` operations provides a signed
+> LEB128 byte offset. The contents of the specified register (0–31) are
+> treated as a memory address in the default address space. The offset is
+> added to the address obtained from the register and the resulting memory
+> location is pushed onto the stack.
+> 
+> 4. `DW_OP_bregx` [moved from section 2.5.1.2]  
+> The `DW_OP_bregx` operation provides a memory location formed from its
+> two operands. The first operand is a register number which is specified
+> by an unsigned LEB128 number. The contents of the specified register are
+> treated as a memory address in the default address space. The second
+> operand is a signed LEB128 byte offset. The offset is added to the
+> address obtained from the register and the resulting location is pushed
+> onto the stack.
 >
-> 3. `DW_OP_form_tls_address`... [moved unchanged from section 2.5.1.3]
+> 5. `DW_OP_form_tls_address`... [moved unchanged from section 2.5.1.3]
 > 
-> 4. `DW_OP_call_frame_cfa`... [moved unchanged from section 2.5.1.3]
+> 6. `DW_OP_call_frame_cfa`... [moved unchanged from section 2.5.1.3]
 > 
-> 5. `DW_OP_deref` [moved from section 2.5.1.3]  
-> The `DW_OP_deref` operation pops the top stack entry and treats it as
-> a location. The first `S` bytes, where `S` is the size of an address on
-> the target machine, are retrieved from the location and pushed onto
-> the stack as a value of the generic type.
+> 7. `DW_OP_deref` [moved from section 2.5.1.3]  
+> The `DW_OP_deref` operation pops a location `L` from the top of the
+> stack. The first `S` bytes, where `S` is the size of an address on the
+> target machine, are retrieved from the location `L` and pushed onto the
+> stack as a value of the generic type.
 > 
-> 6. `DW_OP_deref_size` [moved from section 2.5.1.3]  
+> 8. `DW_OP_deref_size` [moved from section 2.5.1.3]  
 > The `DW_OP_deref_size` takes a single 1-byte unsigned integral operand
-> that specifies the size `S`, in bytes, of the value to be retrieved. 
+> that specifies the size `S`, in bytes, of the value to be retrieved.
 > The size `S` must be no larger than the size of the generic type. The
-> operation behaves like the `DW_OP_deref` operation: it
-> pops the top stack entry and treats it as a location. The first `S` bytes
-> are retrieved from the location, zero extended to the size of an
-> address on the target machine, and pushed onto the stack as a value of
-> the generic type.
+> operation behaves like the `DW_OP_deref` operation: it pops a location
+> `L` from the stack. The first `S` bytes are retrieved from the
+> location `L`, zero extended to the size of an address on the target
+> machine, and pushed onto the stack as a value of the generic type.
 > 
-> 7. `DW_OP_deref_type` [moved from section 2.5.1.3]  
+> 9. `DW_OP_deref_type` [moved from section 2.5.1.3]  
 > The `DW_OP_deref_type` operation takes two operands. The first operand
 > is a 1-byte unsigned integer that specifies the size `S` of the type
 > given by the second operand. The second operand is an unsigned LEB128
@@ -465,20 +480,20 @@ Insert the following:
 > the current compilation unit, which must be a `DW_TAG_base_type` entry
 > that provides the type `T` of the value to be retrieved. The size `S`
 > must be the same as the size of the base type represented by the
-> second operand. This operation pops the top stack entry and treats it
-> as a location. The first `S` bytes are retrieved from the location and
-> pushed onto the stack as a value of type `T`.
+> second operand. This operation pops a location `L` from the stack. The
+> first `S` bytes are retrieved from the location `L` and pushed onto the
+> stack as a value of type `T`.
 > 
 > [non-normative] While the size of the pushed value could be inferred from the base type
 > definition, it is encoded explicitly into the operation so that the
 > operation can be parsed easily without reference to the `.debug_info`
 > section.
 > 
-> 8. `DW_OP_xderef`... [moved unchanged from section 2.5.1.3]
+> 10. `DW_OP_xderef`... [moved unchanged from section 2.5.1.3]
 > 
-> 9. `DW_OP_xderef_size`... [moved unchanged from section 2.5.1.3]
+> 11. `DW_OP_xderef_size`... [moved unchanged from section 2.5.1.3]
 > 
-> 10. `DW_OP_xderef_type`... [moved unchanged from section 2.5.1.3]
+> 12. `DW_OP_xderef_type`... [moved unchanged from section 2.5.1.3]
 
 
 ### Section 2.5.4.2 Register Locations [adapted from 2.6.1.1.3]
@@ -750,7 +765,7 @@ Replace the following non-normative paragraph with:
 > > a location description for a data member. The result of the evaluation
 > > is a location, not an offset to the member.
 
-Remove the second non-normative paragraph:
+_Remove_ the second non-normative paragraph:
 
 > > [non-normative] A `DW_AT_data_member_location` attribute that has the
 > > form of a location description is not valid for a data member contained
