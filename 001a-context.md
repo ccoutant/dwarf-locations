@@ -22,208 +22,173 @@ Proposed Changes
 Insert the following subsection under 2.5 (renumbering subsequent
 subsections):
 
-> 2.5.1 DWARF Expression Evaluation Context
+> ### 2.5.1 DWARF Expression Evaluation Context
 > 
-> A DWARF expression is evaluated in a context that can include a
-> number of context elements. If multiple context elements are
-> specified, then they must be self consistent or the result of the
-> evaluation is undefined. The context elements that can be specified
-> are:
+> A DWARF expression is evaluated within a context provided by the debugger
+> or other DWARF consumer.
 > 
-> 1. A current result kind
+> 1. Required result kind
 > 
->     The kind of result required by the DWARF expression evaluation.
->     If specified it can be a location description or a value.
+>     The kind of result required -- either a location description or a
+>     value -- is determined by the DWARF construct where the expression
+>     is found.
 > 
-> 2. A current thread
+> 2. Initial stack
 > 
->     The target architecture thread identifier of the source program
->     thread of execution for which a user presented expression is
->     currently being evaluated.
+>     In most cases, the DWARF expression stack is empty at the
+>     start of expression evaluation. In certain circumstances,
+>     however, one or more values are pushed implicitly onto the
+>     stack before evaluation of the expression starts (e.g.,
+>     `DW_AT_data_location`).
 > 
->     It is required for operations that are related to target
->     architecture threads.
+> 3. Current compilation unit
 > 
->     [non-normative] For example, the `DW_OP_form_tls_address` operation.
-> 
-> 3. A current lane
-> 
->     The 0-based SIMT lane identifier to be used in evaluating a
->     user-presented expression. This applies to source languages that are
->     implemented for a target architecture using a SIMT execution model.
->     These implementations map source language threads of execution to
->     lanes of the target architecture threads.
-> 
->     It is required for operations that are related to SIMT lanes.
-> 
->     [non-normative] For example, the `DW_OP_push_lane` operation.
-> 
->     If specified, it must be consistent with the value of the
->     `DW_AT_num_lanes` attribute of the subprogram corresponding to
->     context’s frame and program location. It is consistent if the value
->     is greater than or equal to 0 and less than the, possibly default,
->     value of the `DW_AT_num_lanes` attribute. Otherwise the result is
->     undefined.
-> 
-> 4. A current call frame
-> 
->     The target architecture call frame identifier. It identifies a
->     call frame that corresponds to an active invocation of a
->     subprogram in the current thread. It is identified by its
->     address on the call stack. The address is referred to as the
->     Canonical Frame Address (CFA). The call frame information is
->     used to determine the CFA for the call frames of the current
->     thread’s call stack (see 6.4 Call Frame Information).
-> 
->     It is required for operations that specify target architecture
->     registers to support virtual unwinding of the call stack.
-> 
->     [non-normative] For example, the `DW_OP_*reg*` operations.
-> 
->     If specified, it must be an active call frame in the current
->     thread. Otherwise the result is undefined.
-> 
->     If it is the currently executing call frame, then it is termed
->     the top call frame.
-> 
-> 5. A current program location
-> 
->     The target architecture program location corresponding to the
->     current call frame of the current thread.
-> 
->     The program location of the top call frame is the target
->     architecture program counter for the current thread. The call
->     frame information is used to obtain the value of the return
->     address register to determine the program location of the other
->     call frames (see 6.4 Call Frame Information).
-> 
->     It is required for the evaluation of location list expressions
->     to select amongst multiple program location ranges. It is
->     required for operations that specify target architecture
->     registers to support virtual unwinding of the call stack (see
->     6.4 Call Frame Information).
-> 
->     If specified:
-> 
->       * If the current call frame is the top call frame, it must be
->         the current target architecture program location.
-> 
->       * If the current call frame F is not the top call frame, it
->         must be the program location associated with the call site
->         in the current caller frame F that invoked the callee frame.
-> 
->       * Otherwise the result is undefined.
-> 
-> 6. A current compilation unit
-> 
->     The compilation unit debug information entry that contains the
->     DWARF expression being evaluated.
-> 
+>     The current compilation unit is the compilation unit debugging
+>     information entry that contains the DWARF expression being
+>     evaluated.
+>     
 >     It is required for operations that reference debug information
 >     associated with the same compilation unit, including indicating
->     if such references use the 32-bit or 64-bit DWARF format. It can
->     also provide the default address space address size if no
->     current target architecture is specified.
-> 
->     [non-normative] For example, the `DW_OP_constx` and `DW_OP_addrx`
->     operations.
-> 
->     [non-normative] Note that this compilation unit might not be the
+>     if such references use the 32-bit or 64-bit DWARF format.
+>     
+>     [non-normative] _For example, the `DW_OP_constx` and `DW_OP_addrx`
+>     operations require the address size, which is a property of the
+>     compilation unit._
+>     
+>     [non-normative] _Note that this compilation unit might not be the
 >     same as the compilation unit determined from the loaded code
 >     object corresponding to the current program location. For
 >     example, the evaluation of the expression E associated with a
 >     `DW_AT_location` attribute of the debug information entry operand
 >     of the `DW_OP_call*` operations is evaluated with the compilation
 >     unit that contains E and not the one that contains the
->     `DW_OP_call*` operation expression.
-> 
->     [non-normative] The DWARF expressions for call frame information (see
+>     `DW_OP_call*` operation expression._
+>     
+>     [non-normative] _The DWARF expressions for call frame information (see
 >     6.4 Call Frame Information) operations are restricted to those that
->     do not require the compilation unit context to be specified.
+>     do not require a current compilation unit._
 > 
-> 7. A current target architecture
+> 4. Target architecture
 > 
->     The target architecture.
+>     The target architecture is typically provided by the object file
+>     containing the DWARF information. It may also be refined by
+>     instruction set identifiers in the line number table.
+>     
+>     It is required for operations that specify architecture-specific entities.
+>     
+>     [non-normative] _Architecture-specific entities include DWARF
+>     register identifiers, DWARF address space identifiers, the default
+>     address space, and the address space address sizes._
 > 
->     It is required for operations that specify target architecture
->     specific entities.
+> 5. Current thread
 > 
->     [non-normative] For example, target architecture specific
->     entities include DWARF register identifiers, DWARF address space
->     identifiers, the default address space, and the address space
->     address sizes.
+>     The current thread identifies a current thread of execution. When
+>     debugging a multi-threaded program, the current thread may be
+>     selected by a user command that focuses on a specific thread, or it
+>     may be selected automatically when the running thread stops at a
+>     breakpoint.
+>     
+>     If there is no running process, the current thread is not
+>     available.
+>     
+>     It is required for operations that are related to target
+>     architecture threads.
 > 
->     If specified:
+>     [non-normative] _For example, the `DW_OP_form_tls_address` operation
+>     requires a current thread._
 > 
->       * If the current frame is specified, then the current target
->         architecture must be the same as the target architecture of
->         the current frame.
+> 6. Current lane
 > 
->       * If the current frame is specified and is the top frame, and
->         if the current thread is specified, then the current target
->         architecture must be the same as the target architecture of
->         the current thread.
+>     The current lane is a SIMD/SIMT lane identifier. This applies to source languages that are
+>     implemented using a SIMD/SIMT execution model.
+>     These implementations map source language threads of execution to
+>     lanes of the target architecture threads.
+>     When debugging a SIMD/SIMT program, the current lane is typically
+>     selected by a user command that focuses on a specific lane.
+>     
+>     It is required for operations that are related to SIMD/SIMT lanes.
+>     
+>     [non-normative] _For example, the `DW_OP_push_lane` operation pushes
+>     the value of the current lane._
+>     
+>     The current lane must be consistent with the value of the
+>     `DW_AT_num_lanes` attribute of the subprogram corresponding to
+>     context’s frame and program location. It is consistent if the value
+>     is greater than or equal to 0 and less than the, possibly default,
+>     value of the `DW_AT_num_lanes` attribute.
+>     
+>     If there is no running process, the current lane is not available.
+>     If the current running program is not using a SIMD/SIMT
+>     execution model, the current lane is always 0.
 > 
->       * If the current compilation unit is specified, then the
->         current target architecture default address space address
->         size must be the same as the `address_size` field in the
->         header of the current compilation unit.
+> 7. Current call frame
 > 
->       * If the current program location is specified, then the
->         current target architecture must be the same as the target
->         architecture of any line number information entry (see 6.2
->         Line Number Information) corresponding to the current
->         program location.
+>     The current call frame identifies an active invocation of a
+>     subprogram in the current thread. It is identified by its address on
+>     the call stack. The address is referred to as the Canonical Frame
+>     Address (CFA). The call frame information is used to determine the
+>     CFA for the call frames of the current thread’s call stack (see 6.4
+>     Call Frame Information).
 > 
->       * If the current program location is specified, then the
->         current target architecture default address space address
->         size must be the same as the `address_size` field in the
->         header of any entry corresponding to the current program
->         location in the `.debug_addr`, `.debug_line`, `.debug_rnglists`,
->         `.debug_rnglists.dwo`, `.debug_loclists`, and
->         `.debug_loclists.dwo` sections.
+>     When debugging a running program, the current frame may be the
+>     topmost frame (e.g., where a breakpoint has triggered), or may be
+>     selected by a user command to focus the view on a frame further down
+>     the call stack. The current frame provides a view of the state
+>     of the running process at a particular point in time.
+>     
+>     It is required for operations that use the contents of registers
+>     (e.g., `DW_OP_reg*`) or frame-local storage (e.g., `DW_OP_fbreg`) so
+>     that the debugger can retrieve values from the selected view of
+>     the process state.
+>     
+>     If there is no running process, the current call frame is not available.
+>     
+>     The current frame, when available, must be an active call frame in
+>     the current thread.
 > 
->       * Otherwise the result is undefined.
+> 8. Current program counter (PC)
 > 
-> 8. A current object
+>     The current program counter identifies the current point of
+>     execution in the current call frame of the current thread.
+>     
+>     The PC of the top call frame is the target
+>     architecture program counter for the current thread. The call
+>     frame information is used to obtain the value of the return
+>     address register to determine the PC of the other
+>     call frames (see 6.4 Call Frame Information).
+>     
+>     It is required for the evaluation of expression lists
+>     to select amongst multiple program location ranges.
+>     
+>     If there is no running process, the current program counter is not
+>     available. When evaluating expression lists when no current pc is
+>     available, only default location descriptions are used.
 > 
->     The location description of a program object.
+> 9. Current object
 > 
->     It is required for the `DW_OP_push_object_address` operation.
+>     The current object is a data object described by a data object entry
+>     (see Section 4.1) that is being inspected. When evaluating
+>     expressions that provide attribute values of a data object, the
+>     containing debugging information entry is the current object. When
+>     evaluating expressions that provide attribute values for a type
+>     (e.g., `DW_AT_data_location` for a `DW_TAG_data_member`), the
+>     current object is the data object entry (if there is one) that
+>     referred to the type entry (e.g., via `DW_AT_type`).
+>     
+>     A current object is required for the `DW_OP_push_object_address`
+>     operation and by some attributes (e.g.,
+>     `DW_AT_data_member_location`) where the object's location is
+>     provided as part of the initial stack.
 > 
->     [non-normative] For example, the `DW_AT_data_location` attribute
->     on type debug information entries specifies the program object
->     corresponding to a runtime descriptor as the current object when
->     it evaluates its associated expression.
 > 
->     The result is undefined if the location description is invalid
->     (see 2.6 Location Descriptions).
+> [non-normative] _A DWARF expression for a location description may be
+> able to be evaluated without a thread, lane, call frame, program
+> counter, or architecture context element. For example, the location of a
+> global variable may be able to be evaluated without such context. If the
+> expression evaluation requires any missing context elements, it may
+> indicate the variable has been optimized and so requires more context._
 > 
-> 9. An initial stack
-> 
->     This is a list of values that will be pushed on the operation
->     expression evaluation stack in the order provided before
->     evaluation of an operation expression starts.
-> 
->     Some debugger information entries have attributes that evaluate
->     their DWARF expression value with initial stack entries. In all
->     other cases the initial stack is empty.
-> 
->     The result is undefined if any location descriptions are invalid
->     (see 2.6 Location Descriptions).
-> 
-> If the evaluation requires a context element that is not specified,
-> then the result of the evaluation is an error.
-> 
-> [non-normative] A DWARF expression for a location description may be
-> able to be evaluated without a thread, lane, call frame, program location,
-> or architecture context. For example, the location of a global
-> variable may be able to be evaluated without such context. If the
-> expression evaluates with an error then it may indicate the variable
-> has been optimized and so requires more context.
-> 
-> The DWARF is ill-formed if all the address_size fields in the
-> headers of all the entries in the `.debug_info`, `.debug_addr`,
-> `.debug_line`, `.debug_rnglists`, `.debug_rnglists.dwo`, `.debug_loclists`,
-> and `.debug_loclists.dwo` sections corresponding to any given program
-> location do not match.
+> The `address_size` fields must match in the headers of all the entries
+> in the `.debug_info`, `.debug_addr`, `.debug_line`, `.debug_rnglists`,
+> `.debug_rnglists.dwo`, `.debug_loclists`, and `.debug_loclists.dwo`
+> sections corresponding to any given program counter.
