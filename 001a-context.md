@@ -25,13 +25,17 @@ subsections):
 > ### 2.5.1 DWARF Expression Evaluation Context
 > 
 > A DWARF expression is evaluated within a context provided by the debugger
-> or other DWARF consumer.
+> or other DWARF consumer. The context includes the following elements:
 > 
 > 1. Required result kind
 > 
 >     The kind of result required -- either a location description or a
 >     value -- is determined by the DWARF construct where the expression
 >     is found.
+> 
+>     [non-normative] _For example, DWARF attributes with exprval class require a
+>     value and attributes with locdesc class require a location
+>     description (see Section 7.5.5)._
 > 
 > 2. Initial stack
 > 
@@ -88,21 +92,49 @@ subsections):
 >     may be selected automatically when the running thread stops at a
 >     breakpoint.
 >     
->     If there is no running process, the current thread is not
->     available.
+>     If there is no running process (or an image of a process, as from
+>     a core file), there is no current thread.
 >     
->     It is required for operations that are related to target
->     architecture threads.
+>     It is required for operations that provide access to thread-local
+>     storage.
 > 
 >     [non-normative] _For example, the `DW_OP_form_tls_address` operation
 >     requires a current thread._
 > 
-> 6. Current lane
+> 6. Current call frame
 > 
->     The current lane is a SIMD/SIMT lane identifier. This applies to source languages that are
->     implemented using a SIMD/SIMT execution model.
->     These implementations map source language threads of execution to
->     lanes of the target architecture threads.
+>     The current call frame identifies an active invocation of a
+>     subprogram in the current thread. It is identified by its address
+>     on the call stack (see Section 3.3.5.2). The address is referred
+>     to as the frame base or the call frame address (CFA). The call
+>     frame information is used to determine the base addresses for the
+>     call frames of the current thread’s call stack (see 6.4 Call Frame
+>     Information).
+> 
+>     When debugging a running program or examining a core file, the
+>     current frame may be the topmost (most recently activated) frame
+>     (e.g., where a breakpoint has triggered), or may be selected by a
+>     user command to focus the view on a frame further down the call
+>     stack. The current frame provides a view of the state of the
+>     running process at a particular point in time.
+>     
+>     It is required for operations that use the contents of registers
+>     (e.g., `DW_OP_reg*`) or frame-local storage (e.g., `DW_OP_fbreg`) so
+>     that the debugger can retrieve values from the selected view of
+>     the process state.
+>     
+>     If there is no running process (or image of a process), there is no
+>     current call frame.
+>     
+>     The current frame must be an active call frame in the current
+>     thread.
+> 
+> 7. Current lane
+> 
+>     The current lane is a SIMD/SIMT lane identifier. This applies to
+>     source languages that are implemented using a SIMD/SIMT execution
+>     model. These implementations map source language vectorized
+>     operations to SIMD/SIMT lanes of execution (see Section 3.3.5.4).
 >     When debugging a SIMD/SIMT program, the current lane is typically
 >     selected by a user command that focuses on a specific lane.
 >     
@@ -121,47 +153,22 @@ subsections):
 >     If the current running program is not using a SIMD/SIMT
 >     execution model, the current lane is always 0.
 > 
-> 7. Current call frame
-> 
->     The current call frame identifies an active invocation of a
->     subprogram in the current thread. It is identified by its address on
->     the call stack. The address is referred to as the Canonical Frame
->     Address (CFA). The call frame information is used to determine the
->     CFA for the call frames of the current thread’s call stack (see 6.4
->     Call Frame Information).
-> 
->     When debugging a running program, the current frame may be the
->     topmost frame (e.g., where a breakpoint has triggered), or may be
->     selected by a user command to focus the view on a frame further down
->     the call stack. The current frame provides a view of the state
->     of the running process at a particular point in time.
->     
->     It is required for operations that use the contents of registers
->     (e.g., `DW_OP_reg*`) or frame-local storage (e.g., `DW_OP_fbreg`) so
->     that the debugger can retrieve values from the selected view of
->     the process state.
->     
->     If there is no running process, the current call frame is not available.
->     
->     The current frame, when available, must be an active call frame in
->     the current thread.
-> 
 > 8. Current program counter (PC)
 > 
 >     The current program counter identifies the current point of
->     execution in the current call frame of the current thread.
+>     execution in the current call frame of the current thread and/or lane.
 >     
->     The PC of the top call frame is the target
->     architecture program counter for the current thread. The call
->     frame information is used to obtain the value of the return
->     address register to determine the PC of the other
->     call frames (see 6.4 Call Frame Information).
+>     The PC of the top (most recently activated) call frame is the
+>     program counter for the current thread. The call frame information
+>     is used to obtain the value of the return address register to
+>     determine the PC of the other call frames (see 6.4 Call Frame
+>     Information).
 >     
->     It is required for the evaluation of expression lists
+>     It is required for the evaluation of value lists and location lists
 >     to select amongst multiple program location ranges.
 >     
->     If there is no running process, the current program counter is not
->     available. When evaluating expression lists when no current pc is
+>     If there is no running process, there is no current program
+>     counter. When evaluating expression lists when no current pc is
 >     available, only default location descriptions are used.
 > 
 > 9. Current object
@@ -182,13 +189,67 @@ subsections):
 > 
 > 
 > [non-normative] _A DWARF expression for a location description may be
-> able to be evaluated without a thread, lane, call frame, program
+> able to be evaluated without a thread, call frame, lane, program
 > counter, or architecture context element. For example, the location of a
-> global variable may be able to be evaluated without such context. If the
-> expression evaluation requires any missing context elements, it may
-> indicate the variable has been optimized and so requires more context._
+> global variable may be able to be evaluated without such context,
+> while the location of local variables in a stack frame cannot be
+> evaluated without additional context._
 > 
 > The `address_size` fields must match in the headers of all the entries
 > in the `.debug_info`, `.debug_addr`, `.debug_line`, `.debug_rnglists`,
 > `.debug_rnglists.dwo`, `.debug_loclists`, and `.debug_loclists.dwo`
 > sections corresponding to any given program counter.
+
+
+### Section 2.5.2.2 Register Values [was 2.5.1.2]
+
+In item 1, `DW_OP_fbreg`, add "(see Section 2.5.1)" at
+the end of the first paragraph.
+
+
+### Section 2.5.2.3 Stack Operations [was 2.5.1.3]
+
+In item 13, `DW_OP_push_object_address`, add "(see Section 2.5.1)" at
+the end of the first sentence.
+
+In item 14, `DW_OP_form_tls_address`, change the first sentence to:
+
+> The `DW_OP_form_tls_address` operation pops a value from the stack, which
+> must have an integral type identifier, translates this value into an
+> address in the thread-local storage for the current thread (see Section
+> 2.5.1), and pushes the address onto the stack together with the generic
+> type identifier.
+
+In item 15, `DW_OP_call_frame_cfa`, change the first paragraph to:
+
+> The `DW_OP_call_frame_cfa` operation pushes the value of the current
+> call frame address (CFA), obtained from the Call Frame Information (see
+> Section 2.5.1 and Section 6.4).
+
+In item 16, `DW_OP_push_lane`, change the last sentence of the first paragraph to:
+
+> See Section 2.5.1 and Section 3.3.5.
+
+
+### Section 2.6.2 Location Lists
+
+Following the first bulleted list (after "End-of-list"), add the following
+non-normative paragraph:
+
+> [non-normative] _If there is no current PC (see Section 2.5.1), only
+> default location description entries will apply._
+
+
+### Section 5.7.6 Data Member Entries
+
+In bullet 2 under `DW_AT_data_member_location`, add "(see Section 2.5.1)"
+at the end of the first paragraph.
+
+
+### Section 6.4.2 Call Frame Instructions
+
+Add the following after the first sentence of the second paragraph:
+
+> The DWARF expressions for call frame information operations are
+> restricted to those that do not require a current compilation unit
+> (see Section 2.5.1).
