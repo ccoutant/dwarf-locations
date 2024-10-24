@@ -500,6 +500,11 @@ Insert the following:
 
 Place the contents of old section 2.6.1.1.3 here.
 
+_Remove_ the first paragraph:
+
+> A register location consists of a register name operation, which
+> represents a piece or all of an object located in a given register.
+
 _Remove_ the non-normative text:
 
 > _A register location description must stand alone as the entire
