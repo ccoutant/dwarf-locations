@@ -17,9 +17,6 @@ Issues ready to submit to DWARF committee:
 
 Issues in progress:
 
-* [Generalize Offsetting of Location Descriptions](010-generalize-offsetting.txt)
-* [Generalize Creation of Undefined Location Descriptions](011-generalize-undefined.txt)
-* [Generalize Creation of Composite Location Descriptions](012-generalize-composite.txt)
 * [DWARF Operations to Create Vector Composite Location Descriptions](015-vector-composite-location-descriptions.txt)
 * [DWARF Operation to Create Runtime Overlay Composite Location Description](016-overlay-composite-location-descriptions.txt)
 * [DWARF Operation to Access Call Frame Entry Registers](017-call-frame-entry-registers.txt)
@@ -32,6 +29,12 @@ Clarifications and editorial reorganization:
 * [Clarifications for Expression Evaluation](001-clarifications-eval.txt)
 * [Clarifications for CFI](003-clarifications-cfi.txt)
 * [Editorial Reorganization](006-editorial.txt)
+
+Issues superseded by others:
+
+* [Generalize Offsetting of Location Descriptions](010-generalize-offsetting.txt) (Included in Locations on the Stack)
+* [Generalize Creation of Undefined Location Descriptions](011-generalize-undefined.txt) (Included in Locations on the Stack)
+* [Generalize Creation of Composite Location Descriptions](012-generalize-composite.txt) (Replaced by DW_OP_composite in Locations on the Stack)
 
 Independent issues not part of this series:
 
