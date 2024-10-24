@@ -28,10 +28,10 @@ Clarifications and editorial reorganization:
 
 * [Clarifications for Expression Evaluation](001-clarifications-eval.txt)
 * [Clarifications for CFI](003-clarifications-cfi.txt)
-* [Editorial Reorganization](006-editorial.txt)
 
 Issues superseded by others:
 
+* [Editorial Reorganization](006-editorial.txt) (Included in Locations on the Stack)
 * [Generalize Offsetting of Location Descriptions](010-generalize-offsetting.txt) (Included in Locations on the Stack)
 * [Generalize Creation of Undefined Location Descriptions](011-generalize-undefined.txt) (Included in Locations on the Stack)
 * [Generalize Creation of Composite Location Descriptions](012-generalize-composite.txt) (Replaced by DW_OP_composite in Locations on the Stack)
