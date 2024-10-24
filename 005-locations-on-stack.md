@@ -804,6 +804,8 @@ Add to Table 7.9:
 >     --------------------  ----  --------  -----
 >     DW_OP_offset          TBA      0
 >     DW_OP_bit_offset      TBA      0
+>     DW_OP_composite       TBA      0
+>     DW_OP_undefined       TBA      0
 
 
 ### Section D.2.1 Fortran Simple Array Example
