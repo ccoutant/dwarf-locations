@@ -178,7 +178,7 @@ subsections):
 >     expressions that provide attribute values of a data object, the
 >     containing debugging information entry is the current object. When
 >     evaluating expressions that provide attribute values for a type
->     (e.g., `DW_AT_data_location` for a `DW_TAG_data_member`), the
+>     (e.g., `DW_AT_data_location` for a `DW_TAG_member`), the
 >     current object is the data object entry (if there is one) that
 >     referred to the type entry (e.g., via `DW_AT_type`).
 >     
