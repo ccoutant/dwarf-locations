@@ -404,7 +404,7 @@ Insert the following into this new section:
 > evaluation. This operator provides explicit functionality (especially
 > for arrays involving descriptors) that is analogous to the implicit push
 > of the base address of a structure prior to evaluation of a
-> DW_AT_data_member_location to access a data member of a structure. For
+> `DW_AT_data_member_location` to access a data member of a structure. For
 > an example, see Appendix D.2 on page 304.
 
 
@@ -755,8 +755,7 @@ Place the contents of old Section 2.6.2 Location Lists here.
 In the description for `DW_AT_data_member_location`, change
 the second bullet to:
 
-> 2\. Otherwise, the value must be a location description. In this case,
-> the beginning of the containing entity must be byte aligned. The
+> 2\. Otherwise, the value must be a location description. The
 > location of the containing entity is pushed on the DWARF stack before
 > the location description is evaluated; the result of the evaluation is
 > the location of the member entry.
