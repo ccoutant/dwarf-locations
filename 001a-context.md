@@ -1,6 +1,3 @@
-Expression Evaluation Context
-=============================
-
 Background
 ----------
 
@@ -24,18 +21,19 @@ subsections):
 
 > ### 2.5.1 DWARF Expression Evaluation Context
 > 
-> A DWARF expression is evaluated within a context provided by the debugger
-> or other DWARF consumer. The context includes the following elements:
+> DWARF expressions and location descriptions (see Section 2.6) are
+> evaluated within a context provided by the debugger or other DWARF
+> consumer. The context includes the following elements:
 > 
 > 1. Required result kind
 > 
->     The kind of result required -- either a location description or a
+>     The kind of result required -- either a location or a
 >     value -- is determined by the DWARF construct where the expression
 >     is found.
 > 
->     [non-normative] _For example, DWARF attributes with exprval class require a
->     value and attributes with locdesc class require a location
->     description (see Section 7.5.5)._
+>     [non-normative] _For example, DWARF attributes with exprval class
+>     require a value, and attributes with locdesc class require a
+>     location description (see Section 7.5.5)._
 > 
 > 2. Initial stack
 > 
@@ -43,7 +41,7 @@ subsections):
 >     start of expression evaluation. In certain circumstances,
 >     however, one or more values are pushed implicitly onto the
 >     stack before evaluation of the expression starts (e.g.,
->     `DW_AT_data_location`).
+>     `DW_AT_data_member_location`).
 > 
 > 3. Current compilation unit
 > 
@@ -86,6 +84,13 @@ subsections):
 > 
 > 5. Current thread
 > 
+>     [non-normative] _Many programming environments support the concept of
+>     independent threads of execution, where the process and its address
+>     space are shared among the threads, but each thread has its own stack,
+>     program counter, and possibly its own block of memory for thread-local
+>     storage (TLS). These threads may be implemented in user-space or with
+>     kernel threads, or by a combination of the two._
+>
 >     The current thread identifies a current thread of execution. When
 >     debugging a multi-threaded program, the current thread may be
 >     selected by a user command that focuses on a specific thread, or it
@@ -93,7 +98,9 @@ subsections):
 >     breakpoint.
 >     
 >     If there is no running process (or an image of a process, as from
->     a core file), there is no current thread.
+>     a core file), there is no current thread. A single-threaded
+>     program (as distinguished from a multi-threaded program
+>     with only a single thread) might not have a current thread.
 >     
 >     It is required for operations that provide access to thread-local
 >     storage.
@@ -130,6 +137,23 @@ subsections):
 >     thread.
 > 
 > 7. Current lane
+>
+>     [non-normative] _On SIMD (Single-Instruction Multiple-Data Stream)
+>     and SIMT (Single-Instruction Multiple-Thread) architectures,
+>     fine-grained parallel execution can be achieved by dispatching a
+>     single instruction across multiple data streams (e.g., a vector or
+>     array). Some parallel programming models allow for the
+>     vectorization of loops using SIMD instructions. These parallel
+>     streams can be considered fine-grain threads of execution, or
+>     lanes, where each lane typically shares a common stack, program
+>     counter, and register file._
+> 
+>     [non-normative] _In SIMT architectures, control flow may diverge
+>     through the use of predication, where each instruction executes
+>     only in certain lanes. Some SIMT architectures, however, provide
+>     separate stacks and register files for each lane, and the parallel
+>     streams of execution would be better represented as threads
+>     (above)._
 > 
 >     The current lane is a SIMD/SIMT lane identifier. This applies to
 >     source languages that are implemented using a SIMD/SIMT execution
@@ -149,7 +173,7 @@ subsections):
 >     is greater than or equal to 0 and less than the, possibly default,
 >     value of the `DW_AT_num_lanes` attribute.
 >     
->     If there is no running process, the current lane is not available.
+>     If there is no running process, there is no current lane.
 >     If the current running program is not using a SIMD/SIMT
 >     execution model, the current lane is always 0.
 > 
@@ -168,8 +192,11 @@ subsections):
 >     to select amongst multiple program location ranges.
 >     
 >     If there is no running process, there is no current program
->     counter. When evaluating expression lists when no current pc is
->     available, only default location descriptions are used.
+>     counter. 
+>
+>     [non-normative] _When evaluating value lists and location lists
+>     when no current pc is available, only default location
+>     descriptions are used._
 > 
 > 9. Current object
 > 
@@ -184,9 +211,8 @@ subsections):
 >     
 >     A current object is required for the `DW_OP_push_object_address`
 >     operation and by some attributes (e.g.,
->     `DW_AT_data_member_location`) where the object's location is
->     provided as part of the initial stack.
-> 
+>     `DW_AT_data_member_location` and `DW_AT_use_location`) where the
+>     object's location is provided as part of the initial stack.
 > 
 > [non-normative] _A DWARF expression for a location description may be
 > able to be evaluated without a thread, call frame, lane, program
@@ -234,10 +260,10 @@ In item 16, `DW_OP_push_lane`, change the last sentence of the first paragraph t
 ### Section 2.6.2 Location Lists
 
 Following the first bulleted list (after "End-of-list"), add the following
-non-normative paragraph:
+paragraph:
 
-> [non-normative] _If there is no current PC (see Section 2.5.1), only
-> default location description entries will apply._
+> If there is no current PC (see Section 2.5.1), only
+> default location description entries will apply.
 
 
 ### Section 5.7.6 Data Member Entries
@@ -246,10 +272,24 @@ In bullet 2 under `DW_AT_data_member_location`, add "(see Section 2.5.1)"
 at the end of the first paragraph.
 
 
+### Section 5.14 Pointer to Member Type Entries
+
+In the paragraph beginning "The `DW_AT_use_location` description is used
+in conjunction...", add "(see Section 2.5.1)" at the end of the second
+sentence:
+
+> The `DW_AT_use_location` description is used in conjunction with the
+> location descriptions for a particular object of the given pointer to
+> member type and for a particular structure or class instance. The
+> `DW_AT_use_location` attribute expects two values to be pushed onto
+> the DWARF expression stack before the `DW_AT_use_location` description
+> is evaluated (see Section 2.5.1). ...
+
+
 ### Section 6.4.2 Call Frame Instructions
 
 Add the following after the first sentence of the second paragraph:
 
-> The DWARF expressions for call frame information operations are
-> restricted to those that do not require a current compilation unit
-> (see Section 2.5.1).
+> The DWARF expressions for call frame information are restricted to
+> those operations that do not require a current compilation unit (see
+> Section 2.5.1).
