@@ -791,7 +791,7 @@ Replace the paragraph beginning "The `DW_AT_use_location` description..." with:
 > is being calculated.
 
 
-### Section 6.4 Call Frame Information
+### Section 6.4.1 Structure of Call Frame Information
 
 For the "expression(E)" register rule, change the description to:
 
