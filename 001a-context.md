@@ -256,6 +256,8 @@ In item 16, `DW_OP_push_lane`, change the last sentence of the first paragraph t
 
 > See Section 2.5.1 and Section 3.3.5.
 
+Remove following two non-normative paragraphs (which duplicate description
+added in 2.5.1.)
 
 ### Section 2.6.2 Location Lists
 
