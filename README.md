@@ -26,7 +26,7 @@ Issues in progress:
 
 Clarifications and editorial reorganization:
 
-* [Clarifications for Expression Evaluation](001-clarifications-eval.txt)
+* [Clarifications for Expression Evaluation](001-clarifications-eval.md)
 * [Clarifications for CFI](003-clarifications-cfi.txt)
 
 Issues superseded by others:
