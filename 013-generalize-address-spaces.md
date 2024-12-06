@@ -264,7 +264,7 @@ paragraph:
 > current context except: the result kind is location description; the initial
 > stack is empty; and the object is the location description of P.
 
-[[ Don't yet have the notion of "context" ]]
+### FIXME: [[ Don't yet have the notion of "context" ]]
 
 [For further discussion -- remove?]
 With the expanded support for DWARF address spaces, it may be worth examining
@@ -289,7 +289,7 @@ with:
 >   `DW_OP_form_tls_address` operation are included; otherwise, they are
 >   excluded.
 
-[[ Reword definition of CFA in 6.4 Call Frame Information ]]
+### FIXME: [[ Reword definition of CFA in 6.4 Call Frame Information ]]
 
 In Section 6.4.2.2 "CFA Definition Instructions", replace the description of the
 six CFI instructions with the following:
@@ -350,7 +350,7 @@ six CFI instructions with the following:
 >     [non-normative] The action is the same as `DW_CFA_def_cfa_offset`, except
 >     that the operand is signed and factored.
 
-[[ Fix this... ]]
+### FIXME: [[ Fix this... ]]
 
 > 6.  `DW_CFA_def_cfa_expression`
 > 
