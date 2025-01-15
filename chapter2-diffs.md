@@ -42,7 +42,7 @@ The context includes the following elements:
     
     _For example, DWARF attributes with `exprval` class
     require a value, and attributes with `locdesc` class require 
-    a location description (see Section {datarep:classesandforms).__
+    a location description (see Section {datarep:classesandforms)._
     
 1. Initial stack
     
@@ -407,14 +407,14 @@ included with the value</span>.
     target machine, are retrieved from the location `L` and pushed onto the
     stack as a value of the generic type.</span>
     
-1. `DW_OP_derefsize`  
-    <span class="del">The `DW_OP_derefsize` operation behaves like the
+1. `DW_OP_deref_size`  
+    <span class="del">The `DW_OP_deref_size` operation behaves like the
     `DW_OP_deref`
     operation: it pops the top stack entry and treats it as an
     address. The popped value must have an integral type.
     The value retrieved from that address is pushed,
     and has the generic type.
-    In the `DW_OP_derefsize` operation, however, the size in bytes
+    In the `DW_OP_deref_size` operation, however, the size in bytes
     of the data retrieved from the dereferenced address is
     specified by the single operand. This operand is a 1-byte
     unsigned integral constant whose value may not be larger
@@ -431,12 +431,12 @@ included with the value</span>.
     pushed onto the stack as a value of the generic type.
     </span>
     
-1. `DW_OP_dereftype`  
-    <span class="del">The `DW_OP_dereftype` operation behaves like the `DW_OP_derefsize` operation:
+1. `DW_OP_deref_type`  
+    <span class="del">The `DW_OP_deref_type` operation behaves like the `DW_OP_deref_size` operation:
     it pops the top stack entry and treats it as an address.
     The popped value must have an integral type.
     The value retrieved from that address is pushed together with a type identifier.
-    In the `DW_OP_dereftype` operation, the size in
+    In the `DW_OP_deref_type` operation, the size in
     bytes of the data retrieved from the dereferenced address is specified by
     the first operand. This operand is a 1-byte unsigned integral constant whose
     value which is the same as the size of the base type referenced
@@ -477,8 +477,8 @@ included with the value</span>.
     dereferenced
     address is the size of the generic type.
     
-1. `DW_OP_xderefsize`  
-    The `DW_OP_xderefsize` operation behaves like the
+1. `DW_OP_xderef_size`  
+    The `DW_OP_xderef_size` operation behaves like the
     `DW_OP_xderef` operation. The entry at the top of the stack is
     treated as an address. The second stack entry is treated as
     an “address space identifier” for those architectures
@@ -489,7 +489,7 @@ included with the value</span>.
     The top two stack
     elements are popped, and a data item is retrieved through an
     implementation-defined address calculation and pushed as the
-    new stack top. In the `DW_OP_xderefsize` operation, however,
+    new stack top. In the `DW_OP_xderef_size` operation, however,
     the size in bytes of the data retrieved from the
     dereferenced
     address is specified by the single operand. This operand is a
@@ -499,11 +499,11 @@ included with the value</span>.
     target machine before being pushed onto the expression stack together
     with the generic type identifier.
     
-1. `DW_OP_xdereftype`  
-    The `DW_OP_xdereftype` operation behaves like the `DW_OP_xderefsize`
+1. `DW_OP_xderef_type`  
+    The `DW_OP_xderef_type` operation behaves like the `DW_OP_xderef_size`
     operation: it pops the top two stack entries, treats them as an address and
     an address space identifier, and pushes the value retrieved. In the
-    `DW_OP_xdereftype` operation, the size in bytes of the data retrieved from
+    `DW_OP_xderef_type` operation, the size in bytes of the data retrieved from
     the dereferenced address is specified by the first operand. This operand is
     a 1-byte unsigned integral constant whose value
     value which is the same as the size of the base type referenced
@@ -531,16 +531,16 @@ operations is larger than can be stored in a single stack element,
 the value is truncated to the element size and the low-order bits
 are pushed on the stack.
 
-1. `DWOPlit0`, `DWOPlit1`, ..., `DWOPlit31`  
+1. `DW_OP_lit0`, `DW_OP_lit1`, ..., `DW_OP_lit31`  
     The `DW_OP_lit<n>` operations encode the unsigned literal values
     from 0 through 31, inclusive.
     
-1. `DWOPconst1u`, `DWOPconst2u`, `DWOPconst4u`, `DWOPconst8u`  
-    The single operand of a `DWOPconst<n>u` operation provides a 1,
+1. `DW_OP_const1u`, `DW_OP_const2u`, `DW_OP_const4u`, `DW_OP_const8u`  
+    The single operand of a `DW_OP_const<n>u` operation provides a 1,
     2, 4, or 8-byte unsigned integer constant, respectively.
     
-1. `DWOPconst1s`, `DWOPconst2s`, `DWOPconst4s`, `DWOPconst8s`  
-    The single operand of a `DWOPconst<n>s` operation provides a 1,
+1. `DW_OP_const1s`, `DW_OP_const2s`, `DW_OP_const4s`, `DW_OP_const8s`  
+    The single operand of a `DW_OP_const<n>s` operation provides a 1,
     2, 4, or 8-byte signed integer constant, respectively.
     
 1. `DW_OP_constu`  
@@ -690,7 +690,7 @@ on overflow.
     _This operation is supplied specifically to be
     able to encode more field offsets in two bytes than can be
     done with
-    “`DWOPlit<n> DW_OP_plus`”._
+    “`DW_OP_lit<n> DW_OP_plus`”._
     
 1. `DW_OP_shl`  
     The `DW_OP_shl` operation pops the top two stack entries,
@@ -1171,11 +1171,11 @@ The following operations provide simple control of the flow of a DWARF expressio
     DWARF expression to skip forward or backward from the current
     operation, beginning after the 2-byte constant.
     
-1. `DWOPcall2`, `DWOPcall4`, `DW_OP_call_ref`  
+1. `DW_OP_call2`, `DW_OP_call4`, `DW_OP_call_ref`  
     `DW_OP_call2`, `DW_OP_call4`, and `DW_OP_call_ref` perform
     DWARF procedure calls during evaluation of a DWARF expression or
     location description.
-    For `DWOPcall2` and `DWOPcall4`,
+    For `DW_OP_call2` and `DW_OP_call4`,
     the operand is the 2- or 4-byte unsigned offset, respectively,
     of a debugging information entry in the current compilation
     unit. The `DW_OP_call_ref` operator has a single operand. In the
@@ -1188,8 +1188,8 @@ The following operations provide simple control of the flow of a DWARF expressio
     the `.debug_info` section of the current executable or shared object file.
         
     _Operand interpretation of
-    `DWOPcall2`, `DWOPcall4` and `DW_OP_call_ref` is exactly like
-    that for `DWFORMref2`, `DWFORMref4` and `DW_FORM_ref_addr`,
+    `DW_OP_call2`, `DW_OP_call4` and `DW_OP_call_ref` is exactly like
+    that for `DW_FORM_ref2`, `DW_FORM_ref4` and `DW_FORM_ref_addr`,
     respectively (see Section {datarep:attributeencodings})._
     
     These operations transfer control of DWARF expression evaluation to
@@ -1277,7 +1277,7 @@ There are these special operations currently defined:
     The `DW_OP_extended` opcode encodes an extension operation. It has
     at least one operand: a ULEB128 constant identifying the extension operation.
     The remaining operands are defined by the extension opcode, which are named
-    using a prefix of `DWOP`EXT.
+    using a prefix of `DW_OP_`.
     The extension opcode 0 is reserved.
     
 1. `DW_OP_user_extended`  
@@ -1440,7 +1440,7 @@ In the descriptions that follow, these terms are used for operands:
     
 -   A target address operand is an address on the target
     machine. (Its size is the same as used for attribute values of
-    class `CLASSaddress`, specifically, `DW_FORM_addr`.)
+    class `address`, specifically, `DW_FORM_addr`.)
 
 The following entry kinds are defined for use in both
 split or non-split units:
