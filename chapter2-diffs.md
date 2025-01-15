@@ -890,10 +890,14 @@ by the ABI authoring committee for each architecture._
     unsigned LEB128 literal
     operand that encodes the name of a register.
 
-_These operations name a register location. To
+_These operations name a register <span class="del">location</span>,
+<span class="add">not the contents of the register</span>. To
 fetch the contents of a register, it is necessary to use
 one of the register based addressing operations, such as
-`DW_OP_bregx` (Section {registervalues}._
+`DW_OP_bregx` (Section {memorylocations},
+<span class="add">or a register value operation, such as
+`DW_OP_regval` (Section {registervalues})</span>._
+
 
 ### 2.5.10 Implicit Locations
 
