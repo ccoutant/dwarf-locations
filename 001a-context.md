@@ -220,11 +220,6 @@ subsections):
 > global variable may be able to be evaluated without such context,
 > while the location of local variables in a stack frame cannot be
 > evaluated without additional context._
-> 
-> The `address_size` fields must match in the headers of all the entries
-> in the `.debug_info`, `.debug_addr`, `.debug_line`, `.debug_rnglists`,
-> `.debug_rnglists.dwo`, `.debug_loclists`, and `.debug_loclists.dwo`
-> sections corresponding to any given program counter.
 
 
 ### Section 2.5.2.2 Register Values [was 2.5.1.2]

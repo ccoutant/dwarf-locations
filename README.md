@@ -9,7 +9,6 @@ more manageable proposals, in a form acceptable to the DWARF committee.
 
 Issues ready to submit to DWARF committee:
 
-* [Expression Evaluation Context](001a-context.md) (Issue [241011.1][241011.1])
 * [Locations on the Stack](005-locations-on-stack.md) (Issue [230524.1][230524.1])
 * [Clarifications for Memory Location Descriptions](004-clarifications-mem.txt) (Issue [230120.3][230120.3])
 * [Clarifications for Location Descriptions](002-clarifications-loc.txt) (Issue [230120.2][230120.2])
@@ -35,6 +34,10 @@ Issues superseded by others:
 * [Generalize Offsetting of Location Descriptions](010-generalize-offsetting.txt) (Included in Locations on the Stack)
 * [Generalize Creation of Undefined Location Descriptions](011-generalize-undefined.txt) (Included in Locations on the Stack)
 * [Generalize Creation of Composite Location Descriptions](012-generalize-composite.txt) (Replaced by DW_OP_composite in Locations on the Stack)
+
+Issues already passed by the committee:
+
+* [Expression Evaluation Context](001a-context.md) (Issue [241011.1][241011.1])
 
 Independent issues not part of this series:
 
