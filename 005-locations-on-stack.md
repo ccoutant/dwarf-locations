@@ -99,22 +99,22 @@ on the stack.
 The contents of Section 2.5 and 2.6 are reorganized as follows:
 
 - 2.5 DWARF Expressions
-    - 2.5.1 Values and Locations
-    - 2.5.2 Stack Operations
-    - 2.5.3 Value Operations
-        - 2.5.3.1 Literal Encodings
-        - 2.5.3.2 Register Values
-        - 2.5.3.3 Arithmetic and Logical Operations
-    - 2.5.4 Location Operations
-        - 2.5.4.1 Memory Locations
-        - 2.5.4.2 Register Locations
-        - 2.5.4.3 Implicit Locations
-        - 2.5.4.4 Undefined Locations
-        - 2.5.4.5 Composite Locations
-        - 2.5.4.6 Offset Operations
-    - 2.5.5 Control Flow Operations
-    - 2.5.6 Type Conversions
-    - 2.5.7 Special Operations
+    - 2.5.1 DWARF Expression Evaluation Context
+    - 2.5.2 Values and Locations
+    - 2.5.3 Stack Operations
+    - 2.5.4 Literal and Constant Operations
+    - 2.5.5 Register Value Operations
+    - 2.5.6 Arithmetic and Logical Operations
+    - 2.5.7 General Location Operations
+    - 2.5.8 Memory Locations
+    - 2.5.9 Register Locations
+    - 2.5.10 Implicit Locations
+    - 2.5.11 Undefined Locations
+    - 2.5.12 Composite Locations
+    - 2.5.13 Offset Operations
+    - 2.5.14 Control Flow Operations
+    - 2.5.15 Type Conversions
+    - 2.5.16 Special Operations
 - 2.6 Expression Lists
   - 2.6.1 Value Lists
   - 2.6.2 Location Lists
@@ -145,7 +145,7 @@ Replace the contents of the preamble to this section with:
 > The result of a DWARF expression is the value or location on the top
 > of the stack after evaluating the operations.
 
-### Section 2.5.1 Values and Locations [NEW]
+### Section 2.5.2 Values and Locations [NEW]
 
 Add the following as a new subsection:
 
@@ -190,16 +190,16 @@ Add the following as a new subsection:
 > (which serves as an index into a separate section containing location
 > lists).
 > 
-> A single location description specifies the storage bank that holds
-> a program object and a position within that storage bank where the
+> A single location description specifies the storage bank that holds a
+> program object and a position within that storage bank where the
 > program object starts. The position within the storage bank is
-> expressed as a bit offset relative to the start of the storage bank.
+> expressed as a zero-based bit offset relative to the start of the
+> storage bank.
 > 
-> A storage bank is a linear stream of bits that can hold values. Each
-> storage bank has a size in bits and can be accessed using a
-> zero-based bit offset. The ordering of bits within a storage bank
-> uses the bit numbering and direction conventions that are appropriate to
-> the current language on the target architecture.
+> A storage bank is a linear stream of bits that can hold values. The
+> ordering of bits within a storage bank uses the bit numbering and
+> direction conventions that are appropriate to the current language on
+> the target architecture.
 > 
 > There are five kinds of storage banks:
 > 
@@ -273,13 +273,13 @@ Add the following as a new subsection:
 > refer to storage that has the same value), but must write any
 > changed value to all the single locations.
 
-### Section 2.5.2 Stack Operations [was: 2.5.1.3 Stack Operations]
+### Section 2.5.3 Stack Operations [was: 2.5.2.3 Stack Operations]
 
-Move the contents of 2.5.1.3 Stack Operations to this new subsection.
+Move the contents of 2.5.2.3 Stack Operations to this new subsection.
 Change the first sentence to:
 
 > The following operations manipulate the DWARF stack, and may
-> operate on both values and locations.
+> operate on both values and locations.... [remainder of paragraph unchanged]
 
 Change the second paragraph to:
 
@@ -295,6 +295,13 @@ Include the descriptions for the following operations:
 - `DW_OP_over`
 - `DW_OP_swap`
 - `DW_OP_rot`
+- `DW_OP_deref`
+- `DW_OP_deref_size`
+- `DW_OP_deref_type`
+- `DW_OP_xderef`
+- `DW_OP_xderef_size`
+- `DW_OP_xderef_type`
+- `DW_OP_push_lane`
 
 For the above operations, remove all occurrences of "including its type identifier".
 
@@ -306,29 +313,51 @@ For `DW_OP_drop`, change the description to:
 
 > The `DW_OP_drop` operation pops the entry at the top of the stack.
 
-The following operations that were in section 2.5.1.3 are moved to other sections:
+For `DW_OP_deref`, change the description to:
 
-- `DW_OP_deref`, `DW_OP_deref_size`, `DW_OP_deref_type`,
-  `DW_OP_xderef`, `DW_OP_xderef_size`, `DW_OP_xderef_type`, `DW_OP_form_tls_address`,
-  `DW_OP_call_frame_cfa` (to 2.5.4.1 Memory Locations)
-- `DW_OP_push_object_address`  (to 2.5.4 Location Operations)
-- `DW_OP_push_lane` (to 2.5.3.1 Literal Encodings)
+> The `DW_OP_deref` operation pops a location `L` from the top of the
+> stack. The first `S` bytes, where `S` is the size of an address on the
+> target machine, are retrieved from the location `L` and pushed onto the
+> stack as a value of the generic type.
+
+For `DW_OP_deref_size`, change the description to:
+
+> The `DW_OP_deref_size` takes a single 1-byte unsigned integral operand
+> that specifies the size `S`, in bytes, of the value to be retrieved.
+> The size `S` must be no larger than the size of the generic type. The
+> operation behaves like the `DW_OP_deref` operation: it pops a location
+> `L` from the stack. The first `S` bytes are retrieved from the
+> location `L`, zero extended to the size of the generic type, and
+> pushed onto the stack as a value of the generic type.
+
+For `DW_OP_deref_type`, change the description to:
+
+> The `DW_OP_deref_type` operation takes two operands. The first operand
+> is a 1-byte unsigned integer that specifies the size `S` of the type
+> given by the second operand. The second operand is an unsigned LEB128
+> integer that represents the offset of a debugging information entry in
+> the current compilation unit, which must be a `DW_TAG_base_type` entry
+> that provides the type `T` of the value to be retrieved. The size `S`
+> must be the same as the size of the base type represented by the
+> second operand. This operation pops a location `L` from the stack. The
+> first `S` bytes are retrieved from the location `L` and pushed onto the
+> stack as a value of type `T`.
+> 
+> [non-normative] While the size of the pushed value could be inferred from the base type
+> definition, it is encoded explicitly into the operation so that the
+> operation can be parsed easily without reference to the `.debug_info`
+> section.
+
+The following operations that were in section 2.5.2.3 are moved to other sections:
+
+- `DW_OP_form_tls_address` (to 2.5.8 Memory Locations)
+- `DW_OP_call_frame_cfa` (to 2.5.8 Memory Locations)
+- `DW_OP_push_object_address`  (to 2.5.7 General Location Operations)
 
 
-### Section 2.5.3 Value Operations [was: 2.5.1 General Operations]
+### Section 2.5.4 Literal and Constant Operations [was: 2.5.2.1 Literal Encodings]
 
-In the first paragraph, delete all but the first sentence of the first
-two paragraphs, leaving only this:
-
-> Each value operation represents a postfix operation on a simple
-> stack machine.
-
-(The deleted sentences have been moved up to the introduction to Section 2.5.)
-
-
-### Section 2.5.3.1 Literal Encodings [was: 2.5.1.1]
-
-Place the contents of old section 2.5.1.1 here.
+Rename and place the contents of old section 2.5.2.1 here.
 
 Include the descriptions of the following operations:
 
@@ -339,33 +368,36 @@ Include the descriptions of the following operations:
 - `DW_OP_consts`
 - `DW_OP_constx`
 - `DW_OP_const_type`
-- `DW_OP_push_lane` (moved from old section 2.5.1.3)
 
-The following operations that were in 2.5.1.1 are moved to Section 2.5.4.1 Memory Locations:
+For `DW_OP_constx`, change "size of a machine address"
+to "size of the generic type." [[[??? it's specifically meant
+for relocatable addresses, so perhaps this could stay as is.]]]
+
+The following operations that were in 2.5.2.1 are moved to Section 2.5.8 Memory Locations:
 
 - `DW_OP_addr`
 - `DW_OP_addrx`
 
 
-### Section 2.5.3.2 Register Values [was: 2.5.1.2]
+### Section 2.5.5 Register Value Operations [was: 2.5.2.2]
 
-Place the contents of old section 2.5.1.2 here.
+Place the contents of old section 2.5.2.2 here.
 
 Include the descriptions of the following operations:
 
 - `DW_OP_regval_type`
 - `DW_OP_regval_bits`
 
-The following operations that were in 2.5.1.2 are moved to other sections:
+The following operations that were in 2.5.2.2 are moved to other sections:
 
-- `DW_OP_fbreg` (to 2.5.4 Location Operations)
-- `DW_OP_breg0`, ..., `DW_OP_breg31` (to 2.5.4.1 Memory Locations)
-- `DW_OP_bregx` (to 2.5.4.1 Memory Locations)
+- `DW_OP_fbreg` (to 2.5.7 General Location Operations)
+- `DW_OP_breg0`, ..., `DW_OP_breg31` (to 2.5.8 Memory Locations)
+- `DW_OP_bregx` (to 2.5.8 Memory Locations)
 
 
-### Section 2.5.3.3 Arithmetic and Logical Operations [was: 2.5.1.4]
+### Section 2.5.6 Arithmetic and Logical Operations [was: 2.5.2.4]
 
-Place the contents of old section 2.5.1.4 here.
+Place the contents of old section 2.5.2.4 here.
 
 Include the descriptions of the following operations:
 
@@ -386,29 +418,31 @@ Include the descriptions of the following operations:
 - `DW_OP_xor`
 
 
-### Section 2.5.4 Location Operations [NEW]
+### Section 2.5.7 General Location Operations [NEW]
 
 Insert the following into this new section:
 
 > The following operations can be used to push a location onto the stack:
 > 
-> 1. `DW_OP_fbreg`... [moved unchanged from section 2.5.1.2]
+> 1. `DW_OP_fbreg`... [moved unchanged from section 2.5.2.2]
 > 
-> 2. `DW_OP_push_object_address` [moved from section 2.5.1.3]  
-> The DW_OP_push_object_address operation pushes the location of the
+> 2. `DW_OP_push_object_address` [moved from section 2.5.2.3]  
+> The `DW_OP_push_object_address` operation pushes the location of the
 > object currently being evaluated as part of evaluation of a user
 > presented expression. This object may correspond to an independent
 > variable described by its own debugging information entry or it may be a
 > component of an array, structure, or class whose address has been
 > dynamically determined by an earlier step during user expression
-> evaluation. This operator provides explicit functionality (especially
+> evaluation.
+>
+> [non-normative] _This operator provides explicit functionality (especially
 > for arrays involving descriptors) that is analogous to the implicit push
 > of the base address of a structure prior to evaluation of a
 > `DW_AT_data_member_location` to access a data member of a structure. For
-> an example, see Appendix D.2 on page 304.
+> an example, see Appendix D.2 on page 304._
 
 
-### Section 2.5.4.1 Memory Locations [adapted from 2.6.1.1.2]
+### Section 2.5.8 Memory Locations [adapted from 2.6.1.1.2]
 
 Insert the following:
 
@@ -423,13 +457,13 @@ Insert the following:
 > 
 > The following operations push memory locations onto the DWARF stack:
 > 
-> 1. `DW_OP_addr` [moved from section 2.5.1.1]  
+> 1. `DW_OP_addr` [moved from section 2.5.2.1]  
 > The `DW_OP_addr` operation has a single operand that encodes a
 > machine address and whose size is the size of an address on the
 > target machine. The value of this operand is treated as an address
 > in the default address space and pushed onto the stack.
 > 
-> 2. `DW_OP_addrx` [moved from section 2.5.1.1]  
+> 2. `DW_OP_addrx` [moved from section 2.5.2.1]  
 > The `DW_OP_addrx` operation has a single operand that encodes an
 > unsigned LEB128 value, which is a zero-based index into the `.debug_addr`
 > section, where a machine address is stored. This index is relative to the
@@ -437,66 +471,38 @@ Insert the following:
 > unit. The address obtained is treated as an address in the default address
 > space and pushed onto the stack.
 > 
-> 3. `DW_OP_breg0`, ..., `DW_OP_breg31` [moved from section 2.5.1.2]  
+> 3. `DW_OP_breg0`, ..., `DW_OP_breg31` [moved from section 2.5.2.2]  
 > The single operand of the `DW_OP_breg<n>` operations provides a signed
 > LEB128 byte offset. The contents of the specified register (0–31) are
 > treated as a memory address in the default address space. The offset is
 > added to the address obtained from the register and the resulting memory
 > location is pushed onto the stack.
 > 
-> 4. `DW_OP_bregx` [moved from section 2.5.1.2]  
+> 4. `DW_OP_bregx` [moved from section 2.5.2.2]  
 > The `DW_OP_bregx` operation provides a memory location formed from its
 > two operands. The first operand is a register number which is specified
 > by an unsigned LEB128 number. The contents of the specified register are
 > treated as a memory address in the default address space. The second
 > operand is a signed LEB128 byte offset. The offset is added to the
-> address obtained from the register and the resulting location is pushed
-> onto the stack.
+> address obtained from the register and the resulting memory location
+> is pushed onto the stack.
 >
-> 5. `DW_OP_form_tls_address`... [moved unchanged from section 2.5.1.3]
+> 5. `DW_OP_form_tls_address` [moved from section 2.5.2.3]
+> The `DW_OP_form_tls_address` operation pops a value from the stack,
+> which must have an integral type, translates this value into an address
+> in the thread-local storage for the current thread (see Section
+> 2.5.1), and pushes the address onto the stack as a memory location
+> (which may be an address space other than the default).... [remainder
+> of paragraph unchanged]
 > 
-> 6. `DW_OP_call_frame_cfa`... [moved unchanged from section 2.5.1.3]
+> [non-normative] Some implementations of C, C++, Fortran, and other
+> languages, support a thread-local storage class.... [this paragraph
+> unchanged]
 > 
-> 7. `DW_OP_deref` [moved from section 2.5.1.3]  
-> The `DW_OP_deref` operation pops a location `L` from the top of the
-> stack. The first `S` bytes, where `S` is the size of an address on the
-> target machine, are retrieved from the location `L` and pushed onto the
-> stack as a value of the generic type.
+> 6. `DW_OP_call_frame_cfa`... [moved unchanged from section 2.5.2.3]
 > 
-> 8. `DW_OP_deref_size` [moved from section 2.5.1.3]  
-> The `DW_OP_deref_size` takes a single 1-byte unsigned integral operand
-> that specifies the size `S`, in bytes, of the value to be retrieved.
-> The size `S` must be no larger than the size of the generic type. The
-> operation behaves like the `DW_OP_deref` operation: it pops a location
-> `L` from the stack. The first `S` bytes are retrieved from the
-> location `L`, zero extended to the size of an address on the target
-> machine, and pushed onto the stack as a value of the generic type.
-> 
-> 9. `DW_OP_deref_type` [moved from section 2.5.1.3]  
-> The `DW_OP_deref_type` operation takes two operands. The first operand
-> is a 1-byte unsigned integer that specifies the size `S` of the type
-> given by the second operand. The second operand is an unsigned LEB128
-> integer that represents the offset of a debugging information entry in
-> the current compilation unit, which must be a `DW_TAG_base_type` entry
-> that provides the type `T` of the value to be retrieved. The size `S`
-> must be the same as the size of the base type represented by the
-> second operand. This operation pops a location `L` from the stack. The
-> first `S` bytes are retrieved from the location `L` and pushed onto the
-> stack as a value of type `T`.
-> 
-> [non-normative] While the size of the pushed value could be inferred from the base type
-> definition, it is encoded explicitly into the operation so that the
-> operation can be parsed easily without reference to the `.debug_info`
-> section.
-> 
-> 10. `DW_OP_xderef`... [moved unchanged from section 2.5.1.3]
-> 
-> 11. `DW_OP_xderef_size`... [moved unchanged from section 2.5.1.3]
-> 
-> 12. `DW_OP_xderef_type`... [moved unchanged from section 2.5.1.3]
 
-
-### Section 2.5.4.2 Register Locations [adapted from 2.6.1.1.3]
+### Section 2.5.9 Register Locations [adapted from 2.6.1.1.3]
 
 Place the contents of old section 2.6.1.1.3 here.
 
@@ -505,7 +511,7 @@ _Remove_ the first paragraph:
 > A register location consists of a register name operation, which
 > represents a piece or all of an object located in a given register.
 
-_Remove_ the non-normative text:
+_Remove_ the last sentence of non-normative text that follows:
 
 > _A register location description must stand alone as the entire
 > description of an object or a piece of an object._
@@ -516,7 +522,7 @@ Include the descriptions of the following operations:
 - `DW_OP_regx`
 
 
-### Section 2.5.4.3 Implicit Locations [adapted from 2.6.1.1.4]
+### Section 2.5.10 Implicit Locations [adapted from 2.6.1.1.4]
 
 Move the contents of Section 2.6.1.1.4 here, replacing the term
 "location description" with "location" throughout, except for the last
@@ -533,7 +539,7 @@ Under `DW_OP_stack_value`, remove the sentence:
 > The `DW_OP_stack_value` operation terminates the expression.
 
 
-### Section 2.5.4.4 Undefined Locations [adapted from 2.6.1.1.1]
+### Section 2.5.11 Undefined Locations [adapted from 2.6.1.1.1]
 
 Insert the following (adapted from Section 2.6.1.1.1):
 
@@ -545,7 +551,7 @@ Insert the following (adapted from Section 2.6.1.1.1):
 > location.
 
 
-### Section 2.5.4.5 Composite Locations [adapted from 2.6.1.2]
+### Section 2.5.12 Composite Locations [adapted from 2.6.1.2]
 
 Insert the following (adapted from Section 2.6.1.2, and with the new
 `DW_OP_composite` operator):
@@ -587,10 +593,12 @@ Insert the following (adapted from Section 2.6.1.2, and with the new
 >     of the object referenced by the location `A` on the top of the stack. If
 >     the piece is located in a register, but does not occupy the entire
 >     register, the placement of the piece within that register is defined by
->     the ABI. Many compilers store a single variable in sets of registers, or
->     store a variable partially in memory and partially in registers.
->     `DW_OP_piece` provides a way of describing how large a part of a
->     variable a particular location refers to.
+>     the ABI. 
+>
+>     [non-normative] Many compilers store a single variable in sets of
+>     registers, or store a variable partially in memory and partially
+>     in registers. `DW_OP_piece` provides a way of describing how large
+>     a part of a variable a particular location refers to.
 >
 > 3. `DW_OP_bit_piece`
 >
@@ -648,7 +656,7 @@ Insert the following (adapted from Section 2.6.1.2, and with the new
 > piece `A`.
 
 
-### Section 2.5.4.6 Offset Operations [NEW]
+### Section 2.5.13 Offset Operations [NEW]
 
 Add:
 
@@ -676,9 +684,9 @@ Add:
 >     [non-normative] A bit offset of `n*8` is equivalent to a byte offset of `n`.
 
 
-### Section 2.5.5  Control Flow Operations [was: 2.5.1.5]
+### Section 2.5.14  Control Flow Operations [was: 2.5.2.5]
 
-Move the contents of old section 2.5.1.5 here.
+Move the contents of old section 2.5.2.5 here.
 
 Include the descriptions of the following operations:
 
@@ -709,9 +717,9 @@ to:
 > between the calling and called expressions.
 
 
-### Section 2.5.6 Type Conversions [was: 2.5.1.6]
+### Section 2.5.15 Type Conversions [was: 2.5.2.6]
 
-Move and renumber Section 2.5.1.6 to here.
+Move and renumber Section 2.5.2.6 to here.
 
 Include the descriptions of the following operations:
 
@@ -719,9 +727,9 @@ Include the descriptions of the following operations:
 - `DW_OP_reinterpret`
 
 
-### Section 2.5.7 Special Operations [was: 2.5.1.7]
+### Section 2.5.16 Special Operations [was: 2.5.2.7]
 
-Move and renumber Section 2.5.1.7 to here.
+Move and renumber Section 2.5.2.7 to here.
 
 Include the descriptions of the following operations:
 
