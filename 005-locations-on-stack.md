@@ -521,6 +521,16 @@ Include the descriptions of the following operations:
 - `DW_OP_reg0`, ..., `DW_OP_reg31`
 - `DW_OP_regx`
 
+Replace the non-normative paragraph at the end with the following:
+
+> [non-normative]
+> These operations name a register, not the contents of the register.
+> To fetch the contents of a register, it is necessary to use
+> one of the register based addressing operations, such as
+> `DW_OP_bregx` (Section {memorylocations}),
+> or a register value operation, such as
+> `DW_OP_regval` (Section {registervalues}).
+
 #### FIXME: Specify storage and offset.
 
 
