@@ -9,7 +9,7 @@ more manageable proposals, in a form acceptable to the DWARF committee.
 
 Issues ready to submit to DWARF committee:
 
-* [Locations on the Stack](005-locations-on-stack.md) (Issue [230524.1][230524.1])
+* [Locations on the Stack](005-locations-on-stack.md) (Issue [230524.1][230524.1]) ([Rendered diffs][diffs])
 * [Clarifications for Memory Location Descriptions](004-clarifications-mem.txt) (Issue [230120.3][230120.3])
 * [Clarifications for Location Descriptions](002-clarifications-loc.txt) (Issue [230120.2][230120.2])
 * [General Support for Address Spaces](013-generalize-address-spaces.md) ([Original text](013-generalize-address-spaces.orig.txt))
@@ -49,3 +49,4 @@ Independent issues not part of this series:
 [230120.2]: https://dwarfstd.org/issues/230120.2.html
 [230120.3]: https://dwarfstd.org/issues/230120.3.html
 [241011.1]: https://dwarfstd.org/issues/241011.1.html
+[diffs]: https://ccoutant.github.io/dwarf-locations/chapter2-diffs.html
