@@ -435,11 +435,11 @@ Insert the following into this new section:
 > dynamically determined by an earlier step during user expression
 > evaluation.
 >
-> [non-normative] _This operator provides explicit functionality (especially
+> [non-normative] This operator provides explicit functionality (especially
 > for arrays involving descriptors) that is analogous to the implicit push
 > of the base address of a structure prior to evaluation of a
 > `DW_AT_data_member_location` to access a data member of a structure. For
-> an example, see Appendix D.2 on page 304._
+> an example, see Appendix D.2 on page 304.
 
 
 ### Section 2.5.8 Memory Locations [adapted from 2.6.1.1.2]
@@ -520,6 +520,8 @@ Include the descriptions of the following operations:
 
 - `DW_OP_reg0`, ..., `DW_OP_reg31`
 - `DW_OP_regx`
+
+#### FIXME: Specify storage and offset.
 
 
 ### Section 2.5.10 Implicit Locations [adapted from 2.6.1.1.4]
