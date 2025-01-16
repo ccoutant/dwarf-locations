@@ -223,7 +223,7 @@ the desired value itself, and so on).</span>
 <span class="del">_The generic type is the same as the unspecified type used for stack operations
 defined in DWARF Version 4 and before._</span>
 
-### <span class="add">Section 2.5.2 Values and Locations [NEW]</span>
+### <span class="add">2.5.2 Values and Locations [NEW]</span>
 
 A DWARF expression is evaluated in a context that determines whether
 its result is expected to be a value or a location. Expressions that are
