@@ -16,7 +16,7 @@ Issues ready to submit to DWARF committee:
 
 Issues in progress:
 
-* [Deferred Issues from Tony’s Review of Locations on Stack][005a-misc.md]
+* [Deferred Issues from Tony’s Review of Locations on Stack](005a-misc.md)
 * [DWARF Operations to Create Vector Composite Location Descriptions](015-vector-composite-location-descriptions.txt)
 * [DWARF Operation to Create Runtime Overlay Composite Location Description](016-overlay-composite-location-descriptions.md)
 * [DWARF Operation to Access Call Frame Entry Registers](017-call-frame-entry-registers.txt)
