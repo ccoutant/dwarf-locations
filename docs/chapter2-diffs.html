@@ -10,9 +10,9 @@
   <div class="contentwrapper">
     <div class="content">
 <h1>Chapter 2: General Description</h1>
-<h3><span class="del">2.5 DWARF Expressions [REMOVED]</span></h3>
-<h3><span class="del">2.6 Location Descriptions [REMOVED]</span></h3>
-<h3><span class="add">2.5 Values and Locations [NEW]</span></h3>
+<h2><span class="del">2.5 DWARF Expressions [REMOVED]</span></h2>
+<h2><span class="del">2.6 Location Descriptions [REMOVED]</span></h2>
+<h2><span class="add">2.5 Values and Locations [NEW]</span></h2>
 <p>A DWARF expression is evaluated in a context that determines whether
 its result is expected to be a value or a location. Expressions that are
 expected to produce a location are called “location descriptions.”</p>
@@ -96,7 +96,7 @@ The size of a composite storage bank is the sum of the sizes of the
 composite parts.</p>
 </li>
 </ul>
-<p>Implicit conversions between memory locations and values may happen
+<p>An implicit conversion between a memory location and a value may happen
 during the execution of any operation or when evaluation of the
 expression is completed. If a location is expected, but the result is
 a value, the value is implicitly treated as a memory address in the
@@ -273,7 +273,7 @@ the other call frames (see Section {callframeinformation}).</p>
 <p>The current PC is used during the evaluation of value lists and location
 lists to select from among multiple program location ranges.</p>
 <p><em>When evaluating value lists and location lists when no current PC
-is available, only default location <span class="del">descriptions</span>
+is available, only default <span class="del">location descriptions</span>
 <span class="add">location list entries</span> may be used.</em></p>
 </li>
 <li>
@@ -609,10 +609,10 @@ must have the same type,
 either the same base type or the generic type.
 The result of the operation which is pushed back has the same type
 as the type of the operand(s).</p>
-<p>If the type of the operands is the generic type,
+<p><span class="del">If the type of the operands is the generic type,
 except as otherwise specified, the arithmetic operations
 perform addressing arithmetic, that is, unsigned arithmetic that is performed
-modulo one plus the largest representable address.</p>
+modulo one plus the largest representable address.</span></p>
 <p>Operations other than <code>DW_OP_abs</code>,
 <code>DW_OP_div</code>, <code>DW_OP_minus</code>, <code>DW_OP_mul</code>, <code>DW_OP_neg</code> and <code>DW_OP_plus</code>
 require integral types of the operand (either integral base type
@@ -849,7 +849,7 @@ is present, then it already encodes such changes, and it is
 space efficient to reference that.</em></p>
 </li>
 </ol>
-<h3>3.8 Register Locations</h3>
+<h2>3.8 Register Locations</h2>
 <p><span class="del">A register location description consists of a register name
 operation, which represents a piece or all of an object
 located in a given register.</span></p>
@@ -894,7 +894,7 @@ one of the register based addressing operations, such as
 <code>DW_OP_bregx</code> (Section {memorylocations},
 <span class="add">or a register value operation, such as
 <code>DW_OP_regval</code> (Section {registervalues})</span>.</em></p>
-<h3>3.9 Implicit Locations</h3>
+<h2>3.9 Implicit Locations</h2>
 <p>An implicit location <span class="del">description</span>
 represents a piece or all
 of an object which has no actual location but whose contents
@@ -979,7 +979,7 @@ can be used to describe the location of a value when that value exists
 in a register but not in memory. The operations in this section are used
 to describe values that exist neither in memory nor in a single
 register.</em></p>
-<h3>3.10 Undefined Locations</h3>
+<h2>3.10 Undefined Locations</h2>
 <p><span class="del">An empty location description consists of a DWARF expression containing
 no operations. It represents a piece or all of an object that is present
 in the source but not in the object code (perhaps due to optimization).</span></p>
@@ -998,7 +998,7 @@ that leaves no elements on the stack also produces an undefined
 location.</span></p>
 </li>
 </ol>
-<h3>3.11 Composite Locations</h3>
+<h2>3.11 Composite Locations</h2>
 <p><span class="add">The above kinds of locations are considered “simple” locations.</span></p>
 <p><span class="del">A composite location description describes an object or
 value which may be contained in part of a register or stored
@@ -1123,6 +1123,8 @@ only element on the stack. If <code>A</code> is the only remaining element, a ne
 empty composite is inserted before it (as if <code>DW_OP_composite DW_OP_swap</code> had been processed immediately prior to the piece
 operation), and the result is a new composite location with the single
 piece <code>A</code>.</span></p>
+<p>[This third rule may not in fact be necessary. It covers the case
+where a DWARF5 piece expression left multiple items on the stack.]</p>
 </li>
 </ul>
 <h2><span class="add">3.12 Offset Operations [NEW]</span></h2>

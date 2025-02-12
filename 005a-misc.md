@@ -119,31 +119,6 @@ bank ordering defined by the architecture provides full flexibility. Since
 this was added as part of DWARF 6, would advocate to remove it from the
 final version.]
 
-## 2.5.6 Arithmetic and Logical Operations
-
-> If the type of the operands is the generic type,
-> except as otherwise specified, the arithmetic operations
-> perform addressing arithmetic, that is, unsigned arithmetic that is performed
-> modulo one plus the largest <span class="del">representable address</span>
-> <span class="add">unsigned integral value of the generic type's bit size</span>.
-
-[ttye: With locations on the stack, and the DW_OP_offset operation, is this text
-needed? What is the largest representable address given there can be multiple
-address spaces that have different address sizes. Why does this state unsigned
-arithmetic when the definition of the generic type states it can be signed or
-unsigned?]
-
-## 2.5.8 Memory Locations
-
-For `DW_OP_breg<n>`:
-
-> The single operand of the `DW_OP_breg<n>` operations provides a signed
-> LEB128 <span class="del">offset from the contents of the specified register</span>
-> <span class="add">byte offset. The contents of the specified register (0–31) are
-> treated as a memory address in the default address space, the offset is
-> added, and a corresponding memory
-> location is pushed onto the stack.</span>
-
 ## 2.5.14 Control Flow Operations
 
 > <span class="add">If the `DW_AT_location` attribute is encoded using class

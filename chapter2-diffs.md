@@ -1,10 +1,10 @@
 # Chapter 2: General Description
 
-### <span class="del">2.5 DWARF Expressions [REMOVED]</span>
+## <span class="del">2.5 DWARF Expressions [REMOVED]</span>
 
-### <span class="del">2.6 Location Descriptions [REMOVED]</span>
+## <span class="del">2.6 Location Descriptions [REMOVED]</span>
 
-### <span class="add">2.5 Values and Locations [NEW]</span>
+## <span class="add">2.5 Values and Locations [NEW]</span>
 
 A DWARF expression is evaluated in a context that determines whether
 its result is expected to be a value or a location. Expressions that are
@@ -87,7 +87,7 @@ DWARF can describe five kinds of storage banks:
   The size of a composite storage bank is the sum of the sizes of the
   composite parts.
 
-Implicit conversions between memory locations and values may happen
+An implicit conversion between a memory location and a value may happen
 during the execution of any operation or when evaluation of the
 expression is completed. If a location is expected, but the result is
 a value, the value is implicitly treated as a memory address in the
@@ -298,7 +298,7 @@ The context includes the following elements:
     lists to select from among multiple program location ranges.
     
     _When evaluating value lists and location lists when no current PC
-    is available, only default location <span class="del">descriptions</span>
+    is available, only default <span class="del">location descriptions</span>
     <span class="add">location list entries</span> may be used._
     
 1. Current object
@@ -624,10 +624,10 @@ either the same base type or the generic type.
 The result of the operation which is pushed back has the same type
 as the type of the operand(s).
 
-If the type of the operands is the generic type,
+<span class="del">If the type of the operands is the generic type,
 except as otherwise specified, the arithmetic operations
 perform addressing arithmetic, that is, unsigned arithmetic that is performed
-modulo one plus the largest representable address.
+modulo one plus the largest representable address.</span>
 
 Operations other than `DW_OP_abs`,
 `DW_OP_div`, `DW_OP_minus`, `DW_OP_mul`, `DW_OP_neg` and `DW_OP_plus`
@@ -852,7 +852,7 @@ address space.</span>
     is present, then it already encodes such changes, and it is
     space efficient to reference that._
     
-### 3.8 Register Locations
+## 3.8 Register Locations
 
 <span class="del">A register location description consists of a register name
 operation, which represents a piece or all of an object
@@ -901,7 +901,7 @@ one of the register based addressing operations, such as
 `DW_OP_regval` (Section {registervalues})</span>._
 
 
-### 3.9 Implicit Locations
+## 3.9 Implicit Locations
 
 An implicit location <span class="del">description</span>
 represents a piece or all
@@ -990,7 +990,7 @@ to describe values that exist neither in memory nor in a single
 register._
 
 
-### 3.10 Undefined Locations
+## 3.10 Undefined Locations
 
 <span class="del">An empty location description consists of a DWARF expression containing
 no operations. It represents a piece or all of an object that is present
@@ -1009,7 +1009,7 @@ that leaves no elements on the stack also produces an undefined
 location.</span>
 
 
-### 3.11 Composite Locations
+## 3.11 Composite Locations
 
 <span class="add">The above kinds of locations are considered "simple" locations.</span>
 
@@ -1141,6 +1141,9 @@ empty composite is inserted before it (as if `DW_OP_composite
 DW_OP_swap` had been processed immediately prior to the piece
 operation), and the result is a new composite location with the single
 piece `A`.</span>
+
+  [This third rule may not in fact be necessary. It covers the case
+  where a DWARF5 piece expression left multiple items on the stack.]
 
 ## <span class="add">3.12 Offset Operations [NEW]</span>
 

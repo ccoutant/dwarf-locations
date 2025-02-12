@@ -231,7 +231,7 @@ Add the following as a new subsection:
 >   The size of a composite storage bank is the sum of the sizes of the
 >   composite parts.
 > 
-> Implicit conversions between memory locations and values may happen
+> An implicit conversion between a memory location and a value may happen
 > during the execution of any operation or when evaluation of the
 > expression is completed. If a location is expected, but the result is
 > a value, the value is implicitly treated as a memory address in the
@@ -432,6 +432,13 @@ The following operations that were in 2.5.2.2 are moved to other sections:
 ### Section 3.5 Arithmetic and Logical Operations [was: 2.5.2.4]
 
 Place the contents of old section 2.5.2.4 here.
+
+Remove the second paragraph:
+
+> <span class="del">If the type of the operands is the generic type,
+> except as otherwise specified, the arithmetic operations
+> perform addressing arithmetic, that is, unsigned arithmetic that is performed
+> modulo one plus the largest representable address.</span>
 
 Include the descriptions of the following operations:
 
@@ -753,6 +760,9 @@ Insert the following (adapted from Section 2.6.1.2, and with the new
 > DW_OP_swap` had been processed immediately prior to the piece
 > operation), and the result is a new composite location with the single
 > piece `A`.
+>
+>   [This third rule may not in fact be necessary. It covers the case
+>   where a DWARF5 piece expression left multiple items on the stack.]
 
 
 ### Section 3.12 Offset Operations [NEW]
