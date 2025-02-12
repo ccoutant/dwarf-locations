@@ -15,17 +15,17 @@ supported base type of the target machine, or of the generic type, which
 is an integral type that has the size of an address in the default
 address space on the target machine, and unspecified signedness.
 
-_The generic type is the same as the unspecified type used for stack
-operations defined in DWARF Version 4 and before._
+*The generic type is the same as the unspecified type used for stack
+operations defined in DWARF Version 4 and before.*
 
-_Debugging information must provide consumers a way to
+*Debugging information must provide consumers a way to
 find the location of program variables, determine the bounds of dynamic
 arrays and strings, and possibly to find the base address of a
 subroutine’s stack frame or the return address of a subroutine.
 Furthermore, to meet the needs of recent computer architectures and
 optimization techniques, debugging information must be able to describe
 the location of an object whose location changes over the object’s
-lifetime._
+lifetime.*
 
 Information about the location of program objects is provided by
 location descriptions. A location description can be either of two forms:
@@ -143,6 +143,14 @@ number of operands is implied by the opcode.</span>
 <span class="add">The result of a DWARF expression is the value or location on the top
 of the stack after evaluating the operations.</span>
 
+<span class="add">Values on the stack are typed, and can represent a value of any
+supported base type of the target machine, or of the generic type,
+which is an integral type that has the size of an address on the
+target machine, and unspecified signedness.</span>
+
+<span class="add">*The generic type is the same as the unspecified type used for stack
+operations defined in DWARF Version 4 and before.*</span>
+
 
 ## 3.1 DWARF Expression Evaluation Context
 
@@ -156,9 +164,9 @@ The context includes the following elements:
     The kind of result required -- either a location or a value -- is 
     determined by the DWARF construct where the expression is found.
     
-    _For example, DWARF attributes with `exprval` class
+    *For example, DWARF attributes with `exprval` class
     require a value, and attributes with `locdesc` class require 
-    a location <span class="del">description</span> (see Section {datarep:classesandforms)._
+    a location <span class="del">description</span> (see Section {classesandforms}).*
     
 1. Initial stack
     
@@ -176,16 +184,16 @@ The context includes the following elements:
     debug information associated with the same compilation unit, including
     indicating if such references use the 32-bit or 64-bit DWARF format.
      
-    _For example, the `DW_OP_constx` and `DW_OP_addrx` operations
-    require the address size, which is a property of the compilation unit._
+    *For example, the `DW_OP_constx` and `DW_OP_addrx` operations
+    require the address size, which is a property of the compilation unit.*
     
-    _Note that this compilation unit might not be the same as the
+    *Note that this compilation unit might not be the same as the
     compilation unit determined from the loaded code object corresponding
     to the current program location. For example, the evaluation of the
     expression E associated with a `DW_AT_location` attribute of the debug
     information entry operand of the `DW_OP_call<n>` operations is evaluated
     with the compilation unit that contains E and not the one that contains
-    the `DW_OP_call<n>` operation expression._
+    the `DW_OP_call<n>` operation expression.*
     
 1. Target architecture
     
@@ -196,26 +204,26 @@ The context includes the following elements:
     The target architecture is required for operations that specify
     architecture-specific entities.
     
-    _Architecture-specific entities include DWARF register identifiers,
+    *Architecture-specific entities include DWARF register identifiers,
     DWARF address space identifiers, the default address space, and the
-    address space address sizes._
+    address space address sizes.*
     
 1. Current thread
     
-    _Many programming environments support the concept of independent
+    *Many programming environments support the concept of independent
     threads of execution, where the process and its address space are shared
     among the threads, but each thread has its own stack, program counter,
     and possibly its own block of memory for thread-local storage (TLS). 
     These threads may be implemented in user-space or with kernel threads,
-    or by a combination of the two._
+    or by a combination of the two.*
     
     The current thread identifies a current thread of execution. When
     debugging a multi-threaded program, the current thread may be selected
     by a user command that focuses on a specific thread, or it may be selected
     automatically when the running thread stops at a breakpoint.
     
-    _If there is no current process (or an image of a process, as from
-    a core file), there is no current thread._
+    *If there is no current process (or an image of a process, as from
+    a core file), there is no current thread.*
     
     A current thread is required for the `DW_OP_form_tls_address` operation 
     (see Section {stackoperations}) which provides access to 
@@ -230,12 +238,12 @@ The context includes the following elements:
     determine the base addresses for the call frames of the current thread’s
     call stack (see Section {callframeinformation}).
     
-    _When debugging a running program or examining a core file,
+    *When debugging a running program or examining a core file,
     the current frame may be the topmost (most recently activated) frame 
     (e.g., where a breakpoint has triggered), or may be selected by a user
     command to focus the view on a frame further down the call stack.
     The current frame provides a view of the state of the running process
-    at a particular point in time._
+    at a particular point in time.*
     
     The current call frame (if there is one) must be an active call frame
     in the current call stack.
@@ -247,20 +255,20 @@ The context includes the following elements:
     
 1. Current lane
     
-    _On SIMD (Single-Instruction Multiple-Data Stream) and SIMT
+    *On SIMD (Single-Instruction Multiple-Data Stream) and SIMT
     (Single-Instruction Multiple-Thread) architectures, fine-grained parallel
     execution can be achieved by dispatching a single instruction across
     multiple data streams (e.g., a vector or array). Some parallel programming
     models allow for the vectorization of loops using SIMD instructions.
     These parallel streams can be considered fine-grain threads of execution,
     or lanes, where all lanes typically share a common stack, program counter,
-    and register file._
+    and register file.*
     
-    _In SIMT architectures, control flow may diverge through the use of
+    *In SIMT architectures, control flow may diverge through the use of
     predication, where each instruction executes only in certain lanes. Some
     SIMT architectures, however, provide separate stacks and register files
     for each lane, and the parallel streams of execution may instead be
-    represented as threads (above)._
+    represented as threads (above).*
     
     The current lane is a SIMD/SIMT lane identifier. This applies to source
     languages with scalar code that is vectorized by the compiler using a
@@ -297,9 +305,9 @@ The context includes the following elements:
     The current PC is used during the evaluation of value lists and location 
     lists to select from among multiple program location ranges.
     
-    _When evaluating value lists and location lists when no current PC
+    *When evaluating value lists and location lists when no current PC
     is available, only default <span class="del">location descriptions</span>
-    <span class="add">location list entries</span> may be used._
+    <span class="add">location list entries</span> may be used.*
     
 1. Current object
     
@@ -318,11 +326,11 @@ The context includes the following elements:
     `DW_AT_data_member_location` and `DW_AT_use_location`) where the
     object's location is provided as part of the initial stack.
 
-_A DWARF expression <span class="del">for a location description</span> may be able to be
+*A DWARF expression <span class="del">for a location description</span> may be able to be
 evaluated without a thread, call frame, lane, program counter, or architecture
 context element. For example, the location of a global variable may be able
 to be evaluated without such context, while the location of local variables
-in a stack frame cannot be evaluated without additional context._
+in a stack frame cannot be evaluated without additional context.*
 
 ## <span class="del">3.x General Operations [REMOVED]</span>
 
@@ -338,8 +346,8 @@ DWARF expression is taken to be the result (the address of the object, the
 value of the array bound, the length of a dynamic string,
 the desired value itself, and so on).</span>
 
-<span class="del">_The generic type is the same as the unspecified type used for stack operations
-defined in DWARF Version 4 and before._</span>
+<span class="del">*The generic type is the same as the unspecified type used for stack operations
+defined in DWARF Version 4 and before.*</span>
 
 ## 3.2 Stack Operations
 
@@ -451,10 +459,10 @@ a location</span>.
     first `S` bytes are retrieved from the location `L` and pushed onto the
     stack as a value of type `T`.</span>
 
-    _While the size of the pushed value could be inferred from the base
+    *While the size of the pushed value could be inferred from the base
     type definition, it is encoded explicitly into the operation so that the
     operation can be parsed easily without reference to the `.debug_info`
-    section._
+    section.*
     
 1. `DW_OP_xderef`  
     The `DW_OP_xderef` operation provides an extended dereference
@@ -514,8 +522,8 @@ a location</span>.
     Section {dwarfexpressionevaluationcontext} and 
     Section {lowlevelinformation}).
 
-_Examples illustrating many of these stack operations are
-found in Appendix {app:dwarfstackoperationexamples_.}
+*Examples illustrating many of these stack operations are
+found in Appendix {dwarfstackoperationexamples}.*
 
 ## 3.3 <span class="del">Literal Encodings</span><span class="add">Literal and Constant Operations</span>
 
@@ -555,10 +563,10 @@ are pushed on the stack.
     This index is relative to the value of the
     `DW_AT_addr_base` attribute of the associated compilation unit.
     
-    _The `DW_OP_constx` operation is provided for constants that
+    *The `DW_OP_constx` operation is provided for constants that
     require link-time relocation but should not be
     interpreted by the consumer as a relocatable address
-    (for example, offsets to thread-local storage)._
+    (for example, offsets to thread-local storage).*
     
 1. `DW_OP_const_type`  
     The `DW_OP_const_type` operation takes three operands. The first operand
@@ -571,10 +579,10 @@ are pushed on the stack.
     sequence of bytes of the given size that is
     interpreted as a value of the referenced type.
     
-    _While the size of the constant can be inferred from the base type
+    *While the size of the constant can be inferred from the base type
     definition, it is encoded explicitly into the operation so that the
     operation can be parsed easily without reference to the `.debug_info`
-    section._
+    section.*
 
 
 ## 3.4 Register Value Operations
@@ -683,10 +691,10 @@ on overflow.
     interpreted as the same type as the operand popped from the
     top of the stack and pushes the result.
     
-    _This operation is supplied specifically to be
+    *This operation is supplied specifically to be
     able to encode more field offsets in two bytes than can be
     done with
-    “`DW_OP_lit<n> DW_OP_plus`”._
+    “`DW_OP_lit<n> DW_OP_plus`”.*
     
 1. `DW_OP_shl`  
     The `DW_OP_shl` operation pops the top two stack entries,
@@ -725,7 +733,7 @@ The following operations can be used to push a location onto the stack:
     `DW_AT_frame_base` attribute of the current function
     (see Section {dwarfexpressionevaluationcontext}).
     
-    _This is typically a stack pointer register plus or minus some offset._
+    *This is typically a stack pointer register plus or minus some offset.*
     
 
 1. `DW_OP_push_object_address`  
@@ -746,11 +754,11 @@ The following operations can be used to push a location onto the stack:
     dynamically determined by an earlier step during user expression
     evaluation.</span>
     
-    _This operator provides explicit functionality (especially for
+    *This operator provides explicit functionality (especially for
     arrays involving descriptors) that is analogous to the implicit push
     of the base address of a structure prior to evaluation of a
     `DW_AT_data_member_location` to access a data member of a structure. For
-    an example, see Appendix D.2._
+    an example, see Appendix D.2.*
 
 ## 3.7 Memory Locations
 
@@ -817,7 +825,7 @@ address space.</span>
     single thread, then the block corresponding to the executable or
     shared library containing this DWARF expression is used.
     
-    _Some implementations of C, C++, Fortran, and other languages,
+    *Some implementations of C, C++, Fortran, and other languages,
     support a thread-local storage class. Variables with this storage
     class have distinct values and addresses in distinct threads, much
     as automatic variables have distinct values and addresses in each
@@ -834,7 +842,7 @@ address space.</span>
     descriptions. Instead of forcing complex thread-local storage
     calculations into the DWARF expressions, the `DW_OP_form_tls_address`
     allows the consumer to perform the computation based on the run-time
-    environment._
+    environment.*
     
 1. `DW_OP_call_frame_cfa`  
     The `DW_OP_call_frame_cfa` operation pushes the value of the
@@ -843,14 +851,14 @@ address space.</span>
     (see Section {dwarfexpressionevaluationcontext} and 
     Section {callframeinformation}).
     
-    _Although the value of `DW_AT_frame_base`
+    *Although the value of `DW_AT_frame_base`
     can be computed using other DWARF expression operators,
     in some cases this would require an extensive location list
     because the values of the registers used in computing the
     CFA change during a subroutine. If the
     Call Frame Information
     is present, then it already encodes such changes, and it is
-    space efficient to reference that._
+    space efficient to reference that.*
     
 ## 3.8 Register Locations
 
@@ -858,24 +866,24 @@ address space.</span>
 operation, which represents a piece or all of an object
 located in a given register.</span>
 
-_Register location descriptions describe an object
+*Register location descriptions describe an object
 (or a piece of an object) that resides in a register, while
 the opcodes listed in Section {registervalues}
 are used to describe an object (or a piece of
 an object) that is located in memory at an address that is
 contained in a register (possibly offset by some constant).
 <span class="del">A register location description must stand alone as the entire
-description of an object or a piece of an object.</span>_
+description of an object or a piece of an object.</span>*
 
 The following DWARF operations can be used to
 specify a register location.
 
-_Note that the register number represents a DWARF specific
+*Note that the register number represents a DWARF specific
 mapping of numbers onto the actual registers of a given
 architecture. The mapping should be chosen to gain optimal
 density and should be shared by all users of a given
 architecture. It is recommended that this mapping be defined
-by the ABI authoring committee for each architecture._
+by the ABI authoring committee for each architecture.*
 
 1. `DW_OP_reg0`, `DW_OP_reg1`, ..., `DW_OP_reg31`  
     The `DW_OP_reg<n>` operations encode the names of up to 32
@@ -892,13 +900,13 @@ by the ABI authoring committee for each architecture._
     register's storage bank with an offset of 0.</span>
 
 
-_These operations name a register <span class="del">location</span>,
+*These operations name a register <span class="del">location</span>,
 <span class="add">not the contents of the register</span>. To
 fetch the contents of a register, it is necessary to use
 one of the register based addressing operations, such as
 `DW_OP_bregx` (Section {memorylocations},
 <span class="add">or a register value operation, such as
-`DW_OP_regval` (Section {registervalues})</span>._
+`DW_OP_regval` (Section {registervalues})</span>.*
 
 
 ## 3.9 Implicit Locations
@@ -935,9 +943,9 @@ or is computed from other locations and values in the program.
     the value's type and with an offset of 0.</span>
     
 1. `DW_OP_implicit_pointer`  
-    _An optimizing compiler may eliminate a pointer, while
+    *An optimizing compiler may eliminate a pointer, while
     still retaining the value that the pointer addressed.
-    `DW_OP_implicit_pointer` allows a producer to describe this value._
+    `DW_OP_implicit_pointer` allows a producer to describe this value.*
     
     The `DW_OP_implicit_pointer` operation specifies that the object
     is a pointer that cannot be represented as a real pointer,
@@ -956,7 +964,7 @@ or is computed from other locations and values in the program.
     The first operand is a 4-byte unsigned value in the 32-bit
     DWARF format, or an 8-byte unsigned value in the 64-bit
     DWARF format (see Section
-    {datarep:32bitand64bitdwarfformats})
+    {32bitand64bitdwarfformats})
     that is used as the offset of a debugging information entry
     in the `.debug_info` section of the current executable
     or shared object file.
@@ -967,7 +975,7 @@ or is computed from other locations and values in the program.
     offset of 0. If the contents of the storage bank are dereferenced, the
     result is the location `L` offset by `B` bytes.</span>
     
-    _The debugging information entry referenced by a
+    *The debugging information entry referenced by a
     `DW_OP_implicit_pointer` operation is typically a
     `DW_TAG_variable` or `DW_TAG_formal_parameter` entry whose
     `DW_AT_location` attribute gives a second DWARF expression or a
@@ -977,9 +985,9 @@ or is computed from other locations and values in the program.
     By using the second DWARF expression, a consumer can
     reconstruct the value of the object when asked to dereference
     the pointer described by the original DWARF expression
-    containing the `DW_OP_implicit_pointer` operation._
+    containing the `DW_OP_implicit_pointer` operation.*
 
-_DWARF location descriptions are intended to yield the **location** of a
+*DWARF location descriptions are intended to yield the **location** of a
 value rather than the value itself. An optimizing compiler may perform a
 number of code transformations where it becomes impossible to give a
 location for a value, but it remains possible to describe the value
@@ -987,7 +995,7 @@ itself. Section {registerlocationdescriptions} describes operators that
 can be used to describe the location of a value when that value exists
 in a register but not in memory. The operations in this section are used
 to describe values that exist neither in memory nor in a single
-register._
+register.*
 
 
 ## 3.10 Undefined Locations
@@ -1048,16 +1056,15 @@ section. Each part's location describes the location of one piece of
 the object; each composition operation describes which part of the
 object is located there.</span>
 
-1. <span class="add">`DW_OP_composite`</span>
-
+1. <span class="add">`DW_OP_composite`</span>  
     <span class="add">The `DW_OP_composite` operator has no operands. It pushes a new, empty,
     composite location onto the stack, with an offset of 0.</span>
 
-    <span class="add">_This operator is provided so that a new series of
+    <span class="add">*This operator is provided so that a new series of
     piece operations can be started to form a composite location when
-    the state of the stack is unknown (e.g., following a `DW_OP_call*`
+    the state of the stack is unknown (e.g., following a `DW_OP_call\*`
     operation), or when a new composite is to be started (e.g., rather
-    than add to a previous composite location on the stack)._</span>
+    than add to a previous composite location on the stack).*</span>
 
 1. `DW_OP_piece`  
     The `DW_OP_piece` operation takes a
@@ -1070,11 +1077,11 @@ object is located there.</span>
     but does not occupy the entire register, the placement of
     the piece within that register is defined by the ABI.
     
-    _Many compilers store a single variable in sets of registers,
+    *Many compilers store a single variable in sets of registers,
     or store a variable partially in memory and partially in
     registers. `DW_OP_piece` provides a way of describing how large
     a part of a variable a particular DWARF location description
-    refers to._
+    refers to.*
     
 1. `DW_OP_bit_piece`  
     The `DW_OP_bit_piece` operation takes two operands.
@@ -1104,14 +1111,14 @@ object is located there.</span>
     (see Section {implicitlocationdescriptions});
     the offset is from the least significant bit of the source value.
 
-    _`DW_OP_bit_piece` is
+    *`DW_OP_bit_piece` is
     used instead of `DW_OP_piece` when
     the piece to be assembled into a value or assigned to is not
     byte-sized or is not at the start of a register or addressable
-    unit of memory._
+    unit of memory.*
     
-    _Whether or not a `DW_OP_piece` operation is equivalent to any
-    `DW_OP_bit_piece` operation with an offset of 0 is ABI dependent._
+    *Whether or not a `DW_OP_piece` operation is equivalent to any
+    `DW_OP_bit_piece` operation with an offset of 0 is ABI dependent.*
 
 <span class="del">A composition operation that follows an empty location description indicates
 that the piece is undefined, for example because it has been optimized away.</span>
@@ -1142,8 +1149,8 @@ DW_OP_swap` had been processed immediately prior to the piece
 operation), and the result is a new composite location with the single
 piece `A`.</span>
 
-  [This third rule may not in fact be necessary. It covers the case
-  where a DWARF5 piece expression left multiple items on the stack.]
+  <span class="add">*[This third rule may not in fact be necessary. It covers the case
+  where a DWARF5 piece expression left multiple items on the stack.]*</span>
 
 ## <span class="add">3.12 Offset Operations [NEW]</span>
 
@@ -1217,15 +1224,15 @@ The following operations provide simple control of the flow of a DWARF expressio
     32-bit DWARF format,
     the operand is a 4-byte unsigned value;
     in the 64-bit DWARF format, it is an 8-byte unsigned value
-    (see Section {datarep:32bitand64bitdwarfformats}).
+    (see Section {32bitand64bitdwarfformats}).
     The operand is used as the offset of a
     debugging information entry in
     the `.debug_info` section of the current executable or shared object file.
         
-    _Operand interpretation of
+    *Operand interpretation of
     `DW_OP_call2`, `DW_OP_call4` and `DW_OP_call_ref` is exactly like
     that for `DW_FORM_ref2`, `DW_FORM_ref4` and `DW_FORM_ref_addr`,
-    respectively (see Section {datarep:attributeencodings})._
+    respectively (see Section {attributeencodings}).*
     
     These operations transfer control of DWARF expression evaluation to
     the `DW_AT_location` attribute of the referenced debugging information entry. If
@@ -1236,7 +1243,7 @@ The following operations provide simple control of the flow of a DWARF expressio
     the stack.
     Execution returns
     to the point following the call when the end of the attribute
-    is reached. Values <span class="add">and locations</span >on the stack at the time of the call may be
+    is reached. Values <span class="add">and locations</span> on the stack at the time of the call may be
     used as parameters by the called expression, and <span class="del">values</span>
     <span class="add">elements (values or locations)</span> left on
     the stack by the called expression may be used as return values
@@ -1294,10 +1301,10 @@ There are these special operations currently defined:
     
     `DW_OP_push_object_address` is not meaningful inside of this DWARF operation.
     
-    _The register location description provides a more compact form for the
-    case where the value was in a register on entry to the subprogram._
+    *The register location description provides a more compact form for the
+    case where the value was in a register on entry to the subprogram.*
     
-    _The values needed to evaluate `DW_OP_entry_value` could be obtained in
+    *The values needed to evaluate `DW_OP_entry_value` could be obtained in
     several ways. The consumer could suspend execution on entry to the
     subprogram, record values needed by `DW_OP_entry_value` expressions within
     the subprogram, and then continue; when evaluating `DW_OP_entry_value`,
@@ -1306,7 +1313,7 @@ There are these special operations currently defined:
     virtually unwind using the Call Frame Information
     (see Section {callframeinformation})
     to recover register values that might have been clobbered since the
-    subprogram entry point._
+    subprogram entry point.*
     
 1. `DW_OP_extended`  
     The `DW_OP_extended` opcode encodes an extension operation. It has
@@ -1329,9 +1336,9 @@ There are these special operations currently defined:
     producer
     extension.
     
-    _The `DW_OP_user_extended` encoding space can be understood to supplement
+    *The `DW_OP_user_extended` encoding space can be understood to supplement
     the space defined by `DW_OP_lo_user` and `DW_OP_hi_user` that is allocated by
-    the standard for the same purpose._
+    the standard for the same purpose.*
 
 ## 3.16 Value Lists
 
@@ -1343,7 +1350,7 @@ Value lists are contained in a separate object file section,
 along with location lists (see {locationlists}).
 
 A value list is indicated by an attribute whose value is of class
-`vallist` (see Section {datarep:classesandforms}).
+`vallist` (see Section {classesandforms}).
 
 A value list consists of a series of value list entries.
 The representation of a value list is the same as for a
@@ -1352,10 +1359,10 @@ that bounded location description and default location description
 entries are understood to provide DWARF expressions that produce
 values rather than location descriptions.
 
-_The DWARF expressions in value list entries, being
+*The DWARF expressions in value list entries, being
 expressions and not location descriptions, may not contain
 any of the DWARF operations described in Section
-{locationdescriptions}._
+{locationdescriptions}.*
 
 The address ranges defined by the bounded expressions of a
 value list may overlap. When they do, the meaning is undefined
@@ -1375,10 +1382,10 @@ A location list is indicated <span class="del">by a location or other</span>
 <span class="add">an</span> attribute whose value is of class `loclist`
 (see Section {classesandforms}).
 
-_This location list representation, the `loclist` class, and the
+*This location list representation, the `loclist` class, and the
 related `DW_AT_loclists_base` attribute are new in DWARF Version 5.
 Together they eliminate most or all of the object language relocations
-previously needed for location lists._
+previously needed for location lists.*
 
 A location list consists of a series of location list entries.
 Each location list entry is one of the following kinds:
@@ -1483,8 +1490,8 @@ split or non-split units:
 1. `DW_LLE_end_of_list`  
     An end-of-list entry contains no further data.
     
-    _A series of this kind of entry may be used for padding or
-    alignment purposes._
+    *A series of this kind of entry may be used for padding or
+    alignment purposes.*
     
     
 1. `DW_LLE_base_addressx`  
@@ -1565,3 +1572,4 @@ use only in non-split DWARF units:
     operand of `DW_FORM_sec_offset`.  The offset identifies the
     first entry of a location list whose entries are to be regarded as part of
     the current location  list, up to the `DW_LLE_end_of_list` entry.
+

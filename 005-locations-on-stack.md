@@ -276,6 +276,14 @@ Replace the contents of the preamble to the old Section 2.5 with:
 > 
 > The result of a DWARF expression is the value or location on the top
 > of the stack after evaluating the operations.
+>
+> Values on the stack are typed, and can represent a value of any
+> supported base type of the target machine, or of the generic type,
+> which is an integral type that has the size of an address on the
+> target machine, and unspecified signedness.
+>
+> [non-normative] The generic type is the same as the unspecified type used for stack
+> operations defined in DWARF Version 4 and before.
 
 
 ### Section 3.1 DWARF Expression Evaluation Context [was 2.5.1]
@@ -869,7 +877,7 @@ attribute."
 ### Section 5.7.6 Data Member Entries
 
 In the description for `DW_AT_data_member_location`, change
-the second bullet to:
+the first paragraph of the second bullet to:
 
 > 2\. Otherwise, the value must be a location description. The
 > location of the containing entity is pushed on the DWARF stack before
@@ -878,19 +886,19 @@ the second bullet to:
 
 Replace the following non-normative paragraph with:
 
-> > [non-normative] The push on the DWARF expression stack of the location
-> > of the containing construct is equivalent to execution of the
-> > `DW_OP_push_object_address` operation (see Section 3.6);
-> > `DW_OP_push_object_address` therefore is not needed at the beginning of
-> > a location description for a data member. The result of the evaluation
-> > is a location, not an offset to the member.
+> [non-normative] The push on the DWARF expression stack of the location
+> of the containing construct is equivalent to execution of the
+> `DW_OP_push_object_address` operation (see Section 3.6);
+> `DW_OP_push_object_address` therefore is not needed at the beginning of
+> a location description for a data member. The result of the evaluation
+> is a location, not an offset to the member.
 
 _Remove_ the second non-normative paragraph:
 
-> > [non-normative] A `DW_AT_data_member_location` attribute that has the
-> > form of a location description is not valid for a data member contained
-> > in an entity that is not byte aligned because DWARF operations do not
-> > allow for manipulating or computing bit offsets.
+> [non-normative] A `DW_AT_data_member_location` attribute that has the
+> form of a location description is not valid for a data member contained
+> in an entity that is not byte aligned because DWARF operations do not
+> allow for manipulating or computing bit offsets.
 
 ### Section 5.14 Pointer to Member Type Entries
 

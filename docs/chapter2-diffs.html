@@ -141,6 +141,12 @@ consisting of an opcode followed by zero or more literal operands. The
 number of operands is implied by the opcode.</span></p>
 <p><span class="add">The result of a DWARF expression is the value or location on the top
 of the stack after evaluating the operations.</span></p>
+<p><span class="add">Values on the stack are typed, and can represent a value of any
+supported base type of the target machine, or of the generic type,
+which is an integral type that has the size of an address on the
+target machine, and unspecified signedness.</span></p>
+<p><span class="add"><em>The generic type is the same as the unspecified type used for stack
+operations defined in DWARF Version 4 and before.</em></span></p>
 <h2>3.1 DWARF Expression Evaluation Context</h2>
 <p>DWARF expressions <span class="del">and location descriptions (see Section
 {locationdescriptions})</span> are evaluated within a
@@ -153,7 +159,7 @@ The context includes the following elements:</p>
 determined by the DWARF construct where the expression is found.</p>
 <p><em>For example, DWARF attributes with <code>exprval</code> class
 require a value, and attributes with <code>locdesc</code> class require
-a location <span class="del">description</span> (see Section {datarep:classesandforms).</em></p>
+a location <span class="del">description</span> (see Section {classesandforms}).</em></p>
 </li>
 <li>
 <p>Initial stack</p>
@@ -497,7 +503,7 @@ Section {lowlevelinformation}).</p>
 </li>
 </ol>
 <p><em>Examples illustrating many of these stack operations are
-found in Appendix {app:dwarfstackoperationexamples</em>.}</p>
+found in Appendix {dwarfstackoperationexamples}.</em></p>
 <h2>3.3 <span class="del">Literal Encodings</span><span class="add">Literal and Constant Operations</span></h2>
 <p>The following operations all push a value onto the DWARF stack.
 Operations other than <code>DW_OP_const_type</code> push a value with the
@@ -947,7 +953,7 @@ is treated as a byte offset from the start of that value.
 The first operand is a 4-byte unsigned value in the 32-bit
 DWARF format, or an 8-byte unsigned value in the 64-bit
 DWARF format (see Section
-{datarep:32bitand64bitdwarfformats})
+{32bitand64bitdwarfformats})
 that is used as the offset of a debugging information entry
 in the <code>.debug_info</code> section of the current executable
 or shared object file.
@@ -1032,8 +1038,8 @@ the object; each composition operation describes which part of the
 object is located there.</span></p>
 <ol>
 <li>
-<p><span class="add"><code>DW_OP_composite</code></span></p>
-<p><span class="add">The <code>DW_OP_composite</code> operator has no operands. It pushes a new, empty,
+<p><span class="add"><code>DW_OP_composite</code></span><br />
+<span class="add">The <code>DW_OP_composite</code> operator has no operands. It pushes a new, empty,
 composite location onto the stack, with an offset of 0.</span></p>
 <p><span class="add"><em>This operator is provided so that a new series of
 piece operations can be started to form a composite location when
@@ -1123,8 +1129,8 @@ only element on the stack. If <code>A</code> is the only remaining element, a ne
 empty composite is inserted before it (as if <code>DW_OP_composite DW_OP_swap</code> had been processed immediately prior to the piece
 operation), and the result is a new composite location with the single
 piece <code>A</code>.</span></p>
-<p>[This third rule may not in fact be necessary. It covers the case
-where a DWARF5 piece expression left multiple items on the stack.]</p>
+<p><span class="add"><em>[This third rule may not in fact be necessary. It covers the case
+where a DWARF5 piece expression left multiple items on the stack.]</em></span></p>
 </li>
 </ul>
 <h2><span class="add">3.12 Offset Operations [NEW]</span></h2>
@@ -1206,14 +1212,14 @@ unit. The <code>DW_OP_call_ref</code> operator has a single operand. In the
 32-bit DWARF format,
 the operand is a 4-byte unsigned value;
 in the 64-bit DWARF format, it is an 8-byte unsigned value
-(see Section {datarep:32bitand64bitdwarfformats}).
+(see Section {32bitand64bitdwarfformats}).
 The operand is used as the offset of a
 debugging information entry in
 the <code>.debug_info</code> section of the current executable or shared object file.</p>
 <p><em>Operand interpretation of
 <code>DW_OP_call2</code>, <code>DW_OP_call4</code> and <code>DW_OP_call_ref</code> is exactly like
 that for <code>DW_FORM_ref2</code>, <code>DW_FORM_ref4</code> and <code>DW_FORM_ref_addr</code>,
-respectively (see Section {datarep:attributeencodings}).</em></p>
+respectively (see Section {attributeencodings}).</em></p>
 <p>These operations transfer control of DWARF expression evaluation to
 the <code>DW_AT_location</code> attribute of the referenced debugging information entry. If
 there is no such attribute, then there is no effect. Execution
@@ -1223,7 +1229,7 @@ of the DWARF expression of a <code>DW_AT_location</code> attribute may
 the stack.
 Execution returns
 to the point following the call when the end of the attribute
-is reached. Values <span class="add">and locations</span >on the stack at the time of the call may be
+is reached. Values <span class="add">and locations</span> on the stack at the time of the call may be
 used as parameters by the called expression, and <span class="del">values</span>
 <span class="add">elements (values or locations)</span> left on
 the stack by the called expression may be used as return values
@@ -1330,7 +1336,7 @@ can change during the lifetime of that object.</p>
 <p>Value lists are contained in a separate object file section,
 along with location lists (see {locationlists}).</p>
 <p>A value list is indicated by an attribute whose value is of class
-<code>vallist</code> (see Section {datarep:classesandforms}).</p>
+<code>vallist</code> (see Section {classesandforms}).</p>
 <p>A value list consists of a series of value list entries.
 The representation of a value list is the same as for a
 location list (see {locationlists}), except
