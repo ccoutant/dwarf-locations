@@ -478,7 +478,9 @@ control...”) with the following:
 >     on the stack by the called expression may be used as return
 >     values by prior agreement between the calling and called
 >     expressions.
->
+
+### FIXME: encoded as loclist or loclistptr?
+
 >   * Otherwise, there is no effect and no changes are made to the
 >     stack.
 >
