@@ -13,12 +13,14 @@ the source language loop will be executed using SIMD instructions. Then on the
 next iteration of the generated vectorized loop, iteration 8 to 15 will be
 executed, and so on.
 
-If the source language loop accesses an array element based on the loop
-iteration index, the compiler may read the element into a register for the
-duration of that iteration. Next iteration it will read the next element into
-the register, and so on. With SIMD, this generalizes to the compiler reading
-array elements 0 to 7 into a vector register on the first vectorized loop
-iteration, then array elements 8 to 15 on the next iteration, and so on.
+If the source language loop accesses an array element based on the
+loop iteration index, the compiler may read the element into a
+register for the duration of that iteration. Then on the next
+iteration it will read the next element into the register, and so
+on. However with SIMD, this generalizes to the compiler reading array
+elements 0 to 7 into a vector register on the first vectorized loop
+iteration, then array elements 8 to 15 on the next iteration, and so
+on.
 
 The DWARF location description for the array needs to express that all elements
 are in memory, except the slice that has been promoted to the vector register.
@@ -26,10 +28,10 @@ The starting position of the slice is a runtime value based on the iteration
 index modulo the vectorization size. This cannot be expressed by `DW_OP_piece`
 and `DW_OP_bit_piece` which only allow constant offsets to be expressed.
 
-Therefore, a new operator is defined that takes two location descriptions, an
-offset and a size, and creates a composite that effectively uses the second
-location description as an overlay of the first, positioned according to the
-offset and size.
+Therefore, a new operator is defined that takes two location
+descriptions, an offset and a size, and creates a composite that uses
+the second location description as an overlay of the first, positioned
+according to the offset and size.
 
 Consider an array that has been partially registerized such that the currently
 processed elements are held in registers, whereas the remainder of the array
@@ -37,7 +39,7 @@ remains in memory. Consider the loop in this C function, for example:
 
     extern void foo(uint32_t dst[], uint32_t src[], int len) {
         for (int i = 0; i < len; ++i)
-        dst[i] += src[i];
+            dst[i] += src[i];
     }
 
 Inside the loop body, the machine code loads src[i] and dst[i] into registers,
@@ -70,9 +72,8 @@ runtime offset involving i:
 
 ## Proposal
 
-In Section 2.5.4.4.6 "Composite Location Description Operations" of [Allow
-location description on the DWARF evaluation stack], add the following
-operations after `DW_OP_bit_piece` and `DW_OP_piece_end`:
+In Section 3.11 "Composite Location Description Operations" of, add
+the following operations after `DW_OP_bit_piece`:
 
 > 4.  `DW_OP_overlay`
 >     `DW_OP_overlay` pops four stack entries. The first must be an integral
@@ -128,9 +129,11 @@ operations after `DW_OP_bit_piece` and `DW_OP_piece_end`:
 >         operation.
 >     4.  Perform the `DW_OP_piece_end` operation.
 
-In Section 7.7.1 Operation Expressions of [Allow
-location description on the DWARF evaluation stack], add the following
+In Section 7.7.1 Operation Expressions of, add the following
 rows to Table 7.9 "DWARF Operation Encodings":
+
+### FIXME: Adding a chapter 3 will probably bump chapter 7 to
+    8. Adjust as necessary.
 
 > Table 7.9: DWARF Operation Encodings
 >
