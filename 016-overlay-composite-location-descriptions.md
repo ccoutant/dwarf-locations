@@ -48,9 +48,22 @@ adds them, and stores the result back into dst[i].
 Considering the location of dst and src in the loop body, the elements dst[i]
 and src[i] would be located in registers, all other elements are located in
 memory. Let register R0 contain the base address of dst, register R1 contain i,
-and register R2 contain the registerized dst[i] element. We can describe the
-location of dst as a memory location with a register location overlaid at a
-runtime offset involving i:
+and register R2 contain the registerized dst[i] element.
+
+     + dst's address stored in register 0
+     v
+     +---------------------------------------------------+
+     | 0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 |
+     +---------------------------------------------------+
+
+     register 1 contains i
+     register 2 has copy of a portion of dst
+     +------------------------+
+     + 0  1  2  3  4  5  6  7 |
+     +------------------------+
+     
+We can describe the location of dst as a memory location with a
+register location overlaid at a runtime offset involving i:
 
     // 1. Memory location description of dst elements located in memory:
     `DW_OP_breg0` 0
@@ -69,6 +82,30 @@ runtime offset involving i:
     // 5. Make a composite location description for dst that is the memory #1
     //    with the register #2 positioned as an overlay at offset #3 of size #4:
     `DW_OP_overlay`
+
+On the first iteration of the vectorized loop the overlay would look like:
+
+         +---------------------------------------------------+
+    dst  | 0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 |
+         +---------------------------------------------------+
+    reg2 | 0  1  2  3  4  5  6  7 |
+         +------------------------+
+
+A consumer accessing dst[8] would reference the unsigned int reg0+32
+but when a consumer accesses dst[2] it would reference the unsigned
+int located at the 9th byte of reg2.
+
+Then on the second iteration of the loop after i had been incremented by 8:
+
+         +---------------------------------------------------+
+    dst  | 0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 |
+         +---------------------------------------------------+
+    reg2                         | 8  9 10 11 12 13 14 15 |
+                                 +------------------------+
+
+The situation would be reversed. A consumer accessing dst[8] would
+reference the unsigned int at byte 0 of reg0 but when a consumer
+accesses dst[2] it would reference the unsigned int located reg0+8
 
 ## Proposal
 
@@ -129,13 +166,10 @@ the following operations after `DW_OP_bit_piece`:
 >         operation.
 >     4.  Perform the `DW_OP_piece_end` operation.
 
-In Section 7.7.1 Operation Expressions of, add the following
-rows to Table 7.9 "DWARF Operation Encodings":
+In Section 8.7.1 Operation Expressions of, add the following
+rows to Table 8.9 "DWARF Operation Encodings":
 
-### FIXME: Adding a chapter 3 will probably bump chapter 7 to
-    8. Adjust as necessary.
-
-> Table 7.9: DWARF Operation Encodings
+> Table 8.9: DWARF Operation Encodings
 >
 > | Operation                          | Code  | Number of Operands | Notes |
 > | ---------------------------------- | ----- | ------------------ | ----- |
