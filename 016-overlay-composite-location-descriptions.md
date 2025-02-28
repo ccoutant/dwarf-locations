@@ -10,7 +10,7 @@ each vectorized loop iteration.
 
 On the first iteration of the generated vectorized loop, iterations 0 to 7 of
 the source language loop will be executed using SIMD instructions. Then on the
-next iteration of the generated vectorized loop, iteration 8 to 15 will be
+next iteration of the generated vectorized loop, iterations 8 to 15 will be
 executed, and so on.
 
 If the source language loop accesses an array element based on the
@@ -29,7 +29,7 @@ index modulo the vectorization size. This cannot be expressed by `DW_OP_piece`
 and `DW_OP_bit_piece` which only allow constant offsets to be expressed.
 
 Therefore, a new operator is defined that takes two location
-descriptions, an offset and a size, and creates a composite that uses
+descriptions plus an offset and a size, and creates a composite that uses
 the second location description as an overlay of the first, positioned
 according to the offset and size.
 
@@ -111,20 +111,20 @@ An overlay can also be used to create a composite location without
 using `DW_OP_piece`. For example GPUs often store doubles in two
 32b parts. An overlay can be used to concatenate the locations.
 
-   DW_OP_undefined
-   DW_OP_addr 0x100
-   DW_OP_lit0  # offset 0
-   DW_OP_lit4  # size 4
-   DW_OP_overlay
-   DW_OP_addr 0x200
-   DW_OP_lit4  # offset 4
-   DW_OP_lit8  # size 8
-   DW_OP_overlay
+    DW_OP_undefined
+    DW_OP_addr 0x100
+    DW_OP_lit0  # offset 0
+    DW_OP_lit4  # size 4
+    DW_OP_overlay
+    DW_OP_addr 0x200
+    DW_OP_lit4  # offset 4
+    DW_OP_lit8  # size 8
+    DW_OP_overlay
 
 Using an overlay this way as opposed to using the piece operators has
 two big advantages.
 
-The first being that DW_OP_piece has an ABI dependency
+The first being that `DW_OP_piece` has an ABI dependency:
 
      2.5.4.5 Composite Location Descriptions, point 2.:
 
@@ -162,11 +162,11 @@ operators with something like:
     DW_OP_offset 4
 
     yields:
-     +---------------------------------------------+
-     | ... 12 11 10  9  8  7  6  5  4  3  2  1  0  |
-vreg0|           07 06 05 04                       |
-vreg1|           03 02 01 00                       |
-     +---------------------------------------------+
+         +---------------------------------------------+
+         | ... 12 11 10  9  8  7  6  5  4  3  2  1  0  |
+    vreg0|           07 06 05 04                       |
+    vreg1|           03 02 01 00                       |
+         +---------------------------------------------+
 
 This also works if those vector registers were spilled to GPU memory:
 
@@ -178,20 +178,20 @@ This also works if those vector registers were spilled to GPU memory:
     DW_OP_piece 4
 
     yields:
-      +-------------------------------------------------+
-      |  0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F |
-0x100 |                         07 06 05 04             |
-...
-0x200 |                         03 02 01 00             |
-      +-------------------------------------------------+
+          +-------------------------------------------------+
+          |  0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F |
+    0x100 |                         07 06 05 04             |
+    ...
+    0x200 |                         03 02 01 00             |
+          +-------------------------------------------------+
 
-This can also be generalized it into a DWARF function which ignores
-the location provided the ABI works. This would allow the compiler to
-use the same function DWARF function whether the function is stored in
-an register or in some kind of memory.
+This can also be generalized into a DWARF function which ignores
+the location, provided the ABI works. This would allow the compiler to
+use the same function DWARF function whether the variable is stored in
+a register or in some kind of memory.
 
 Note this example is not particularly useful as is. However
-generalizing the function to use DW_OP_push_lane rather than having a
+generalizing the function to use `DW_OP_push_lane` rather than having a
 fixed offset would make a function that is generally useful and a good
 candidate for factorization. However, that general function would
 greatly increase the size of the examples below making them less
@@ -212,11 +212,11 @@ Then if the variable is in registers
     DW_OP_call func
 
     as above yields:
-     +---------------------------------------------+
-     | ... 12 11 10  9  8  7  6  5  4  3  2  1  0  |
-vreg0|           07 06 05 04                       |
-vreg1|           03 02 01 00                       |
-     +---------------------------------------------+
+         +---------------------------------------------+
+         | ... 12 11 10  9  8  7  6  5  4  3  2  1  0  |
+    vreg0|           07 06 05 04                       |
+    vreg1|           03 02 01 00                       |
+         +---------------------------------------------+
 
 or if it is in memory:
 
@@ -225,12 +225,12 @@ or if it is in memory:
     DW_OP_call func
 
     yields:
-      +-------------------------------------------------+
-      |  0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F |
-0x100 |                         07 06 05 04             |
-...
-0x200 |                         03 02 01 00             |
-      +-------------------------------------------------+
+          +-------------------------------------------------+
+          |  0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F |
+    0x100 |                         07 06 05 04             |
+    ...
+    0x200 |                         03 02 01 00             |
+          +-------------------------------------------------+
 
 However if you already have a composite as your first part of your
 value then the DWARF function will not work.
@@ -264,11 +264,11 @@ Then all three scenarios work.
     DW_OP_call func
 
     yields:
-      +----------------------------------+
-      |     07 06 05 04 03 02 01 00      |
-vreg1 |     11 10  9  8                  |
-vreg0 | ... 15 14 13 12 11 10  9  8  ... |
-      +----------------------------------+
+          +----------------------------------+
+          |     07 06 05 04 03 02 01 00      |
+    vreg1 |     11 10  9  8                  |
+    vreg0 | ... 15 14 13 12 11 10  9  8  ... |
+          +----------------------------------+
 
     DW_OP_addr 0x100
     DW_OP_addr 0x200
@@ -276,7 +276,7 @@ vreg0 | ... 15 14 13 12 11 10  9  8  ... |
 
     yields a double constructed out of
                              0x208 0x209 0x20A 0x20B
-     0s108 0x109 0x10A 0x10B ----- ----- ----- -----
+     0x108 0x109 0x10A 0x10B ----- ----- ----- -----
 
     DW_OP_addr 0x100
     DW_OP_regx AX
@@ -296,12 +296,12 @@ as follows:
    0x108 0x109 0x10A 0x10B ----- ----- ----- -----
 
 The lack of sensitivity to the type of the locations passed as a
-parameter is what makes DW_OP_overlay composites composable in a way
-that DW_OP_piece composites are not.
+parameter is what makes `DW_OP_overlay` composites composable in a way
+that `DW_OP_piece` composites are not.
 
 ## Proposal
 
-In Section 3.11 "Composite Location Description Operations" of, add
+In Section 3.11 "Composite Locations", add
 the following operations after `DW_OP_bit_piece`:
 
 > 4.  `DW_OP_overlay`
@@ -325,7 +325,7 @@ the following operations after `DW_OP_bit_piece`:
 >     description that represents the base location description BL.
 >
 
-In Section 8.7.1 Operation Expressions of, add the following
+In Section 8.7.1 "DWARF Expressions", add the following
 rows to Table 8.9 "DWARF Operation Encodings":
 
 > Table 8.9: DWARF Operation Encodings
