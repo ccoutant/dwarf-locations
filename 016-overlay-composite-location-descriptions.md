@@ -61,7 +61,7 @@ and register R2 contain the registerized dst[i] element.
      +------------------------+
      + 0  1  2  3  4  5  6  7 |
      +------------------------+
-     
+
 We can describe the location of dst as a memory location with a
 register location overlaid at a runtime offset involving i:
 
@@ -107,6 +107,198 @@ The situation would be reversed. A consumer accessing dst[8] would
 reference the unsigned int at byte 0 of reg0 but when a consumer
 accesses dst[2] it would reference the unsigned int located reg0+8
 
+An overlay can also be used to create a composite location without
+using `DW_OP_piece`. For example GPUs often store doubles in two
+32b parts. An overlay can be used to concatenate the locations.
+
+   DW_OP_undefined
+   DW_OP_addr 0x100
+   DW_OP_lit0  # offset 0
+   DW_OP_lit4  # size 4
+   DW_OP_overlay
+   DW_OP_addr 0x200
+   DW_OP_lit4  # offset 4
+   DW_OP_lit8  # size 8
+   DW_OP_overlay
+
+Using an overlay this way as opposed to using the piece operators has
+two big advantages.
+
+The first being that DW_OP_piece has an ABI dependency
+
+     2.5.4.5 Composite Location Descriptions, point 2.:
+
+	"If the piece is located in a register, but does not occupy the
+	entire register, the placement of the piece within that register
+	is defined by the ABI. "
+
+While this is not often a problem with normal relatively small CPU
+registers. GPUs make much more heavy use of vector registers which are
+often thousands of bits long. Furthermore, to work around this ABI
+dependency on CPU registers the ABI often defines different names for
+sub-registers. For example on the x86, the lowest 16b of the 32b
+register known as EAX can be referred to as AX and within those 16b
+the lowest 8b can be referred to as AL and the next 8b are AH as if
+they were different registers. This workaround is not practical when
+there are already 256 vector registers which regularly have 2048b.
+
+These large vector registers can also be spilled to fast GPU memory to
+free up registers for a portion of a computation. Thus it is helpful
+to have DWARF expressions which refer to these source variables in the
+same way whether they are in a vector register or in memory. To allow
+the DWARF expressions to be factored the DWARF expressions must be
+composable in a way that expressions with the piece opperator are not.
+
+A very common thing done in GPUs is combining two 32b slices of vector
+registers to make a 64b double. This can be done with the piece
+operators with something like:
+
+    DW_OP_regx vreg0
+    DW_OP_offset 8 # this could also be computed using DW_OP_push_lane
+                   # I just picked a number
+    DW_OP_piece 4
+    DW_OP_regx vreg1
+    DW_OP_offset 8
+    DW_OP_offset 4
+
+    yields:
+     +---------------------------------------------+
+     | ... 12 11 10  9  8  7  6  5  4  3  2  1  0  |
+vreg0|           07 06 05 04                       |
+vreg1|           03 02 01 00                       |
+     +---------------------------------------------+
+
+This also works if those vector registers were spilled to GPU memory:
+
+    DW_OP_addr 0x100
+    DW_OP_offset 8
+    DW_OP_piece 4
+    DW_OP_addr 0x200
+    DW_OP_offset 8
+    DW_OP_piece 4
+
+    yields:
+      +-------------------------------------------------+
+      |  0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F |
+0x100 |                         07 06 05 04             |
+...
+0x200 |                         03 02 01 00             |
+      +-------------------------------------------------+
+
+This can also be generalized it into a DWARF function which ignores
+the location provided the ABI works. This would allow the compiler to
+use the same function DWARF function whether the function is stored in
+an register or in some kind of memory.
+
+Note this example is not particularly useful as is. However
+generalizing the function to use DW_OP_push_lane rather than having a
+fixed offset would make a function that is generally useful and a good
+candidate for factorization. However, that general function would
+greatly increase the size of the examples below making them less
+understandable.
+
+    func: # expects 2 locations to be on the stack when called
+      DW_OP_swap
+      DW_OP_offset 8
+      DW_OP_piece 4
+      DW_OP_swap
+      DW_OP_offset 8
+      DW_OP_piece 4
+
+Then if the variable is in registers
+
+    DW_OO_regx vreg0
+    DW_OP_regx vreg1
+    DW_OP_call func
+
+    as above yields:
+     +---------------------------------------------+
+     | ... 12 11 10  9  8  7  6  5  4  3  2  1  0  |
+vreg0|           07 06 05 04                       |
+vreg1|           03 02 01 00                       |
+     +---------------------------------------------+
+
+or if it is in memory:
+
+    DW_OP_addr 0x100
+    DW_OP_addr 0x200
+    DW_OP_call func
+
+    yields:
+      +-------------------------------------------------+
+      |  0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F |
+0x100 |                         07 06 05 04             |
+...
+0x200 |                         03 02 01 00             |
+      +-------------------------------------------------+
+
+However if you already have a composite as your first part of your
+value then the DWARF function will not work.
+
+    DW_OP_addr 0x100
+    DW_OP_piece 2
+    DW_OP_regx AX
+    DW_OP_piece 2
+    DW_OP_addrx 0x200
+    DW_OP_call func
+
+That is because in the function above does an offset off of a piece
+built composite and doing an offset off the end of a composite is
+undefined behavior.
+
+If on the other hand I define func as:
+
+  func: # expects 2 locations to be on the stack when called
+    DW_OP_offset 8
+    DW_OP_swap
+    DW_OP_offset 8
+    DW_OP_swap
+    DW_OP_lit4
+    DW_OP_lit4
+    DW_OP_overlay
+
+Then all three scenarios work.
+
+    DW_OP_regx vreg0
+    DW_OP_regx vreg1
+    DW_OP_call func
+
+    yields:
+      +----------------------------------+
+      |     07 06 05 04 03 02 01 00      |
+vreg1 |     11 10  9  8                  |
+vreg0 | ... 15 14 13 12 11 10  9  8  ... |
+      +----------------------------------+
+
+    DW_OP_addr 0x100
+    DW_OP_addr 0x200
+    DW_OP_call func
+
+    yields a double constructed out of
+                             0x208 0x209 0x20A 0x20B
+     0s108 0x109 0x10A 0x10B ----- ----- ----- -----
+
+    DW_OP_addr 0x100
+    DW_OP_regx AX
+    DW_OP_lit2
+    DW_OP_lit2
+    DW_OP_overlay # This creates the first overlay
+    DW_OP_addr 0x200
+    DW_OP_call func
+
+The first overlay looks like:
+                <---AX---->
+    0x100 0x101 ----- ----- 0x104 ... 0x108 0x109 0x10A 0x10B 0x10C 0x10D ...
+
+Then after func is called the double is constructed out of the bytes
+as follows:
+                           0x208 0x209 0x20A 0x20B
+   0x108 0x109 0x10A 0x10B ----- ----- ----- -----
+
+The lack of sensitivity to the type of the locations passed as a
+parameter is what makes DW_OP_overlay composites composable in a way
+that DW_OP_piece composites are not.
+
 ## Proposal
 
 In Section 3.11 "Composite Location Description Operations" of, add
@@ -120,12 +312,10 @@ the following operations after `DW_OP_bit_piece`:
 >     overlay location description OL. The fourth must be a location
 >     description that represents the base location description BL.
 >
->     The action is the same as for `DW_OP_bit_overlay`, except that the overlay
+>     The action is the same for `DW_OP_bit_overlay`, except that the overlay
 >     bit size BS and overlay bit offset BO used are S and O respectively
 >     scaled by 8 (the byte size).
-
-### FIXME: Allow concat-like behavior
-
+>
 > 5.  `DW_OP_bit_overlay`
 >     `DW_OP_bit_overlay` pops four stack entries. The first must be an integral
 >     type value that represents the overlay bit size value BS. The second
@@ -134,37 +324,6 @@ the following operations after `DW_OP_bit_piece`:
 >     overlay location description OL. The fourth must be a location
 >     description that represents the base location description BL.
 >
->     The DWARF expression is ill-formed if BS or BO are negative values.
->
->     rbss(L) is the minimum remaining bit storage size of L which is defined
->     as follows. LS is the location storage and LO is the location bit offset
->     specified by a single location description SL of L. The remaining bit
->     storage size RBSS of SL is the bit size of LS minus LO. rbss(L) is the
->     minimum RBSS of each single location description SL of L.
->
->     The DWARF expression is ill-formed if rbss(BL) is less than BO plus BS.
-
-### FIXME: Restate so not in terms of DW_OP_bit_piece
-
->     If BS is 0, then the operation pushes BL.
->
->     If BO is 0 and BS equals rbss(BL), then the operation pushes OL.
->
->     Otherwise, the operation is equivalent to performing the following steps
->     to push a composite location description.
->
->     [non-normative] The composite location description is conceptually the
->     base location description BL with the overlay location description OL
->     positioned as an overlay starting at the overlay offset BO and covering
->     overlay bit size BS.
->
->     1.  If BO is not 0 then push BL followed by performing the
->         `DW_OP_bit_piece` BO, 0 operation.
->     2.  Push OL followed by performing the `DW_OP_bit_piece` BS, 0 operation.
->     3.  If rbss(BL) is greater than BO plus BS, push BL followed by
->         performing the `DW_OP_bit_piece` (rbss(BL) - BO - BS), (BO + BS)
->         operation.
->     4.  Perform the `DW_OP_piece_end` operation.
 
 In Section 8.7.1 Operation Expressions of, add the following
 rows to Table 8.9 "DWARF Operation Encodings":
