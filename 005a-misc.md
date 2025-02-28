@@ -1,6 +1,14 @@
 # Deferred Issues from Tony’s Review of Locations on Stack
 
-## Section 2.5.1 DWARF Expression Evaluation Context
+## Section 2.5 Values and Locations
+
+Re: multiple locations.
+
+> ...but can also be returned by a DWARF expression if it includes a
+> `DW_OP_call*` to a debugging information entry that has a location
+> list attribute.
+
+## Section 3.1 DWARF Expression Evaluation Context
 
 In item 6, "Current call frame," CFA is referred to as "Call Frame Address."
 Should be "Canonical Frame Address."
@@ -11,15 +19,7 @@ to "must be an active call frame in the current thread's call stack."
 [ccoutant: I think this was already decided in the discussion that added
 this section to the document.]
 
-## Section 2.5.2 Values and Locations
-
-Re: multiple locations.
-
-> ...but can also be returned by a DWARF expression if it includes a
-> `DW_OP_call*` to a debugging information entry that has a location
-> list attribute.
-
-## Section 2.5.2.3 Stack Operations
+## Section 3.2 Stack Operations
 
 For `DW_OP_deref_size`:
 
@@ -76,7 +76,16 @@ For `DW_OP_xderef_type`:
 > debugging information entry in the current compilation unit, which must
 > be a `DW_TAG_base_type` entry that provides the type of the data pushed.
 
-## 2.5.4 Literal and Constant Operations
+For `DW_OP_push_lane`:
+
+> The `DW_OP_push_lane` operation pushes the current lane
+> value on the stack as the generic type (see Section
+> {dwarfexpressionevaluationcontext}). This is the context of
+> the lane in which the expression is being evaluated (see
+> Section {lowlevelinformation}).
+
+
+## 3.3 Literal and Constant Operations
 
 > The following operations all push a value onto the DWARF stack.
 > Operations other than `DW_OP_const_type` push a value with the
@@ -85,7 +94,7 @@ For `DW_OP_xderef_type`:
 > the value is truncated to the element<span class="add">'s type</span> size and the low-order bits
 > are pushed on the stack.
 
-## 2.5.5 Register Value Operations
+## 3.4 Register Value Operations
 
 [ttye: Note that this definition covers what happens if T is smaller
 (truncation) or larger (illegal) than R.]
@@ -119,7 +128,44 @@ bank ordering defined by the architecture provides full flexibility. Since
 this was added as part of DWARF 6, would advocate to remove it from the
 final version.]
 
-## 2.5.14 Control Flow Operations
+## 3.7 Memory Locations
+
+> The single operand of the `DW_OP_breg<n>` operations
+> provides a signed LEB128 byte offset. The contents of the specified
+> register (0–31) are <span class="add">retrieved as if using
+> `DW_OP_regval_type` with an unsigned integral type with a
+> bit size that is the minimum of the register size and
+> generic type size. The result is</span> treated as a memory address
+> in the default address space. The offset is added to the
+> address obtained from the register and the resulting memory
+> location is pushed onto the stack.
+
+## 3.9 Implicit Locations
+
+> The `DW_OP_implicit_pointer` operation has two operands: a
+> reference to a debugging information entry that describes
+> the dereferenced object's <span
+> class="del">value</span><span class="add">location
+> `L`</span>, and a signed number that is treated as a byte
+> offset `B` from the start of that <span
+> class="del">value</span><span class="add">location</span>.
+> The first operand is a 4-byte unsigned value in the 32-bit
+> DWARF format, or an 8-byte unsigned value in the 64-bit
+> DWARF format...
+
+> By using the second DWARF expression, a consumer can
+> referenced entry may be any entry that contains a
+> `DW_AT_location` or `DW_AT_const_value` attribute (for
+> example, `DW_TAG_dwarf_procedure`). By using the second
+> DWARF expression, a consumer can reconstruct the <span
+> class="del">value</span><span class="add">location</span> of
+> the object when asked to dereference the pointer described
+> by the <span class="del">original DWARF expression
+> containing the</span> `DW_OP_implicit_pointer` operation.*
+
+
+
+## 3.13 Control Flow Operations
 
 > <span class="add">If the `DW_AT_location` attribute is encoded using class
 > `locdesc`, then these</span>
