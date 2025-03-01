@@ -267,7 +267,7 @@ Then all three scenarios work.
           +----------------------------------+
           |     07 06 05 04 03 02 01 00      |
     vreg1 |     11 10  9  8                  |
-    vreg0 | ... 15 14 13 12 11 10  9  8  ... |
+    vreg0 | ... -- -- -- -- 11 10  9  8  ... |
           +----------------------------------+
 
     DW_OP_addr 0x100
@@ -275,8 +275,11 @@ Then all three scenarios work.
     DW_OP_call func
 
     yields a double constructed out of
-                             0x208 0x209 0x20A 0x20B
-     0x108 0x109 0x10A 0x10B ----- ----- ----- -----
+
+    +-------------------------------------------------+
+    |                         0x208 0x209 0x20A 0x20B |
+    | 0s108 0x109 0x10A 0x10B ----- ----- ----- ----- |
+    +-------------------------------------------------+
 
     DW_OP_addr 0x100
     DW_OP_regx AX
@@ -287,13 +290,19 @@ Then all three scenarios work.
     DW_OP_call func
 
 The first overlay looks like:
-                <---AX---->
-    0x100 0x101 ----- ----- 0x104 ... 0x108 0x109 0x10A 0x10B 0x10C 0x10D ...
+
+    +---------------------------------------------------------------------------+
+    |             <---AX---->                                                   |
+    | 0x100 0x101 ----- ----- 0x104 ... 0x108 0x109 0x10A 0x10B 0x10C 0x10D ... |
+    +---------------------------------------------------------------------------+
 
 Then after func is called the double is constructed out of the bytes
 as follows:
-                           0x208 0x209 0x20A 0x20B
-   0x108 0x109 0x10A 0x10B ----- ----- ----- -----
+
+    +-------------------------------------------------+
+    |                         0x208 0x209 0x20A 0x20B |
+    | 0x108 0x109 0x10A 0x10B ----- ----- ----- ----- |
+    +-------------------------------------------------+
 
 The lack of sensitivity to the type of the locations passed as a
 parameter is what makes `DW_OP_overlay` composites composable in a way
