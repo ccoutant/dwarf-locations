@@ -411,7 +411,7 @@ called "Overlay Composites" With the the following operations:
 >     bit size BS and overlay bit offset BO used are S and O respectively
 >     scaled by 8 (the byte size).
 >
-> .  `DW_OP_bit_overlay`
+> 2.  `DW_OP_bit_overlay`
 >     `DW_OP_bit_overlay` pops four stack entries. The first must be an integral
 >     type value that represents the overlay bit size value BS. The second
 >     must be an integral type value that represents the overlay bit offset
