@@ -127,7 +127,7 @@ using `DW_OP_piece`. For example GPUs often store doubles in two
     1st overlay || 100 101 102 103 |                 |
     base        || <undefined> ... |                 |
                 |+-----------------+                 |
-		+------------------------------------+
+                +------------------------------------+
 
 *Note: my diagram is slightly wrong but I don't think it matters. My
  understanding is that the undefined base layer continues on into
@@ -188,9 +188,9 @@ operators with something like:
     DW_OP_offset 8
     DW_OP_piece 4
 
-* Note that the small 'v' indicates where the offset into the base
-  location is.
-
+*Note that the small 'v' indicates where the offset into the base
+  location is.*
+  
     yields:
          +---------------------------+        +---------------------------+
 	 |                 v         |        |                 v         |
