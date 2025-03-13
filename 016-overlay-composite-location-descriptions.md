@@ -193,7 +193,7 @@ operators with something like:
   
     yields:
          +---------------------------+        +---------------------------+
-	 |                 v         |        |                 v         |
+         |                 v         |        |                 v         |
          | ... C  B  A  9  8  7  ... |        | ... C  B  A  9  8  7  ... |
     vreg0| ...   XX XX XX XX  ...    |   vreg1| ...   YY YY YY YY  ...    |
          +---------------------------+        +---------------------------+
@@ -219,9 +219,9 @@ This also works if those vector registers were spilled to memory:
     |                  XX  XX  XX  XX                      YY  YY  YY  YY         |
     +-----------------------------------------------------------------------------+
                                      \                    /
-				      \                  /
-				       v                v
-				    [XX XX XX XX YY YY YY YY]
+                                      \                  /
+                                       v                v
+                                    [XX XX XX XX YY YY YY YY]
 
 This can also be generalized into a DWARF function which ignores the
 location. This would allow the compiler to use the same function DWARF
@@ -254,14 +254,14 @@ Then if the variable is in registers
 
     as above yields:
          +---------------------------+        +---------------------------+
-	 |                 v         |        |                 v         |
+         |                 v         |        |                 v         |
          | ... C  B  A  9  8  7  ... |        | ... C  B  A  9  8  7  ... |
     vreg0| ...   XX XX XX XX  ...    |   vreg1| ...   YY YY YY YY  ...    |
          +---------------------------+        +---------------------------+
-	                   \                         /
-			    \                       /
-			     v                     v
-			    [XX XX XX XX YY YY YY YY]
+                           \                         /
+                            \                       /
+                             v                     v
+                            [XX XX XX XX YY YY YY YY]
 
 or if it is in memory:
 
@@ -276,9 +276,9 @@ or if it is in memory:
     |                  XX  XX  XX  XX                      YY  YY  YY  YY         |
     +-----------------------------------------------------------------------------+
                                      \                    /
-				      \                  /
-				       v                v
-				    [XX XX XX XX YY YY YY YY]
+                                      \                  /
+                                       v                v
+                                    [XX XX XX XX YY YY YY YY]
 
 However if you already have a composite as your first part of your
 value then the DWARF function will not work. For example:
@@ -298,9 +298,9 @@ value then the DWARF function will not work. For example:
     |                  XX  XX     |   AX | YY YY |
     +-----------------------------+      +-------+
                             \            /
-		             \          /
-		              v        v
-		          [ 108 109 <-AX--> ]
+                             \          /
+                              v        v
+                          [ 108 109 <-AX--> ]
 
 That is because in the function above does an 8 byte offset off of the
 piece built composite above which is only 4 bytes long and doing an
@@ -324,16 +324,16 @@ Then all three scenarios work.
 
     yields:
          +---------------------------+
-	 |                 v         |
+         |                 v         |
     vreg0| ... C  B  A  9  8  7  ... |
          |       XX XX XX XX         +-----------+
          +-----------+                 v         |
               \ vreg1| ... C  B  A  9  8  7  ... |
                \     |       YY YY YY YY         |
                 \    +---------------------------+
-		 \                |
-	          v               v
-	        [XX XX XX XX YY YY YY YY]
+                 \                |
+                  v               v
+                [XX XX XX XX YY YY YY YY]
 
     DW_OP_addr 0x100
     DW_OP_addr 0x200
@@ -346,7 +346,7 @@ Then all three scenarios work.
     |                  XX  XX  XX  XX                  YY  YY  YY  YY     |
     +---------------------------------------------------------------------+
                               |                               |
-			      v                               |
+                              v                               |
     +-------------------------------------+                   |
     |                 108 109 10A 10B     |                   |
     |                  XX  XX  XX  XX     |                   |
@@ -379,7 +379,7 @@ as follows:
     |              XX  XX   YY  YY                  ZZ  ZZ  ZZ  ZZ     |
     +------------------------------------------------------------------+
                       |        |                               |
- 		      v        v                               |
+                      v        v                               |
     +-------------------------------------+                    |
     |                 <-AX-->             |                    |
     |                 --- --- 10A 10B     |                    |
