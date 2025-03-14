@@ -400,25 +400,40 @@ Add a new Section 3.12 after "Composite Piece Description Operations",
 called "Overlay Composites" With the the following operations:
 
 > 1.  `DW_OP_overlay`
->     `DW_OP_overlay` pops four stack entries. The first must be an integral
->     type value that represents the overlay byte size value S. The second
->     must be an integral type value that represents the overlay byte offset
->     value O. The third must be a location description that represents the
->     overlay location description OL. The fourth must be a location
->     description that represents the base location description BL.
+>     `DW_OP_overlay` consumes the top four elements of the stack. The
+>     top-of-stack (first) entry is an integral type value that
+>     represents the width of the region being overlayed on the base
+>     location in bytes. The second from the top element is an
+>     integral type value that represents the offset in bytes from the
+>     start of the base location where the overlay is positioned. The
+>     third element from the top is the location that is being
+>     overlayed on top of the base location. The fourth element from
+>     the top of the stack is the base location onto which the overlay
+>     is being placed. These four elements are popped and a new
+>     composite location is pushed. The composite location left on the
+>     stack presents the underlying base location with the overlayed
+>     location of the specified size positioned over the base location
+>     at the specified offset.
 >
->     The action is the same for `DW_OP_bit_overlay`, except that the overlay
->     bit size BS and overlay bit offset BO used are S and O respectively
->     scaled by 8 (the byte size).
->
+>     The action is the same for `DW_OP_bit_overlay`, except that the
+>     overlay size and overlay offset are specified in bits rather
+>     than bytes.
+
 > 2.  `DW_OP_bit_overlay`
->     `DW_OP_bit_overlay` pops four stack entries. The first must be an integral
->     type value that represents the overlay bit size value BS. The second
->     must be an integral type value that represents the overlay bit offset
->     value BO. The third must be a location description that represents the
->     overlay location description OL. The fourth must be a location
->     description that represents the base location description BL.
->
+>     `DW_OP_bit_overlay` consumes the top four elements of the
+>     stack. The top-of-stack (first) entry is an integral type value
+>     that represents the width of the region being overlayed on the
+>     base location in bits. The second from the top element is an
+>     integral type value that represents the offset in bits from the
+>     start of the base location where the overlay is positioned. The
+>     third element from the top is the location that is being
+>     overlayed on top of the base location. The fourth element from
+>     the top of the stack is the base location onto which the overlay
+>     is being placed. These four elements are popped and a new
+>     composite location is pushed. The composite location left on the
+>     stack presents the underlying base location with the overlayed
+>     location of the specified size positioned over the base location
+>     at the specified offset.
 
 In Section 8.7.1 "DWARF Expressions", add the following
 rows to Table 8.9 "DWARF Operation Encodings":
