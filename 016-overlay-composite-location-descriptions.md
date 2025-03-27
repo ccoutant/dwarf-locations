@@ -85,11 +85,11 @@ register location overlaid at a runtime offset involving i:
 
 On the first iteration of the vectorized loop the overlay would look like:
 
-         +---------------------------------------------------+
-    dst  | 0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F 10 |
-         +---------------------------------------------------+
-    reg2 | 0  1  2  3  4  5  6  7 |
          +------------------------+
+    reg2 | 0  1  2  3  4  5  6  7 |
+         +-------------------------------------------------------+
+    dst  | 0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F 10 ... |
+         +-------------------------------------------------------+
 
 A consumer accessing dst[8] would reference the unsigned int reg0+32
 but when a consumer accesses dst[2] it would reference the unsigned
@@ -97,11 +97,11 @@ int located at the 9th byte of reg2.
 
 Then on the second iteration of the loop after i had been incremented by 8:
 
-         +---------------------------------------------------+
-    dst  | 0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F 10 |
-         +---------------------------------------------------+
-    reg2                         | 8  9  A  B  C  D  E  F |
                                  +------------------------+
+    reg2                         | 8  9  A  B  C  D  E  F |
+         +-------------------------------------------------------+
+    dst  | 0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F 10 ... |
+         +-------------------------------------------------------+
 
 The situation would be reversed. A consumer accessing dst[8] would
 reference the unsigned int at byte 0 of reg0 but when a consumer
@@ -121,26 +121,20 @@ using `DW_OP_piece`. For example GPUs often store doubles in two
     DW_OP_lit4  # size 4
     DW_OP_overlay
 
-                +------------------------------------+
-    2nd overlay |                    200 201 202 203 |
-                |+-----------------+                 |
-    1st overlay || 100 101 102 103 |                 |
-    base        || <undefined> ... |                 |
-                |+-----------------+                 |
-                +------------------------------------+
+                +--------------------------------------+
+    2nd overlay |                      200 201 202 203 |
+                |+------------------------------------+|
+    1st overlay ||     100 101 102 103                ||
+    base        || ... <undefined> ...                ||
+                |+------------------------------------+|
+                +--------------------------------------+
 
-*Note: my diagram is slightly wrong but I don't think it matters. My
- understanding is that the undefined base layer continues on into
- infinity.
-
-*Note: this was directly from Cary's email about how to do
- concatenation with overlays. I do not understand why we need the
- first overlay with the undefined except that it constrains the size
- of the storage location to be 8 bytes long rather than being as long
- as the first storage in the overlay. I think that there was a slight
- problem in Cary's emailed version. He had the size of the overlay as
- 8 but I understand the size of the overlay to be 4. A simpler example
- is:*
+ *Note: this was directly from Cary's email about how to do
+ concatenation with overlays. He copied the example from Pedro's note
+ I do not understand why we need the first overlay with the undefined
+ except that it constrains the size of the storage location to be 8
+ bytes long rather than being as long as the first storage in the
+ overlay. A simpler example is:
 
     DW_OP_addr 0x100
     DW_OP_addr 0x200
