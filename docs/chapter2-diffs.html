@@ -43,13 +43,13 @@ location description is encoded using class <code>locdesc</code>.</span></p>
 lifetime or change their location during their lifetime. A
 location list is a list of location descriptions, each
 associated with a range of program counters. Location
-lists are described in Section 3.17. As the value of an
+lists are described in Section 3.18. As the value of an
 attribute, a location list is encoded using class
 <code>loclist</code> (which serves as an index into a separate
 section containing location lists).</span></p>
 <p><span class="add">A location list may have overlapping PC ranges, and thus
 may yield more than one location. In these cases, the
-object value stored in each location must be the same
+object value stored in each location is expected to be the same
 (except for uninitialized/undefined parts of the value).</span></p>
 <p><span class="add"><em>A location list that yields multiple locations can be
 used to describe objects that reside in more than one
@@ -58,26 +58,22 @@ than one location as a result of optimization. For
 example, a value that is only read may be promoted from
 memory to a register for some region of code, but later
 code may revert to reading the value from memory as the
-register may be used for other purposes. For the code
-region where the value is in a register, any change to the
-object value must be made in both the register and the
-memory so both regions of code will read the updated
-value.</em></span></p>
-<p><span class="add"><em>When given multiple locations, a consumer can read the
+register may be used for other purposes.</em></span></p>
+<p><span class="add">When given multiple locations, a consumer can read the
 object’s value from any of those locations (since they all
-refer to storage that has the same value), but must write
-any changed value to all the locations.</em></span></p>
+refer to storage that should contain the same value), but must write
+any changed value to all the locations.</span></p>
 <p><span class="add">DWARF can describe the location of program objects in
 several kinds of storage. The location identifies a
-specific bank of storage, and provides a (zero-based) bit
+specific kind of storage, and provides a (zero-based) bit
 offset relative to the start of that storage.</span></p>
-<p><span class="add">A storage bank is a linear stream of bits of finite size.
+<p><span class="add">A storage “bank” is a linear stream of bits of finite size.
 The ordering of bits within a storage bank uses the bit
 numbering and direction conventions that are appropriate
 to the current language on the target architecture. An
-offset may not exceed the size (in bits) of the storage
-bank.</span></p>
-<p><span class="add">DWARF can describe five kinds of storage banks:</span></p>
+offset must be greater than or equal to 0 and not larger
+than the size (in bits) of the storage bank.</span></p>
+<p><span class="add">DWARF can describe locations in four kinds of storage:</span></p>
 <ul>
 <li>
 <p><span class="add">Memory storage.
@@ -95,7 +91,7 @@ storage bank is the size of the register.</span></p>
 <p><span class="add">Undefined storage.
 Indicates no value is available and therefore cannot be
 read or written. The size of an undefined storage bank
-is limited to the size of the largest address space or
+is the size of the largest address space or
 register on the target architecture.</span></p>
 </li>
 <li>
@@ -107,30 +103,28 @@ to define the implicit storage, and is limited to the
 size of the largest address space or register on the target
 architecture.</span></p>
 </li>
-<li>
-<p><span class="add">Composite storage.
-Allows a mixture of these where some bits come from one
-storage bank and some from another storage bank, or from
-disjoint parts of the same storage bank. The size of a
-composite storage bank is the sum of the sizes of the
-composite parts, and is limited to the size of the
-largest address space or register on the target
-architecture.</span></p>
-</li>
 </ul>
+<p><span class="add">DWARF can also describe composite locations, a mixture of
+the above kinds of storage, where some bits come from one
+kind of storage and some from another, or from disjoint
+parts of the same storage bank. The size of a composite
+storage bank is the sum of the sizes of the composite parts,
+and is limited to the size of the largest address space or
+register on the target architecture.</span></p>
 <p><span class="add">An implicit conversion between a memory location and a value may happen
 during the execution of any operation or when evaluation of the
 expression is completed. If a location is expected, but the result is
 a value, the value is implicitly treated as a memory address in the
 default address space, and converted to a memory location. If a value
-is expected, but the result is an addressable memory location in the
-default address space, the address is implicitly converted to a value
-of the generic type.</span></p>
+is expected, but the result is an addressable memory
+location (i.e., the offset is a multiple of the byte size)
+in the default address space, the address is implicitly
+converted to a value of the generic type.</span></p>
 <h1>Chapter 3: DWARF Expressions</h1>
 <p>DWARF expressions describe how to compute a value or
 specify a location. They are expressed in
-terms of DWARF operations that operate on a stack <span class="del">of values.</span>
-<span class="add">Each element on the stack may be
+terms of DWARF operations that operate on a stack of <span class="del">values</span>
+<span class="add">elements, each of which may be
 either a value or a location.</span></p>
 <p>A DWARF expression is encoded as a stream of operations,
 each consisting of an opcode followed by zero or more literal
@@ -145,7 +139,7 @@ of the stack after evaluating the operations.</span></p>
 supported base type of the target machine, or of the generic type,
 which is an integral type that has the size of an address on the
 target machine, and unspecified signedness.</span></p>
-<p><span class="add"><em>The generic type is the same as the unspecified type used for stack
+<p><span class="del"><em>The generic type is the same as the unspecified type used for stack
 operations defined in DWARF Version 4 and before.</em></span></p>
 <h2><span class="del">2.5.1</span> 3.1 DWARF Expression Evaluation Context</h2>
 <p>DWARF expressions <span class="del">and location descriptions (see Section
@@ -370,137 +364,6 @@ entry <span class="del">(including its type identifier)</span> becomes the top o
 the stack, and the third entry <span class="del">(including its type identifier)</span>
 becomes the second entry.</p>
 </li>
-<li>
-<p><code>DW_OP_deref</code><br />
-<span class="del">The <code>DW_OP_deref</code> operation pops the top stack entry and
-treats it as an address. The popped value must have an integral type.
-The value retrieved from that address is pushed,
-and has the generic type.
-The size of the data retrieved from the
-dereferenced
-address is the size of an address on the target machine.</span><br />
-<span class="add">The <code>DW_OP_deref</code> operation pops a location <code>L</code> from the top of the
-stack. The first <code>S</code> bits, where <code>S</code> is the size (in bits) of an address on the
-target machine, are retrieved from the location <code>L</code> and pushed onto the
-stack as a value of the generic type.</span></p>
-</li>
-<li>
-<p><code>DW_OP_deref_size</code><br />
-<span class="del">The <code>DW_OP_deref_size</code> operation behaves like the
-<code>DW_OP_deref</code>
-operation: it pops the top stack entry and treats it as an
-address. The popped value must have an integral type.
-The value retrieved from that address is pushed,
-and has the generic type.
-In the <code>DW_OP_deref_size</code> operation, however, the size in bytes
-of the data retrieved from the dereferenced address is
-specified by the single operand. This operand is a 1-byte
-unsigned integral constant whose value may not be larger
-than the size of the generic type. The data
-retrieved is zero extended to the size of an address on the
-target machine before being pushed onto the expression stack.</span><br />
-<span class="add">
-The <code>DW_OP_deref_size</code> takes a single 1-byte unsigned integral operand
-that specifies the size <code>S</code>, in bytes, of the value to be retrieved.
-The size <code>S</code> must be no larger than the size of the generic type. The
-operation behaves like the <code>DW_OP_deref</code> operation: it pops a location
-<code>L</code> from the stack. The first <code>S</code> bytes are retrieved from the
-location <code>L</code>, zero extended to the size of the generic type, and
-pushed onto the stack as a value of the generic type.
-</span></p>
-</li>
-<li>
-<p><code>DW_OP_deref_type</code><br />
-<span class="del">The <code>DW_OP_deref_type</code> operation behaves like the <code>DW_OP_deref_size</code> operation:
-it pops the top stack entry and treats it as an address.
-The popped value must have an integral type.
-The value retrieved from that address is pushed together with a type identifier.
-In the <code>DW_OP_deref_type</code> operation, the size in
-bytes of the data retrieved from the dereferenced address is specified by
-the first operand. This operand is a 1-byte unsigned integral constant whose
-value which is the same as the size of the base type referenced
-by the second operand.
-The second operand is an unsigned LEB128 integer that
-represents the offset of a debugging information entry in the current
-compilation unit, which must be a <code>DW_TAG_base_type</code> entry that provides the
-type of the data pushed.</span><br />
-<span class="add">The <code>DW_OP_deref_type</code> operation takes two operands. The first operand
-is a 1-byte unsigned integer that specifies the size <code>S</code> (in bytes) of the type
-given by the second operand. The second operand is an unsigned LEB128
-integer that represents the offset of a debugging information entry in
-the current compilation unit, which must be a <code>DW_TAG_base_type</code> entry
-that provides the type <code>T</code> of the value to be retrieved. The size <code>S</code>
-must be the same as the size of the base type represented by the
-second operand. This operation pops a location <code>L</code> from the stack. The
-first <code>S</code> bytes are retrieved from the location <code>L</code> and pushed onto the
-stack as a value of type <code>T</code>.</span></p>
-<p><em>While the size of the pushed value could be inferred from the base
-type definition, it is encoded explicitly into the operation so that the
-operation can be parsed easily without reference to the <code>.debug_info</code>
-section.</em></p>
-</li>
-<li>
-<p><code>DW_OP_xderef</code><br />
-The <code>DW_OP_xderef</code> operation provides an extended dereference
-mechanism. The entry at the top of the stack is treated as an
-address. The second stack entry is treated as an “address
-space identifier” for those architectures that support
-multiple
-address spaces.
-Both of these entries must have integral type<span class="add">s</span> <span class="del">identifiers</span>.
-The top two stack elements are popped,
-and a data item is retrieved through an implementation-defined
-address calculation and pushed as the new stack top together with the
-generic type <span class="del">identifier</span>.
-The size of the data retrieved from the
-dereferenced
-address is the size of the generic type.</p>
-</li>
-<li>
-<p><code>DW_OP_xderef_size</code><br />
-The <code>DW_OP_xderef_size</code> operation behaves like the
-<code>DW_OP_xderef</code> operation. The entry at the top of the stack is
-treated as an address. The second stack entry is treated as
-an “address space identifier” for those architectures
-that support
-multiple
-address spaces.
-Both of these entries must have integral type<span class="add">s</span> <span class="del">identifiers</span>.
-The top two stack
-elements are popped, and a data item is retrieved through an
-implementation-defined address calculation and pushed as the
-new stack top. In the <code>DW_OP_xderef_size</code> operation, however,
-the size in bytes of the data retrieved from the
-dereferenced
-address is specified by the single operand. This operand is a
-1-byte unsigned integral constant whose value may not be larger
-than the size of an address on the target machine. The data
-retrieved is zero extended to the size of an address on the
-target machine before being pushed onto the expression stack together
-with the generic type <span class="del">identifier</span>.</p>
-</li>
-<li>
-<p><code>DW_OP_xderef_type</code><br />
-The <code>DW_OP_xderef_type</code> operation behaves like the <code>DW_OP_xderef_size</code>
-operation: it pops the top two stack entries, treats them as an address and
-an address space identifier, and pushes the value retrieved. In the
-<code>DW_OP_xderef_type</code> operation, the size in bytes of the data retrieved from
-the dereferenced address is specified by the first operand. This operand is
-a 1-byte unsigned integral constant whose value
-<span class="del">value which</span> is the same as the size of the base type referenced
-by the second operand. The second
-operand is an unsigned LEB128 integer that represents the offset of a
-debugging information entry in the current compilation unit, which must be a
-<code>DW_TAG_base_type</code> entry that provides the type of the data pushed.</p>
-</li>
-<li>
-<p><code>DW_OP_push_lane</code><br />
-The <code>DW_OP_push_lane</code> operation pushes a lane index value
-of the generic type, which provides the context of the lane in
-which the expression is being evaluated (see
-Section {dwarfexpressionevaluationcontext} and
-Section {lowlevelinformation}).</p>
-</li>
 </ol>
 <p><em>Examples illustrating many of these stack operations are
 found in Appendix {dwarfstackoperationexamples}.</em></p>
@@ -543,7 +406,8 @@ The <code>DW_OP_constx</code> operation has a single operand that
 encodes an unsigned LEB128 value,
 which is a zero-based
 index into the <code>.debug_addr</code> section, where a constant, the
-size of a machine address, is stored.
+size of <span class="del">a machine address</span>
+<span class="add">the generic type</span>, is stored.
 This index is relative to the value of the
 <code>DW_AT_addr_base</code> attribute of the associated compilation unit.</p>
 <p><em>The <code>DW_OP_constx</code> operation is provided for constants that
@@ -557,7 +421,7 @@ The <code>DW_OP_const_type</code> operation takes three operands. The first oper
 is an unsigned LEB128 integer that represents the offset of a debugging
 information entry in the current compilation unit, which must be a
 <code>DW_TAG_base_type</code> entry that provides the type of the constant provided. The
-second operand is 1-byte unsigned integer that specifies the size of the
+second operand is a 1-byte unsigned integer that specifies the size of the
 constant value, which is the same as the size of the base type referenced
 by the first operand. The third operand is a
 sequence of bytes of the given size that is
@@ -569,13 +433,11 @@ section.</em></p>
 </li>
 </ol>
 <h2><span class="del">2.5.2.2</span> 3.4 Register Value Operations</h2>
-<p>The following operations push
+<p>The following operation pushes
 <span class="del">a value onto the stack that is either part or all of</span>
-<span class="add">all or part of</span>
 the contents of a register <span class="del">or the result of adding the contents of a
 register to a given signed offset</span> <span class="add">onto the stack</span>.
-<span class="del"><code>DW_OP_regval_type</code> pushes the contents of
-a
+<span class="del"><code>DW_OP_regval_type</code> pushes the contents of a
 register together with the given base type.
 <code>DW_OP_regval_bits</code> pushes the partial contents of
 a register together with the generic type.
@@ -597,15 +459,15 @@ compilation unit, which must be a <code>DW_TAG_base_type</code> entry that provi
 type of the value contained in the specified register.</p>
 </li>
 <li>
-<p><code>DW_OP_regval_bits</code><br />
-The <code>DW_OP_regval_bits</code> operation takes a single unsigned LEB128
+<p><span class="del"><code>DW_OP_regval_bits</code></span><br />
+<span class="del">The <code>DW_OP_regval_bits</code> operation takes a single unsigned LEB128
 integer operand, which gives the number of bits to read. This number must
 be smaller or equal to the bit size of the generic type.  It pops
 the top two stack elements and interprets the top element as an
 unsigned bit offset from the least significant bit end and the
 other as a register number identifying the register from which to
 extract the value.  If the extracted value is smaller than the size
-of the generic type, it is zero extended.</p>
+of the generic type, it is zero extended.</span></p>
 </li>
 </ol>
 <h2><span class="del">2.5.2.4</span> 3.5 Arithmetic and Logical Operations</h2>
@@ -717,21 +579,13 @@ performs a bitwise exclusive-or operation on the two, and
 pushes the result.</p>
 </li>
 </ol>
-<h2><span class="add">3.6 General Location Operations</span></h2>
-<p><span class="add">The following operations can be used to push a location onto the stack:</span></p>
+<h2><span class="add">3.6 Context Query Operations</span></h2>
+<p><span class="add">The following operations can be used to push a value
+or location obtained from the expression evaluation context (see Section 3.1)
+onto the stack:</span></p>
 <ol>
 <li>
-<p><code>DW_OP_fbreg</code><br />
-The <code>DW_OP_fbreg</code> operation provides a
-signed LEB128 <span class="add">byte</span> offset
-from the <span class="del">address</span> <span class="add">location</span>
-specified by the location description in the
-<code>DW_AT_frame_base</code> attribute of the current function
-(see Section {dwarfexpressionevaluationcontext}).</p>
-<p><em>This is typically a stack pointer register plus or minus some offset.</em></p>
-</li>
-<li>
-<p><code>DW_OP_push_object_address</code> [Rename to <code>DW_OP_push_object_location</code>?]<br />
+<p><span class="del"><code>DW_OP_push_object_address</code></span> <span class="add"><code>DW_OP_push_object_location</code></span><br />
 <span class="del">The <code>DW_OP_push_object_address</code> operation pushes the
 address of the object currently being evaluated as part of
 evaluation of a user presented expression (see Section
@@ -740,7 +594,7 @@ an independent variable described by its own debugging information
 entry or it may be a component of an array, structure, or class
 whose address has been dynamically determined by an earlier step
 during user expression evaluation.</span></p>
-<p><span class="add">The <code>DW_OP_push_object_address</code> operation pushes the location of the
+<p><span class="add">The <code>DW_OP_push_object_location</code> operation pushes the location of the
 current object (see Section 3.1) onto the stack, as part of evaluation of a user
 presented expression.</span></p>
 <p><span class="add"><em>This object may correspond to an independent
@@ -753,6 +607,70 @@ arrays involving descriptors) that is analogous to the implicit push
 of the base address of a structure prior to evaluation of a
 <code>DW_AT_data_member_location</code> to access a data member of a structure. For
 an example, see Appendix D.2.</em></p>
+<p><span class="add"><em>In previous versions of DWARF, this operator was named <code>DW_OP_push_object_address</code>.
+The old name is still supported in DWARF 6 for compatibility.</em></span></p>
+</li>
+<li>
+<p><span class="del"><code>DW_OP_form_tls_address</code></span> <span class="add"><code>DW_OP_form_tls_location</code></span><br />
+The <span class="del"><code>DW_OP_form_tls_address</code></span>
+<span class="add"><code>DW_OP_form_tls_location</code></span>
+operation pops a value from the stack,
+which must have an integral type <span class="del">identifier</span>,
+translates this value into
+<span class="del">an address</span> <span class="add">a location</span>
+in the thread-local storage for the current thread
+(see Section 3.1), and pushes the
+<span class="del">address</span> <span class="add">location</span>
+onto the stack <span class="del">together with the generic type identifier</span>.
+The meaning of the value on the top of the stack prior to this
+operation is defined by the run-time environment.  If the run-time
+environment supports multiple thread-local storage blocks for a
+single thread, then the block corresponding to the executable or
+shared library containing this DWARF expression is used.</p>
+<p><em>Some implementations of C, C++, Fortran, and other languages,
+support a thread-local storage class. Variables with this storage
+class have distinct values and addresses in distinct threads, much
+as automatic variables have distinct values and addresses in each
+function invocation. Typically, there is a single block of storage
+containing all thread-local variables declared in the main
+executable, and a separate block for the variables declared in each
+shared library. Each thread-local variable can then be accessed in
+its block using an identifier. This identifier is typically an
+offset into the block and pushed onto the DWARF stack by one of the
+<code>DW_OP_const&lt;n&gt;&lt;x&gt;</code> operations prior to the <code>DW_OP_form_tls_address</code>
+operation. Computing the address of the appropriate block can be
+complex (in some cases, the compiler emits a function call to do
+it), and difficult to describe using ordinary DWARF location
+descriptions. Instead of forcing complex thread-local storage
+calculations into the DWARF expressions, the <code>DW_OP_form_tls_address</code>
+allows the consumer to perform the computation based on the run-time
+environment.</em></p>
+<p><span class="add"><em>In previous versions of DWARF, this operator was named <code>DW_OP_form_tls_address</code>.
+The old name is still supported in DWARF 6 for compatibility.</em></span></p>
+</li>
+<li>
+<p><code>DW_OP_call_frame_cfa</code><br />
+The <code>DW_OP_call_frame_cfa</code> operation pushes the value of the
+current call frame address (CFA),
+obtained from the Call Frame Information
+(see Section {dwarfexpressionevaluationcontext} and
+Section {callframeinformation}).</p>
+<p><em>Although the value of <code>DW_AT_frame_base</code>
+can be computed using other DWARF expression operators,
+in some cases this would require an extensive location list
+because the values of the registers used in computing the
+CFA change during a subroutine. If the
+Call Frame Information
+is present, then it already encodes such changes, and it is
+space efficient to reference that.</em></p>
+</li>
+<li>
+<p><code>DW_OP_push_lane</code><br />
+The <code>DW_OP_push_lane</code> operation pushes a lane index value
+of the generic type, which provides the context of the lane in
+which the expression is being evaluated (see
+Section {dwarfexpressionevaluationcontext} and
+Section {lowlevelinformation}).</p>
 </li>
 </ol>
 <h2><span class="del">2.6.1.1.2</span> 3.7 Memory Locations</h2>
@@ -786,6 +704,18 @@ This index is relative to the value of the
 space and the corresponding memory location is pushed onto the stack.</span></p>
 </li>
 <li>
+<p><code>DW_OP_fbreg</code><br />
+The <code>DW_OP_fbreg</code> operation provides a
+signed LEB128 <span class="add">byte</span> offset <span class="add"><code>B</code></span>
+from the <span class="del">address</span> <span class="add">location</span>
+specified by the location description in the
+<code>DW_AT_frame_base</code> attribute of the current function
+(see Section 3.1).
+<span class="add">The frame base location, offset by <code>B</code> bytes,
+is pushed onto the stack.</span></p>
+<p><em>This is typically a stack pointer register plus or minus some offset.</em></p>
+</li>
+<li>
 <p><code>DW_OP_breg0</code>, <code>DW_OP_breg1</code>, …, <code>DW_OP_breg31</code><br />
 The single operand of the <code>DW_OP_breg&lt;n&gt;</code> operations provides a signed
 LEB128 <span class="del">offset from the contents of the specified register</span>
@@ -804,56 +734,6 @@ operand is a register number which is specified by an unsigned LEB128
 number. The second operand is a signed LEB128 byte offset. It is the same as
 <code>DW_OP_breg&lt;n&gt;</code> except it uses the register and offset provided by the
 operands.</span></p>
-</li>
-<li>
-<p><code>DW_OP_form_tls_address</code><br />
-The <code>DW_OP_form_tls_address</code> operation pops a value from the stack,
-which must have an integral type <span class="del">identifier</span>,
-translates this value
-into an address in the thread-local storage for the current thread
-(see Section {dwarfexpressionevaluationcontext}), and pushes the
-address onto the stack <span class="del">together with the generic type identifier</span>
-<span class="add">as a memory location (which may be an address
-space other than the default)</span>.
-The meaning of the value on the top of the stack prior to this
-operation is defined by the run-time environment.  If the run-time
-environment supports multiple thread-local storage blocks for a
-single thread, then the block corresponding to the executable or
-shared library containing this DWARF expression is used.</p>
-<p><em>Some implementations of C, C++, Fortran, and other languages,
-support a thread-local storage class. Variables with this storage
-class have distinct values and addresses in distinct threads, much
-as automatic variables have distinct values and addresses in each
-function invocation. Typically, there is a single block of storage
-containing all thread-local variables declared in the main
-executable, and a separate block for the variables declared in each
-shared library. Each thread-local variable can then be accessed in
-its block using an identifier. This identifier is typically an
-offset into the block and pushed onto the DWARF stack by one of the
-<code>DW_OP_const&lt;n&gt;&lt;x&gt;</code> operations prior to the <code>DW_OP_form_tls_address</code>
-operation. Computing the address of the appropriate block can be
-complex (in some cases, the compiler emits a function call to do
-it), and difficult to describe using ordinary DWARF location
-descriptions. Instead of forcing complex thread-local storage
-calculations into the DWARF expressions, the <code>DW_OP_form_tls_address</code>
-allows the consumer to perform the computation based on the run-time
-environment.</em></p>
-</li>
-<li>
-<p><code>DW_OP_call_frame_cfa</code><br />
-The <code>DW_OP_call_frame_cfa</code> operation pushes the value of the
-current call frame address (CFA),
-obtained from the Call Frame Information
-(see Section {dwarfexpressionevaluationcontext} and
-Section {callframeinformation}).</p>
-<p><em>Although the value of <code>DW_AT_frame_base</code>
-can be computed using other DWARF expression operators,
-in some cases this would require an extensive location list
-because the values of the registers used in computing the
-CFA change during a subroutine. If the
-Call Frame Information
-is present, then it already encodes such changes, and it is
-space efficient to reference that.</em></p>
 </li>
 </ol>
 <h2><span class="del">2.6.1.1.3</span> 3.8 Register Locations</h2>
@@ -905,9 +785,10 @@ one of the register based addressing operations, such as
 <p><span class="del">An empty location description consists of a DWARF expression containing
 no operations. It represents a piece or all of an object that is present
 in the source but not in the object code (perhaps due to optimization).</span></p>
-<p><span class="add">An undefined location represents a piece or all of an object that is
-present in the source but not in the object code (perhaps due to
-optimization).</span></p>
+<p><span class="add">An undefined location represents a piece
+or all of an object that is present in the source but not in
+the object code (perhaps due to optimization). An undefined
+location cannot be read from or written to.</span></p>
 <ol>
 <li>
 <p><span class="add"><code>DW_OP_undefined</code></span><br />
@@ -916,8 +797,8 @@ location with an offset of 0 onto the stack.</span></p>
 </li>
 <li>
 <p><span class="add">A DWARF expression containing no operations or
-that leaves no elements on the stack also produces an undefined
-location.</span></p>
+that leaves no elements on the stack also produces an undefined location.
+<em>This is for compatibility with earlier versions of DWARF.</em></span></p>
 </li>
 </ol>
 <h2><span class="del">2.6.1.1.4</span> 3.10 Implicit Locations</h2>
@@ -933,11 +814,12 @@ or is computed from other locations and values in the program.</p>
 <li>
 <p><code>DW_OP_implicit_value</code><br />
 The <code>DW_OP_implicit_value</code> operation specifies an immediate value
-using two operands: an unsigned LEB128length, followed by a
+using two operands: an unsigned LEB128 length, followed by a
 sequence of bytes of the given length that contain the value.
-<span class="add">A location is pushed on the stack for an implicit
-storage bank containing the byte sequence starting with the first byte
-at offset 0 and with an offset of 0.</span></p>
+<span class="add">A location is formed for an implicit
+storage bank which contains the given byte sequence. The
+offset of the implicit location is set to 0, and is pushed
+onto the stack.</span></p>
 </li>
 <li>
 <p><code>DW_OP_stack_value</code><br />
@@ -956,7 +838,8 @@ the value’s type and with an offset of 0.</span></p>
 <p><code>DW_OP_implicit_pointer</code><br />
 <em>An optimizing compiler may eliminate a pointer, while
 still retaining the value that the pointer addressed.
-<code>DW_OP_implicit_pointer</code> allows a producer to describe this value.</em></p>
+<code>DW_OP_implicit_pointer</code> allows a producer to describe
+<span class="del">this</span> <span class="add">the latter</span> value.</em></p>
 <p>The <code>DW_OP_implicit_pointer</code> operation specifies that the object
 is a pointer that cannot be represented as a real pointer,
 even though the value it would point to can be described. In
@@ -967,23 +850,27 @@ consumer of the debug information would be able to show the
 value of the dereferenced pointer, even when it cannot show
 the value of the pointer itself.</p>
 <p>The <code>DW_OP_implicit_pointer</code> operation has two operands: a
-reference to a debugging information entry that describes
+reference to a debugging information entry <span class="add"><code>D</code></span> that describes
 the dereferenced object’s value, and a signed number that
-is treated as a byte offset from the start of that value.
+is treated as a byte offset <span class="add"><code>B</code></span> from the start of that value.
 The first operand is a 4-byte unsigned value in the 32-bit
 DWARF format, or an 8-byte unsigned value in the 64-bit
-DWARF format (see Section
-{32bitand64bitdwarfformats})
-that is used as the offset of a debugging information entry
+DWARF format (see Section {32bitand64bitdwarfformats})
+that is used as the offset of a debugging information entry <span class="add"><code>D</code></span>
 in the <code>.debug_info</code> section of the current executable
 or shared object file.
-The second operand is a
-signed LEB128 number.
-<span class="add">A location is pushed on the stack for an implicit storage
-bank with a size of an address in the default address space and with an
-offset of 0. If the contents of the storage bank are dereferenced, the
-result is the location <code>L</code> offset by <code>B</code> bytes.</span></p>
-<p><em>The debugging information entry referenced by a
+The second operand, <span class="add"><code>B</code>,</span> is a
+signed LEB128 number.</p>
+<p><span class="add">An implicit storage location <code>LP</code> is created for the
+location of the pointer object <code>P</code>, and the location <code>LV</code> of
+the object <code>V</code> is obtained from <code>D</code>. <code>LP</code> describes the
+location of <code>P</code>, with an offset of 0, and the value in that
+implicit storage represents (implicitly) the value of the
+pointer, which is meant to point to <code>V</code>. <code>LV</code> describes the
+location of the object <code>V</code>, with a byte offset of <code>B</code>.
+</span></p>
+<p><span class="add">The location <code>LP</code> is pushed onto the stack.</span></p>
+<p><em>The debugging information entry <span class="add"><code>D</code></span> referenced by a
 <code>DW_OP_implicit_pointer</code> operation is typically a
 <code>DW_TAG_variable</code> or <code>DW_TAG_formal_parameter</code> entry whose
 <code>DW_AT_location</code> attribute gives a second DWARF expression or a
@@ -1006,7 +893,6 @@ in a register but not in memory. The operations in this section are used
 to describe values that exist neither in memory nor in a single
 register.</em></p>
 <h2><span class="del">2.6.1.2</span> 3.11 Composite Locations</h2>
-<p><span class="add">The above kinds of locations are considered “simple” locations.</span></p>
 <p><span class="del">A composite location description describes an object or
 value which may be contained in part of a register or stored
 in more than one location. Each piece is described by a
@@ -1053,7 +939,7 @@ than add to a previous composite location on the stack).</em></span></p>
 The <code>DW_OP_piece</code> operation takes a
 single operand, which is an
 unsigned LEB128 number.
-The number describes the size <span class="add"><code>S</code></span>, in bytes,
+The number describes the size, in bytes,
 of the piece of the object referenced by <span class="del">the preceding simple
 location description</span> <span class="add">the location <code>A</code> on the top of the stack</span>.
 If the piece is located in a register,
@@ -1068,7 +954,7 @@ refers to.</em></p>
 <li>
 <p><code>DW_OP_bit_piece</code><br />
 The <code>DW_OP_bit_piece</code> operation takes two operands.
-The first is an unsigned LEB128 number that gives the size <span class="add"><code>S</code></span> in bits
+The first is an unsigned LEB128 number that gives the size, in bits,
 of the piece. The second is an
 unsigned LEB128 number that
 gives the offset in bits from the location defined by
@@ -1107,41 +993,184 @@ that the piece is undefined, for example because it has been optimized away.</sp
 additional rules apply to piece operations:</span></p>
 <ul>
 <li>
+<p><span class="add">If <code>A</code> is a non-composite location (or convertible to
+one) and is the only element on the stack, the result
+is a new composite location with the single piece <code>A</code> (as
+if <code>DW_OP_composite DW_OP_swap</code> had been processed
+immediately prior to the piece operation).
+<em>This rule supports the first piece operation in a DWARF 5 expression.</em></span></p>
+</li>
+<li>
 <p><span class="add">If a piece operation is processed while the stack is empty, a new
 empty composite and an undefined location are pushed implicitly (as if
 <code>DW_OP_composite DW_OP_undefined</code> had been processed immediately prior
 to the piece operation). The result is a composite with a single
-undefined piece.</span></p>
+undefined piece.
+<em>This rule supports the empty piece operation in DWARF 5 when it is the
+first piece of a composite.</em></span></p>
 </li>
 <li>
-<p><span class="add">Otherwise, if the top of the stack <code>A</code> is a composite, and is the only
+<p><span class="add">If the top of the stack <code>A</code> is a composite location, and is the only
 element on the stack (i.e., <code>B</code> does not exist), an undefined location
 is pushed implicitly (as if <code>DW_OP_undefined</code> had been processed
 immediately prior to the piece operation), whereupon the composite <code>A</code>
 becomes <code>B</code> and the undefined location is now <code>A</code>. The result is the
-addition of an undefined piece to the existing composite location.</span></p>
+addition of an undefined piece to the existing composite location.
+<em>This rule supports the empty piece operation in DWARF 5 when it is not the
+first piece of a composite.</em></span></p>
 </li>
 <li>
-<p><span class="add">Otherwise, if the top of the stack <code>A</code> is a location, or convertible
-to a location, and the preceding element is not a composite location,
-one or more elements below <code>A</code> are popped and discarded until the
-preceding element <code>B</code> is a composite location, or until <code>A</code> is the
-only element on the stack. If <code>A</code> is the only remaining element, a new
-empty composite is inserted before it (as if <code>DW_OP_composite DW_OP_swap</code> had been processed immediately prior to the piece
-operation), and the result is a new composite location with the single
-piece <code>A</code>.</span></p>
-<p><span class="add"><em>[This third rule may not in fact be necessary. It covers the case
-where a DWARF5 piece expression left multiple items on the stack.]</em></span></p>
+<p><span class="add">Otherwise, the DWARF expression is not valid.</span></p>
 </li>
 </ul>
-<h2><span class="add">3.12 Offset Operations [NEW]</span></h2>
+<h2><span class="add">3.12 Dereferencing Operations [NEW]</span></h2>
+<p><span class="add">The following operations are used to dereference a location
+on the stack; i.e., to load a value (or another location) stored at that location.
+Each operation defines the number of bytes or bits to be loaded.</span></p>
+<p><span class="add">Dereferencing a memory location simply loads a value from memory.
+Dereferencing a register location extracts all or some of the bits from the register,
+depending on the offset of the location and the size of value to be loaded.
+Dereferencing an implicit location loads a value (or, in
+the case of an implicit pointer, another location) from
+the implicit storage. Attempting to dereference an
+undefined location is an error.</span></p>
+<p><span class="add">When dereferencing from a composite location, the value to be loaded
+may span more than one of the pieces of the composite, and the
+consumer must reassemble the value from the component pieces.</span></p>
+<ol>
+<li>
+<p><code>DW_OP_deref</code><br />
+<span class="del">The <code>DW_OP_deref</code> operation pops the top stack entry and
+treats it as an address. The popped value must have an integral type.
+The value retrieved from that address is pushed,
+and has the generic type.
+The size of the data retrieved from the
+dereferenced
+address is the size of an address on the target machine.</span><br />
+<span class="add">The <code>DW_OP_deref</code> operation pops a location <code>L</code> from the top of the
+stack. The first <code>S</code> bits, where <code>S</code> is the size (in bits) of an address on the
+target machine, are retrieved from the location <code>L</code> and pushed onto the
+stack as a value of the generic type.</span></p>
+<p><span class="add">If the location on the stack is an implicit pointer (see Section 3.10),
+the location <code>LP</code> is dereferenced to obtain the location <code>LV</code>.
+In this case, the offset of the location <code>LP</code> must be 0.</span></p>
+</li>
+<li>
+<p><code>DW_OP_deref_size</code><br />
+<span class="del">The <code>DW_OP_deref_size</code> operation behaves like the
+<code>DW_OP_deref</code>
+operation: it pops the top stack entry and treats it as an
+address. The popped value must have an integral type.
+The value retrieved from that address is pushed,
+and has the generic type.
+In the <code>DW_OP_deref_size</code> operation, however, the size in bytes
+of the data retrieved from the dereferenced address is
+specified by the single operand. This operand is a 1-byte
+unsigned integral constant whose value may not be larger
+than the size of the generic type. The data
+retrieved is zero extended to the size of an address on the
+target machine before being pushed onto the expression stack.</span><br />
+<span class="add">The <code>DW_OP_deref_size</code> takes a single 1-byte unsigned integral operand
+that specifies the size <code>S</code>, in bytes, of the value to be retrieved.
+The size <code>S</code> must be no larger than the size of the generic type. The
+operation behaves like the <code>DW_OP_deref</code> operation: it pops a location
+<code>L</code> from the stack. The first <code>S</code> bytes are retrieved from the
+location <code>L</code>, zero extended to the size of the generic type, and
+pushed onto the stack as a value of the generic type.</span></p>
+</li>
+<li>
+<p><code>DW_OP_deref_type</code><br />
+<span class="del">The <code>DW_OP_deref_type</code> operation behaves like the <code>DW_OP_deref_size</code> operation:
+it pops the top stack entry and treats it as an address.
+The popped value must have an integral type.
+The value retrieved from that address is pushed together with a type identifier.
+In the <code>DW_OP_deref_type</code> operation, the size in
+bytes of the data retrieved from the dereferenced address is specified by
+the first operand. This operand is a 1-byte unsigned integral constant whose
+value which is the same as the size of the base type referenced
+by the second operand.
+The second operand is an unsigned LEB128 integer that
+represents the offset of a debugging information entry in the current
+compilation unit, which must be a <code>DW_TAG_base_type</code> entry that provides the
+type of the data pushed.</span><br />
+<span class="add">The <code>DW_OP_deref_type</code> operation takes two operands. The first operand
+is a 1-byte unsigned integer that specifies the size <code>S</code> (in bytes) of the type
+given by the second operand. The second operand is an unsigned LEB128
+integer that represents the offset of a debugging information entry in
+the current compilation unit, which must be a <code>DW_TAG_base_type</code> entry
+that provides the type <code>T</code> of the value to be retrieved. The size <code>S</code>
+must be the same as the size of the base type represented by the
+second operand. This operation pops a location <code>L</code> from the stack. The
+first <code>S</code> bytes are retrieved from the location <code>L</code> and pushed onto the
+stack as a value of type <code>T</code>.</span></p>
+<p><span class="del"><em>While the size of the pushed value could be inferred from the base
+type definition, it is encoded explicitly into the operation so that the
+operation can be parsed easily without reference to the <code>.debug_info</code>
+section.</em></span></p>
+</li>
+<li>
+<p><code>DW_OP_xderef</code><br />
+The <code>DW_OP_xderef</code> operation provides an extended dereference
+mechanism. The entry at the top of the stack is treated as an
+address. The second stack entry is treated as an “address
+space identifier” for those architectures that support
+multiple
+address spaces.
+Both of these entries must have integral type<span class="add">s</span> <span class="del">identifiers</span>.
+The top two stack elements are popped,
+and a data item is retrieved through an implementation-defined
+address calculation and pushed as the new stack top together with the
+generic type <span class="del">identifier</span>.
+The size of the data retrieved from the
+dereferenced
+address is the size of the generic type.</p>
+</li>
+<li>
+<p><code>DW_OP_xderef_size</code><br />
+The <code>DW_OP_xderef_size</code> operation behaves like the
+<code>DW_OP_xderef</code> operation. The entry at the top of the stack is
+treated as an address. The second stack entry is treated as
+an “address space identifier” for those architectures
+that support
+multiple
+address spaces.
+Both of these entries must have integral type<span class="add">s</span> <span class="del">identifiers</span>.
+The top two stack
+elements are popped, and a data item is retrieved through an
+implementation-defined address calculation and pushed as the
+new stack top. In the <code>DW_OP_xderef_size</code> operation, however,
+the size in bytes of the data retrieved from the
+dereferenced
+address is specified by the single operand. This operand is a
+1-byte unsigned integral constant whose value may not be larger
+than the size of an address on the target machine. The data
+retrieved is zero extended to the size of an address on the
+target machine before being pushed onto the expression stack together
+with the generic type <span class="del">identifier</span>.</p>
+</li>
+<li>
+<p><code>DW_OP_xderef_type</code><br />
+The <code>DW_OP_xderef_type</code> operation behaves like the <code>DW_OP_xderef_size</code>
+operation: it pops the top two stack entries, treats them as an address and
+an address space identifier, and pushes the value retrieved. In the
+<code>DW_OP_xderef_type</code> operation, the size in bytes of the data retrieved from
+the dereferenced address is specified by the first operand. This operand is
+a 1-byte unsigned integral constant whose value
+<span class="del">value which</span> is the same as the size of the base type referenced
+by the second operand. The second
+operand is an unsigned LEB128 integer that represents the offset of a
+debugging information entry in the current compilation unit, which must be a
+<code>DW_TAG_base_type</code> entry that provides the type of the data pushed.</p>
+</li>
+</ol>
+<h2><span class="add">3.13 Offset Operations [NEW]</span></h2>
 <p><span class="add">In addition to the composite operations, locations
 may be modified by the following operations:</span></p>
 <ol>
 <li>
 <p><span class="add"><code>DW_OP_offset</code></span><br />
 <span class="add"><code>DW_OP_offset</code> pops two stack entries. The first (top of stack)
-must be an integral type value, which represents a byte
+must be an integral type value, which represents a signed byte
 displacement. The second must be a location. It forms an updated
 location by adding the given byte displacement to the offset
 component of the original location and pushes the updated location
@@ -1150,7 +1179,7 @@ onto the stack.</span></p>
 <li>
 <p><span class="add"><code>DW_OP_bit_offset</code></span><br />
 <span class="add"><code>DW_OP_bit_offset</code> pops two stack entries. The first
-(top of stack) must be an integral type value, which represents a bit
+(top of stack) must be an integral type value, which represents a signed bit
 displacement. The second must be a location. It forms an updated
 location by adding the given bit displacement to the offset
 component of the original location and pushes the updated location
@@ -1159,7 +1188,7 @@ onto the stack.</span></p>
 </li>
 </ol>
 <p><span class="add">The resulting offset must be within range of the location’s storage bank.</span></p>
-<h2><span class="del">2.5.2.5</span> 3.13 Control Flow Operations</h2>
+<h2><span class="del">2.5.2.5</span> 3.14 Control Flow Operations</h2>
 <p>The following operations provide simple control of the flow of a DWARF expression.</p>
 <ol>
 <li>
@@ -1196,8 +1225,8 @@ or backward from the current operation, beginning after the
 <p><code>DW_OP_bra</code><br />
 <code>DW_OP_bra</code> is a conditional branch. Its single operand is a
 2-byte signed integer constant.  This operation pops the
-top of stack. If the value popped is not the constant 0,
-the 2-byte constant operand is the number of bytes of the
+top of stack. If the value popped is not <span class="del">the constant</span> 0,
+the <span class="del">2-byte</span> constant operand is the number of bytes of the
 DWARF expression to skip forward or backward from the current
 operation, beginning after the 2-byte constant.</p>
 </li>
@@ -1237,7 +1266,7 @@ the stack by the called expression may be used as return values
 by prior agreement between the calling and called expressions.</p>
 </li>
 </ol>
-<h2><span class="del">2.5.2.6</span> 3.14 Type Conversions</h2>
+<h2><span class="del">2.5.2.6</span> 3.15 Type Conversions</h2>
 <p>The following operations provide for explicit type conversion.</p>
 <ol>
 <li>
@@ -1258,17 +1287,19 @@ result. It takes one operand, which is an unsigned LEB128 integer that
 represents the offset of a debugging information entry in the current
 compilation unit, or value 0 which represents the generic type.
 If the operand is non-zero, the referenced entry must be a
-<code>DW_TAG_base_type</code> entry that provides the type to which the value is converted.
+<code>DW_TAG_base_type</code> entry that provides the type to which the value is
+<span class="del">converted</span> <span class="add">reinterpreted</span>.
 The type of the operand and result type must have the same size in bits.</p>
 </li>
 </ol>
-<h2><span class="del">2.5.2.7</span> 3.15 Special Operations</h2>
+<h2><span class="del">2.5.2.7</span> 3.16 Special Operations</h2>
 <p>There are these special operations currently defined:</p>
 <ol>
 <li>
 <p><code>DW_OP_nop</code><br />
 The <code>DW_OP_nop</code> operation is a place holder. It has no effect
-on the location stack or any of its values.</p>
+on the <span class="del">location</span> stack or any of its
+<span class="del">values</span> <span class="add">elements</span>.</p>
 </li>
 <li>
 <p><code>DW_OP_entry_value</code><br />
@@ -1327,10 +1358,11 @@ producer
 extension.</p>
 <p><em>The <code>DW_OP_user_extended</code> encoding space can be understood to supplement
 the space defined by <code>DW_OP_lo_user</code> and <code>DW_OP_hi_user</code> that is allocated by
-the standard for the same purpose.</em></p>
+<span class="del">the standard</span>
+<span class="add">this specification</span> for the same purpose.</em></p>
 </li>
 </ol>
-<h2><span class="del">2.5.2</span> 3.16 Value Lists</h2>
+<h2><span class="del">2.5.2</span> 3.17 Value Lists</h2>
 <p>Value lists are used in place of
 DWARF expressions whenever the value of an object’s attribute
 can change during the lifetime of that object.</p>
@@ -1351,7 +1383,7 @@ any of the DWARF operations described in Section
 <p>The address ranges defined by the bounded expressions of a
 value list may overlap. When they do, the meaning is undefined
 if the overlapping expressions do not produce the same value.</p>
-<h2><span class="del">2.6.2</span> 3.17 Location Lists</h2>
+<h2><span class="del">2.6.2</span> 3.18 Location Lists</h2>
 <p>Location lists are used <span class="del">in place of</span>
 <span class="add">as</span> location descriptions whenever
 the object whose location is being described can change location
@@ -1362,10 +1394,10 @@ object file section called <code>.debug_loclists</code> or <code>.debug_loclists
 <p>A location list is indicated by <span class="del">a location or other</span>
 <span class="add">an</span> attribute whose value is of class <code>loclist</code>
 (see Section {classesandforms}).</p>
-<p><em>This location list representation, the <code>loclist</code> class, and the
+<p><span class="del"><em>This location list representation, the <code>loclist</code> class, and the
 related <code>DW_AT_loclists_base</code> attribute are new in DWARF Version 5.
 Together they eliminate most or all of the object language relocations
-previously needed for location lists.</em></p>
+previously needed for location lists.</em></span></p>
 <p>A location list consists of a series of location list entries.
 Each location list entry is one of the following kinds:</p>
 <ul>
