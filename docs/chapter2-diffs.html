@@ -67,7 +67,7 @@ any changed value to all the locations.</span></p>
 several kinds of storage. The location identifies a
 specific kind of storage, and provides a (zero-based) bit
 offset relative to the start of that storage.</span></p>
-<p><span class="add">A storage “bank” is a linear stream of bits of finite size.
+<p><span class="add">A “storage bank” is a linear stream of bits of finite size.
 The ordering of bits within a storage bank uses the bit
 numbering and direction conventions that are appropriate
 to the current language on the target architecture. An
@@ -135,10 +135,11 @@ specific to location descriptions are defined in
 Section {locationdescriptions}.</span></p>
 <p><span class="add">The result of a DWARF expression is the value or location on the top
 of the stack after evaluating the operations.</span></p>
-<p><span class="add">Values on the stack are typed, and can represent a value of any
-supported base type of the target machine, or of the generic type,
-which is an integral type that has the size of an address on the
-target machine, and unspecified signedness.</span></p>
+<p><span class="add">Values on the stack are typed, and can
+represent a value of any supported base type of the target
+machine, or of the generic type, which is an integral type
+that has the size of an address in the default address space
+on the target machine, and unspecified signedness.</span></p>
 <p><span class="del"><em>The generic type is the same as the unspecified type used for stack
 operations defined in DWARF Version 4 and before.</em></span></p>
 <h2><span class="del">2.5.1</span> 3.1 DWARF Expression Evaluation Context</h2>
@@ -204,7 +205,8 @@ by a user command that focuses on a specific thread, or it may be selected
 automatically when the running thread stops at a breakpoint.</p>
 <p><em>If there is no current process (or an image of a process, as from
 a core file), there is no current thread.</em></p>
-<p>A current thread is required for the <code>DW_OP_form_tls_address</code> operation
+<p>A current thread is required for the <span class="del"><code>DW_OP_form_tls_address</code></span>
+<span class="add"><code>DW_OP_form_tls_location</code></span> operation
 (see Section {stackoperations}) which provides access to
 thread-local storage.</p>
 </li>
@@ -286,7 +288,9 @@ evaluating expressions that provide attribute values for a type (e.g.,
 <code>DW_AT_data_location</code> for a <code>DW_TAG_member</code>), the current object is the data
 object entry (if there is one) that referred to the type entry (e.g.,
 via <code>DW_AT_type</code>).</p>
-<p>A current object is required for the <code>DW_OP_push_object_address</code>
+<p>A current object is required for the
+<span class="del"><code>DW_OP_push_object_address</code></span>
+<span class="add"><code>DW_OP_push_object_location</code></span>
 (see Section {stackoperations}) operation and <span class="add">is
 implicitly defined</span> by some attributes (e.g.,
 <code>DW_AT_data_member_location</code> and <code>DW_AT_use_location</code>) where the
@@ -637,12 +641,16 @@ executable, and a separate block for the variables declared in each
 shared library. Each thread-local variable can then be accessed in
 its block using an identifier. This identifier is typically an
 offset into the block and pushed onto the DWARF stack by one of the
-<code>DW_OP_const&lt;n&gt;&lt;x&gt;</code> operations prior to the <code>DW_OP_form_tls_address</code>
+<code>DW_OP_const&lt;n&gt;&lt;x&gt;</code> operations prior to the
+<span class="del"><code>DW_OP_form_tls_address</code></span>
+<span class="add"><code>DW_OP_form_tls_location</code></span>
 operation. Computing the address of the appropriate block can be
 complex (in some cases, the compiler emits a function call to do
 it), and difficult to describe using ordinary DWARF location
 descriptions. Instead of forcing complex thread-local storage
-calculations into the DWARF expressions, the <code>DW_OP_form_tls_address</code>
+calculations into the DWARF expressions, the
+<span class="del"><code>DW_OP_form_tls_address</code></span>
+<span class="add"><code>DW_OP_form_tls_location</code></span>
 allows the consumer to perform the computation based on the run-time
 environment.</em></p>
 <p><span class="add"><em>In previous versions of DWARF, this operator was named <code>DW_OP_form_tls_address</code>.
@@ -778,9 +786,11 @@ register’s storage bank with an offset of 0.</span></p>
 <span class="add">not the contents of the register</span>. To
 fetch the contents of a register, it is necessary to use
 one of the register based addressing operations, such as
-<code>DW_OP_bregx</code> (Section {memorylocations},
-<span class="add">or a register value operation, such as
-<code>DW_OP_regval</code> (Section {registervalues})</span>.</em></p>
+<code>DW_OP_bregx</code> (Section 3.7),
+<span class="add">a register value operation, such as
+<code>DW_OP_regval</code> (Section 3.4),
+or a <code>DW_OP_reg</code> operation followed by a derefencing operation
+(Section 3.12)</span>.</em></p>
 <h2><span class="del">2.6.1.1.1</span> 3.9 Undefined Locations</h2>
 <p><span class="del">An empty location description consists of a DWARF expression containing
 no operations. It represents a piece or all of an object that is present
@@ -1320,7 +1330,9 @@ If the block contains a register location
 description, <code>DW_OP_entry_value</code> pushes the value that register
 held
 upon entering the current subprogram.</p>
-<p><code>DW_OP_push_object_address</code> is not meaningful inside of this DWARF operation.</p>
+<p><span class="del"><code>DW_OP_push_object_address</code></span>
+<span class="add"><code>DW_OP_push_object_location</code></span>
+is not meaningful inside of this DWARF operation.</p>
 <p><em>The register location description provides a more compact form for the
 case where the value was in a register on entry to the subprogram.</em></p>
 <p><em>The values needed to evaluate <code>DW_OP_entry_value</code> could be obtained in
@@ -1617,8 +1629,12 @@ address</span> <span class="add">location of the containing entity</span> is pus
 evaluated; the result of the evaluation is the <span class="del">base address</span> <span class="add">location</span> of the member
 entry (see Section 2.5.1 on page 27).</p>
 <p><em>The push on the DWARF expression stack of the <span class="del">base address</span> <span class="add">location</span> of the containing
-construct is equivalent to execution of the <code>DW_OP_push_object_address</code> operation
-(see Section <span class="del">2.5.2.3</span><span class="add">3.6</span>); <code>DW_OP_push_object_address</code> therefore is not
+construct is equivalent to execution of the <span class="del"><code>DW_OP_push_object_address</code></span>
+<span class="add"><code>DW_OP_push_object_location</code></span> operation
+(see Section <span class="del">2.5.2.3</span><span class="add">3.6</span>);
+<span class="del"><code>DW_OP_push_object_address</code></span>
+<span class="add"><code>DW_OP_push_object_location</code></span>
+therefore is not
 needed at the beginning of a location description for a data member. The result of the
 evaluation is a location<span class="del">—either an address or the name of a register</span>, not an offset to
 the member.</em></p>
