@@ -149,9 +149,9 @@ The first being that `DW_OP_piece` has an ABI dependency:
 
      2.5.4.5 Composite Location Descriptions, point 2.:
 
-	"If the piece is located in a register, but does not occupy the
-	entire register, the placement of the piece within that register
-	is defined by the ABI. "
+        "If the piece is located in a register, but does not occupy the
+        entire register, the placement of the piece within that register
+        is defined by the ABI. "
 
 While this is not often a problem with normal relatively small CPU
 registers. GPUs make much more heavy use of vector registers which are
@@ -184,17 +184,17 @@ operators with something like:
 
 *Note that the small 'v' indicates where the offset into the base
   location is.*
-  
+
     yields:
          +---------------------------+        +---------------------------+
          |                 v         |        |                 v         |
          | ... C  B  A  9  8  7  ... |        | ... C  B  A  9  8  7  ... |
     vreg0| ...   XX XX XX XX  ...    |   vreg1| ...   YY YY YY YY  ...    |
          +---------------------------+        +---------------------------+
-	                   \                         /
-			    \                       /
-			     v                     v
-			    [XX XX XX XX YY YY YY YY]
+                           \                         /
+                            \                       /
+                             v                     v
+                            [XX XX XX XX YY YY YY YY]
 
 
 This also works if those vector registers were spilled to memory:
@@ -388,8 +388,10 @@ that `DW_OP_piece` composites are not.
 
 ## Proposal
 
+### Section 3.11
 Rename Section 3.11 to "Composite Piece Description Operations"
 
+### Add Section 3.12
 Add a new Section 3.12 after "Composite Piece Description Operations",
 called "Overlay Composites" With the the following operations:
 
@@ -429,8 +431,9 @@ called "Overlay Composites" With the the following operations:
 >     location of the specified size positioned over the base location
 >     at the specified offset.
 
-In Section 8.7.1 "DWARF Expressions", add the following
-rows to Table 8.9 "DWARF Operation Encodings":
+### Section 8.7.1 "DWARF Expressions"
+
+Add the following rows to Table 8.9 "DWARF Operation Encodings":
 
 > Table 8.9: DWARF Operation Encodings
 >
@@ -438,3 +441,260 @@ rows to Table 8.9 "DWARF Operation Encodings":
 > | ---------------------------------- | ----- | ------------------ | ----- |
 > | `DW_OP_overlay`                    | TBA   | 0                  |       |
 > | `DW_OP_bit_overlay`                | TBA   | 0                  |       |
+
+### Appendix D.1.4 DWARF Location Description Examples
+
+Replace the piece examples:
+
+    DW_OP_reg3
+    DW_OP_piece (4)
+    DW_OP_reg10
+    DW_OP_piece (2)
+
+>   A variable whose first four bytes reside in register 3 and whose next two
+>   bytes reside in register 10.
+
+    DW_OP_reg0
+    DW_OP_piece (4)
+    DW_OP_piece (4)
+    DW_OP_fbreg (-12)
+    DW_OP_piece (4)
+
+>   A twelve byte value whose first four bytes reside in register zero, whose
+>   middle four bytes are unavailable (perhaps due to optimization), and
+>   whose last four bytes are in memory, 12 bytes before the frame base.
+
+With:
+
+    DW_OP_reg3
+    DW_OP_reg10
+    DW_OP_lit4
+    DW_OP_lit2
+    DW_OP_overlay
+
+>   A variable whose first four bytes reside in register 3 and whose next two
+>   bytes reside in reside in register 10. Any remaining bytes read will be
+>   read from register 3 if that is possible. If it is not possible then the
+>   DWARF expression is ill formed.
+>
+> If a producer wants to strictly limit the width of the expression to six
+> bytes then two overlays can be used to position portions of the registers
+> over undefined storage.
+
+    DW_OP_reg10
+    DW_OP_reg3
+    DW_OP_lit4
+    DW_OP_lit4
+    DW_OP_overlay
+
+>   A six byte variable whose first four bytes reside in register 3 and whose
+>   next two bytes reside in register 10.
+
+    DW_OP_undefined
+    DW_OP_reg0
+    DW_OP_lit0
+    DW_OP_lit4
+    DW_OP_overlay
+    DW_OP_fbreg (-12)
+    DW_OP_lit8
+    DW_OP_lit4
+    DW_OP_overlay
+
+>   A twelve byte value whose first four bytes reside in register zero, whose
+>   middle four bytes are unavailable (perhaps due to optimization), and
+>   whose last four bytes are in memory, 12 bytes before the frame base.
+
+Replace:
+
+    DW_OP_lit1
+    DW_OP_stack_value
+    DW_OP_piece (4)
+    DW_OP_breg3 (0)
+    DW_OP_breg4 (0)
+    DW_OP_plus
+    DW_OP_stack_value
+    DW_OP_piece (4)
+
+>   The object value is found in an anonymous (virtual) location whose value
+>   consists of two parts, given in memory address order: the 4 byte value 1
+>   followed by the four byte value computed from the sum of the contents of
+>   r3 and r4
+
+With:
+
+    DW_OP_lit1
+    DW_OP_shl (32)
+    DW_OP_stack_value
+    DW_OP_breg3 (0)
+    DW_OP_breg4 (0)
+    DW_OP_plus
+    DW_OP_stack_value
+    DW_OP_lit4
+    DW_OP_lit4
+    DW_OP_overlay
+
+>   The object value is found in an anonymous (virtual) location whose value
+>   consists of two parts, given in memory address order: the 4 byte value 1
+>   followed by the four byte value computed from the sum of the contents of
+>   r3 and r4
+
+Replace:
+
+    DW_OP_reg0
+    DW_OP_bit_piece (1, 31)
+    DW_OP_bit_piece (7, 0)
+    DW_OP_reg1
+    DW_OP_piece (1)
+
+>   A variable whose first bit resides in the 31st bit of register 0, whose next
+>   seven bits are undefined and whose second byte resides in register 1.
+
+With:
+
+    DW_OP_undefined
+    DW_OP_reg0
+    DW_OP_shr (31)
+    DW_OP_lit15
+    DW_OP_lit1
+    DW_OP_bit_overlay
+    DW_OP_reg1
+    DW_OP_lit0
+    DW_OP_lit8
+    DW_OP_bit_overlay
+
+>   A 16 bit variable whose most significant bit resides in the 31st bit of
+>   register 0, whose next seven bits are undefined and whose second byte resides
+>   in the lower half of a 16 bit register 1.
+
+*Note: this needs to be checked for endian problems. It is a very
+weird expression and it is not entirely clear to me which bits within
+reg1 were intended to be represented in the final value. I changed the
+describing text to match what I inferred the original intent was.
+
+### Section D.13 Figure D.66 replace:
+
+    21$:   DW_TAG_variable
+           DW_AT_name("s")
+           DW_AT_type(reference to S at 1$)
+           DW_AT_location(expression=
+                DW_OP_breg5(1) DW_OP_stack_value DW_OP_piece(2)
+                DW_OP_breg5(2) DW_OP_stack_value DW_OP_piece(1)
+                DW_OP_breg5(3) DW_OP_stack_value DW_OP_piece(1))
+
+With:
+
+    21$:   DW_TAG_variable
+           DW_AT_name("s")
+           DW_AT_type(reference to S at 1$)
+           DW_AT_location(expression=
+                DW_OP_breg5 (1) DW_OP_stack_value DW_OP_breg5 (2) DW_OP_stack_value
+                DW_OP_lit2 DW_OP_lit1 DW_OP_overlay
+                DW_OP_breg5 (3) DW_OP_lit3 DW_OP_lit1 DW_OP_overlay)
+
+*Note: this needs to be checked. I'm not sure that I have a clear
+ understanding of how implicit storage works. Is the value widened to
+ the size of a generic type. I'm not sure what "represented using the
+ encoding and byte order of the value's type" means when it follows a
+ DW_OP_breg5 (1). I would assume that would leave a 1-byte value on
+ the top of the stack. However, the overlay specifies that it should
+ take up two bytes and thus it would need to be implicitly
+ widened. Also this expression seems weird to me because the implicit
+ describes the entire structure rather than the members of the
+ structure. What if the user tries to "p s.a" would the debugger be
+ smart enough to take the implicit location of s and extract the a
+ member from its implicit storage.
+
+### Section D.13 Figure D.68 replace:
+
+    98$: DW_LLE_start_end[<label0 in main> .. <label1 in main>)
+            DW_OP_lit1 DW_OP_stack_value DW_OP_piece(4)
+            DW_OP_lit2 DW_OP_stack_value DW_OP_piece(4)
+        DW_LLE_start_end[<label1 in main> .. <label2 in main>)
+            DW_OP_lit2 DW_OP_stack_value DW_OP_piece(4)
+            DW_OP_lit2 DW_OP_stack_value DW_OP_piece(4)
+        DW_LLE_start_end[<label2 in main> .. <label3 in main>)
+            DW_OP_lit2 DW_OP_stack_value DW_OP_piece(4)
+            DW_OP_lit3 DW_OP_stack_value DW_OP_piece(4)
+        DW_LLE_end_of_list
+
+With:
+
+    98$: DW_LLE_start_end[<label0 in main> .. <label1 in main>)
+            DW_OP_lit1 DW_OP_stack_value DW_OP_lit2 DW_OP_stack_value
+            DW_OP_lit4 DW_OP_lit4 DW_OP_overlay
+        DW_LLE_start_end[<label1 in main> .. <label2 in main>)
+            DW_OP_lit2 DW_OP_stack_value DW_OP_lit2 DW_OP_stack_value
+            DW_OP_lit4 DW_OP_lit4 DW_OP_overlay
+        DW_LLE_start_end[<label2 in main> .. <label3 in main>)
+            DW_OP_lit2 DW_OP_stack_value DW_OP_lit3 DW_OP_stack_value
+            DW_OP_lit4 DW_OP_lit4 DW_OP_overlay
+        DW_LLE_end_of_list
+
+### Section D.18 SIMD Lane Example
+
+Replace figure D.86 with:
+
+    DW_TAG_subprogram
+    DW_AT_name ("vec_add")
+    DW_AT_num_lanes .vallist.0
+    DW_TAG_formal_parameter
+        DW_AT_name ("dst")
+        DW_AT_type (reference to type pointer to int)
+        DW_AT_location .loclist.1
+    DW_TAG_formal_parameter
+        DW_AT_name ("src")
+        DW_AT_type (reference to type pointer to int)
+        DW_AT_location .loclist.2
+    DW_TAG_formal_parameter
+        DW_AT_name ("len")
+        DW_AT_type (reference to type int)
+        DW_AT_location DW_OP_reg2
+    ...
+    DW_TAG_variable
+        DW_AT_name ("i")
+        DW_AT_type (reference to type int)
+        DW_AT_location .loclist.3
+    ...
+
+    .vallist.0:
+        range [.l1, .l2)
+            DW_OP_lit8
+        end-of-list
+
+    .loclist.1:          # src
+        range [.l0, .l1)
+	    DW_OP_reg0
+        range [.l1, .l2)
+            DW_OP_reg0        # base location of the array
+            DW_OP_regx v1     # location of the overlay
+            DW_OP_breg3 (0)
+            DW_OP_lit4
+            DW_OP_mul         # the offset of the overlay in bytes
+            DW_OP_constu (32) # sizeof(int)*num_lanes
+            DW_OP_overlay
+        range [.l2, .l4)
+            DW_OP_reg0
+    .loclist.2:          # dst
+        range [.l0, .l1)
+            DW_OP_reg1
+        range [.l1, .l2)
+            DW_OP_reg1
+            DW_OP_regx v0
+            DW_OP_breg3 (0)
+            DW_OP_lit4
+            DW_OP_mul
+            DW_OP_constu (32)
+            DW_OP_overlay
+        range [.l2, .l4)
+            DW_OP_reg1
+    .loclist.3:          # i
+        range [.l0, .l1)
+            DW_OP_reg3
+        range [.l1, .l2)
+            DW_OP_breg3 (0)
+            DW_OP_push_lane
+            DW_OP_plus
+            DW_OP_stack_value
+        range [.l2, .l4)
+            DW_OP_reg3
+        end-of-list
