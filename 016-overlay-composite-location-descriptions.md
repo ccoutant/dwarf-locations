@@ -388,8 +388,10 @@ that `DW_OP_piece` composites are not.
 
 ## Proposal
 
+### Section 3.11
 Rename Section 3.11 to "Composite Piece Description Operations"
 
+### Add Section 3.12
 Add a new Section 3.12 after "Composite Piece Description Operations",
 called "Overlay Composites" With the the following operations:
 
@@ -429,8 +431,9 @@ called "Overlay Composites" With the the following operations:
 >     location of the specified size positioned over the base location
 >     at the specified offset.
 
-In Section 8.7.1 "DWARF Expressions", add the following
-rows to Table 8.9 "DWARF Operation Encodings":
+### Section 8.7.1 "DWARF Expressions"
+
+Add the following rows to Table 8.9 "DWARF Operation Encodings":
 
 > Table 8.9: DWARF Operation Encodings
 >
@@ -439,9 +442,9 @@ rows to Table 8.9 "DWARF Operation Encodings":
 > | `DW_OP_overlay`                    | TBA   | 0                  |       |
 > | `DW_OP_bit_overlay`                | TBA   | 0                  |       |
 
-Appendix D.1.4 DWARF Location Description Examples
+### Appendix D.1.4 DWARF Location Description Examples
 
-Replace the piece example:
+Replace the piece examples:
 
     DW_OP_reg3
     DW_OP_piece (4)
@@ -567,12 +570,14 @@ With:
 >   next seven bits are undefined and whose second byte resides in the lower half
 >   of a 16 bit register 1.
 
-*Note: this needs to be checked for endian problems. It is a very weird expression
-and it is not entirely clear to me which bits within reg1 were intended to be
-represented in the final value. I changed the describing text to match what I
-inferred the original intent was.
+*Note: this needs to be checked for endian problems. It is a very
+weird expression and it is not entirely clear to me which bits within
+reg1 were intended to be represented in the final value. I changed the
+describing text to match what I inferred the original intent was. Also
+it wasn't perfectly clear to me if they meant bit 31 or the bit
+numbered 31 starting from 0.
 
-In section D.13 Figure D.66 replace:
+### Section D.13 Figure D.66 replace:
 
     21$:   DW_TAG_variable
            DW_AT_name("s")
@@ -605,9 +610,9 @@ With:
  smart enough to take the implicit location of s and extract the a
  member from its implicit storage.
 
-In Section D.13 Figure D.68 replace:
+### Section D.13 Figure D.68 replace:
 
-   98$: DW_LLE_start_end[<label0 in main> .. <label1 in main>)
+    98$: DW_LLE_start_end[<label0 in main> .. <label1 in main>)
             DW_OP_lit1 DW_OP_stack_value DW_OP_piece(4)
             DW_OP_lit2 DW_OP_stack_value DW_OP_piece(4)
         DW_LLE_start_end[<label1 in main> .. <label2 in main>)
@@ -620,7 +625,7 @@ In Section D.13 Figure D.68 replace:
 
 With:
 
-   98$: DW_LLE_start_end[<label0 in main> .. <label1 in main>)
+    98$: DW_LLE_start_end[<label0 in main> .. <label1 in main>)
             DW_OP_lit1 DW_OP_stack_value DW_OP_lit2 DW_OP_stack_value
             DW_OP_lit4 DW_OP_lit4 DW_OP_overlay
         DW_LLE_start_end[<label1 in main> .. <label2 in main>)
