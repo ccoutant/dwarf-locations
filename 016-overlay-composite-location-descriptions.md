@@ -629,3 +629,72 @@ With:
             DW_OP_lit2 DW_OP_stack_value DW_OP_lit3 DW_OP_stack_value
 	    DW_OP_lit4 DW_OP_lit4 DW_OP_overlay
 	DW_LLE_end_of_list
+
+### Section D.18 SIMD Lane Example
+
+Replace figure D.86 with:
+
+    DW_TAG_subprogram
+    DW_AT_name ("vec_add")
+    DW_AT_num_lanes .vallist.0
+    DW_TAG_formal_parameter
+        DW_AT_name ("dst")
+	DW_AT_type (reference to type pointer to int)
+	DW_AT_location .loclist.1
+    DW_TAG_formal_parameter
+        DW_AT_name ("src")
+	DW_AT_type (reference to type pointer to int)
+	DW_AT_location .loclist.2
+    DW_TAG_formal_parameter
+	DW_AT_name ("len")
+	DW_AT_type (reference to type int)
+	DW_AT_location DW_OP_reg2
+    ...
+    DW_TAG_variable
+	DW_AT_name ("i")
+        DW_AT_type (reference to type int)
+        DW_AT_location .loclist.3
+    ...
+
+    .vallist.0:
+	range [.l1, .l2)
+	    DW_OP_lit8
+	end-of-list
+
+    .loclist.1:          # src
+        range [.l0, .l1)
+	    DW_OP_reg0
+	range [.l1, .l2)
+	    DW_OP_reg0        # base location of the array
+	    DW_OP_regx v1     # location of the overlay
+	    DW_OP_breg3 (0)
+	    DW_OP_lit4
+	    DW_OP_mul         # the offset of the overlay in bytes
+	    DW_OP_constu (32) # sizeof(int)*num_lanes
+	    DW_OP_overlay
+	range [.l2, .l4)
+	    DW_OP_reg0
+    .loclist.2:          # dst
+        range [.l0, .l1)
+	    DW_OP_reg1
+	range [.l1, .l2)
+            DW_OP_reg1
+            DW_OP_regx v0
+            DW_OP_breg3 (0)
+            DW_OP_lit4
+            DW_OP_mul
+            DW_OP_constu (32)
+            DW_OP_overlay
+        range [.l2, .l4)
+            DW_OP_reg1
+    .loclist.3:          # i
+        range [.l0, .l1)
+            DW_OP_reg3
+        range [.l1, .l2)
+            DW_OP_breg3 (0)
+            DW_OP_push_lane
+            DW_OP_plus
+            DW_OP_stack_value
+        range [.l2, .l4)
+            DW_OP_reg3
+        end-of-list
