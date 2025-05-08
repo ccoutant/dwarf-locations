@@ -639,16 +639,16 @@ Replace figure D.86 with:
     DW_AT_num_lanes .vallist.0
     DW_TAG_formal_parameter
         DW_AT_name ("dst")
-	DW_AT_type (reference to type pointer to int)
-	DW_AT_location .loclist.1
+        DW_AT_type (reference to type pointer to int)
+        DW_AT_location .loclist.1
     DW_TAG_formal_parameter
         DW_AT_name ("src")
-	DW_AT_type (reference to type pointer to int)
-	DW_AT_location .loclist.2
+        DW_AT_type (reference to type pointer to int)
+        DW_AT_location .loclist.2
     DW_TAG_formal_parameter
-	DW_AT_name ("len")
-	DW_AT_type (reference to type int)
-	DW_AT_location DW_OP_reg2
+        DW_AT_name ("len")
+        DW_AT_type (reference to type int)
+        DW_AT_location DW_OP_reg2
     ...
     DW_TAG_variable
 	DW_AT_name ("i")
