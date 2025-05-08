@@ -651,7 +651,7 @@ Replace figure D.86 with:
         DW_AT_location DW_OP_reg2
     ...
     DW_TAG_variable
-	DW_AT_name ("i")
+        DW_AT_name ("i")
         DW_AT_type (reference to type int)
         DW_AT_location .loclist.3
     ...
