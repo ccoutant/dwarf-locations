@@ -117,14 +117,15 @@ new Chapter 3, "DWARF Expressions," and reorganized as follows:
     - 3.8 Register Locations (was 2.6.1.1.3)
     - 3.9 Undefined Locations (was 2.6.1.1.1)
     - 3.10 Implicit Locations (was 2.6.1.1.4)
-    - 3.11 Composite Locations (was 2.6.1.2)
-    - 3.12 Dereferencing Operations (new)
-    - 3.13 Offset Operations (new)
-    - 3.14 Control Flow Operations (was 2.5.2.5)
-    - 3.15 Type Conversions (was 2.5.2.6)
-    - 3.16 Special Operations (was 2.5.2.7)
-    - 3.17 Value Lists (was 2.5.2)
-    - 3.18 Location Lists (was 2.6.2)
+    - 3.11 Implicit Pointer Locations (was 2.6.1.1.4)
+    - 3.12 Composite Locations (was 2.6.1.2)
+    - 3.13 Dereferencing Operations (new)
+    - 3.14 Offset Operations (new)
+    - 3.15 Control Flow Operations (was 2.5.2.5)
+    - 3.16 Type Conversions (was 2.5.2.6)
+    - 3.17 Special Operations (was 2.5.2.7)
+    - 3.18 Value Lists (was 2.5.2)
+    - 3.19 Location Lists (was 2.6.2)
 
 
 Proposed Changes
@@ -172,7 +173,7 @@ Add the following as a new subsection:
 > *exprval* and *vallist* indicate that the attribute value is
 > to be computed by evaluating a DWARF expression (described
 > in Chapter 3).
->
+> 
 > A DWARF expression of class *exprval* can be used to compute
 > a value that cannot be given statically, such as the upper
 > bound of a dynamic array.
@@ -212,10 +213,13 @@ Add the following as a new subsection:
 > location list is a list of location expressions, each
 > associated with a range of program counters.
 > 
-> A location list may have overlapping PC ranges, and thus
-> may yield multiple locations. In this case, the object
-> value stored in each location is expected to be the same
-> (except for uninitialized/undefined parts of the value).
+> A location list may have overlapping PC ranges, and thus may
+> yield multiple locations at a given PC.
+> In this case, the consumer may assume that the object value
+> stored is the same in all locations, excluding bits of the
+> object that serve as padding. Non-padding bits that are
+> undefined (for example, as a result of optimization) must be
+> undefined in all the locations.
 > 
 > *A location list that yields multiple locations can be
 > used to describe objects that reside in more than one
@@ -225,11 +229,6 @@ Add the following as a new subsection:
 > memory to a register for some region of code, but later
 > code may revert to reading the value from memory as the
 > register may be used for other purposes.*
-> 
-> When given multiple locations, a consumer may read the
-> object’s value from any of those locations (since they all
-> refer to storage that should contain the same value), but
-> must write any changed value to all the locations.
 > 
 > DWARF can describe the location of program objects in
 > several kinds of storage, such as a memory address space or
@@ -247,61 +246,50 @@ Add the following as a new subsection:
 > (non-negative, zero-based) bit offset relative to the start
 > of that storage. It gives the location of the program
 > object, which occupies a sequence of contiguous bits
-> starting at that location. A location does not
-> provide the size of the object, which is typically
-> obtained from its type attribute.
+> starting at that location.
+> The bit offset of a location must be less than the size of
+> the named block of storage.
 > 
-> DWARF can describe locations in four kinds of storage:
+> DWARF can describe locations in six kinds of storage:
 > 
 >   - Memory.
 >     Corresponds to the target architecture memory address
->     spaces. The location names an address space and
->     provides an address within the address space as a bit
->     offset. The offset must be less than the size (in bits) of
->     the address space. There is always a default address
->     space, and the target architecture may define additional
->     address spaces.
+>     spaces. There is always a default address space, and the
+>     target architecture may define additional address
+>     spaces.
 >     *(The offset can be thought of as a byte or word address
 >     combined with a bit offset within the byte or word.)*
 > 
 >   - Registers.
->     Corresponds to the target architecture registers. The
->     location names a register and provides a bit
->     offset within the register. The offset must be less than
->     the size (in bits) of the register.
+>     Corresponds to the target architecture registers.
 > 
 >   - Undefined storage.
 >     Indicates no value is available, as when a variable has
->     been optimized out. The location names an
->     imaginary block of storage that cannot be read or written.
->     The offset within this block of storage must be less than
->     the size of the largest address space, but has no effect.
+>     been optimized out. The location names a block of
+>     imaginary storage, whose size is that of the largest
+>     memory address space, that cannot be read from or
+>     written to.
 > 
 >   - Implicit storage.
 >     Corresponds to fixed values that can only be read, as when
 >     a variable has been optimized out but can nevertheless be
 >     rematerialized from program context. The location
->     names a block of imaginary, or virtual, storage
->     and provides a bit offset within the block. The block is
->     the same size as the fixed value that it holds, and the
->     offset must be less than the size (in bits) of the block.
+>     names a block of imaginary storage, whose size is
+>     the same as the fixed value that it holds.
 >     
+>   - Implicit pointer storage.
 >     A special form of implicit storage, created by the
->     `DW_OP_implicit_pointer` operator (see Section 3.10),
->     holds a virtual reference to a secondary location.
->     Its size is the size of a pointer in the
->     default memory address space, but no physical pointer is
->     available. Reading (i.e., dereferencing) the location
->     produces the secondary location. Because the
->     contents of the storage cannot be represented as a
->     sequence of bits, an offset other than 0 has no meaning
->     and the location cannot be read.
+>     `DW_OP_implicit_pointer` operator (see Section 3.10).
+>     The location names a block of imaginary storage that
+>     holds a secondary location. Its size is the size of a
+>     pointer in the default memory address space, but no
+>     physical pointer is available.
 > 
-> DWARF can also describe composite locations (see Section
-> 3.11), where different pieces of a program object map to different
-> locations, as when a field of a structure or a slice of an
-> array is promoted to a register while the rest remains in
-> memory.
+>   - Composite storage.
+>     A hybrid form of storage where different pieces of a
+>     program object map to different locations, as when a
+>     field of a structure or a slice of an array is promoted
+>     to a register while the rest remains in memory.
 
 
 ### Chapter 3 DWARF Expressions [NEW]
@@ -394,12 +382,12 @@ For `DW_OP_drop`, change the description to:
 
 The following operations that were in section 2.5.2.3 are moved to other sections:
 
-- `DW_OP_deref` (to 3.12 Dereferencing Operations)
-- `DW_OP_deref_size` (to 3.12 Dereferencing Operations)
-- `DW_OP_deref_type` (to 3.12 Dereferencing Operations)
-- `DW_OP_xderef` (to 3.12 Dereferencing Operations)
-- `DW_OP_xderef_size` (to 3.12 Dereferencing Operations)
-- `DW_OP_xderef_type` (to 3.12 Dereferencing Operations)
+- `DW_OP_deref` (to 3.13 Dereferencing Operations)
+- `DW_OP_deref_size` (to 3.13 Dereferencing Operations)
+- `DW_OP_deref_type` (to 3.13 Dereferencing Operations)
+- `DW_OP_xderef` (to 3.13 Dereferencing Operations)
+- `DW_OP_xderef_size` (to 3.13 Dereferencing Operations)
+- `DW_OP_xderef_type` (to 3.13 Dereferencing Operations)
 - `DW_OP_form_tls_address` (to 3.6 Context Query Operations)
 - `DW_OP_call_frame_cfa` (to 3.6 Context Query Operations)
 - `DW_OP_push_object_address` (to 3.6 Context Query Operations)
@@ -658,7 +646,7 @@ Replace the non-normative paragraph at the end with the following:
 > the register value operation
 > `DW_OP_regval_type` (Section 3.4),
 > or a `DW_OP_reg` operation followed by a derefencing operation
-> (Section 3.12).*
+> (Section 3.13).*
 
 
 ### Section 3.9 Undefined Locations [adapted from 2.6.1.1.1]
@@ -683,7 +671,7 @@ Insert the following (adapted from Section 2.6.1.1.1):
 
 ### Section 3.10 Implicit Locations [adapted from 2.6.1.1.4]
 
-Move the contents of Section 2.6.1.1.4 here.
+Move the contents of Section 2.6.1.1.4 here, excluding `DW_OP_implicit_pointer`.
 
 Move the last non-normative paragraph to the start of the section
 and replace the term "location descriptions" with "location expressions":
@@ -723,59 +711,63 @@ with:
 > containing the value `V`, represented using the encoding and byte order of
 > the value's type. The offset of `L` is set to 0, and `L` is pushed onto the stack.
 
-For `DW_OP_implicit_pointer`, in the first (non-normative) paragraph,
-replace "this value" with "the latter value".
 
-For `DW_OP_implicit_pointer`, replace the 3rd paragraph:
+### Section 3.11 Implicit Pointer Locations [adapted from 2.6.1.1.4]
 
-> The `DW_OP_implicit_pointer` operation has two operands: a
-> reference to a debugging information entry that describes
-> the dereferenced object's value, and a signed number that
-> is treated as a byte offset from the start of that value.
-> The first operand is a 4-byte unsigned value in the 32-bit
-> DWARF format, or an 8-byte unsigned value in the 64-bit
-> DWARF format (see Section
-> {32bitand64bitdwarfformats})
-> that is used as the offset of a debugging information entry
-> in the `.debug_info` section of the current executable
-> or shared object file.
-> The second operand is a
-> signed LEB128 number.
+Move the description of `DW_OP_implicit_pointer` into this new
+section as follows:
 
-with:
+> *An optimizing compiler may eliminate a pointer, while
+> still retaining the value that the pointer addressed.
+> `DW_OP_implicit_pointer` allows a producer to describe
+> <del>this</del> <ins>the latter</ins> value.*
+>
+> An implicit pointer location is used to describe a pointer
+> object that cannot be represented as a real pointer, even
+> though the value it would point to can be described. It
+> refers to a debugging information entry that represents the
+> actual value of the object to which the pointer would point.
+> Thus, a consumer of the debug information would be able to
+> show the value of the dereferenced pointer, even when it
+> cannot show the value of the pointer itself.
+>
+> The following DWARF operation is used to create an implicit
+> pointer location:
+>
+> 1. `DW_OP_implicit_pointer`
+>
+>     The `DW_OP_implicit_pointer` operation has two operands: a
+>     reference to a debugging information entry that describes
+>     the dereferenced object's value, and a signed number that
+>     is treated as a byte offset from the start of that value.
+>     The first operand is a 4-byte unsigned value in the 32-bit
+>     DWARF format, or an 8-byte unsigned value in the 64-bit
+>     DWARF format (see Section
+>     {32bitand64bitdwarfformats})
+>     that is used as the offset of the debugging information entry
+>     in the `.debug_info` section of the current executable
+>     or shared object file.
+>     The second operand, the byte offset, is a
+>     signed LEB128 number.
+>     
+>     An implicit pointer storage location is created for the
+>     location of the pointer object and is pushed onto the
+>     stack.
+>
+>     *The debugging information entry referenced by a
+>     `DW_OP_implicit_pointer` operation is typically a
+>     `DW_TAG_variable` or `DW_TAG_formal_parameter` entry whose
+>     `DW_AT_location` attribute gives a second DWARF expression or a
+>     location list that describes the value of the object, but the
+>     referenced entry may be any entry that contains a `DW_AT_location`
+>     or `DW_AT_const_value` attribute (for example, `DW_TAG_dwarf_procedure`).
+>     By using the second DWARF expression, a consumer can
+>     reconstruct the value of the object when asked to dereference
+>     the pointer described by the original DWARF expression
+>     containing the `DW_OP_implicit_pointer` operation.*
 
-> The `DW_OP_implicit_pointer` operation has two operands: a
-> reference to a debugging information entry `D` that describes
-> the dereferenced object's value, and a signed number that
-> is treated as a byte offset `B` from the start of that value.
-> The first operand is a 4-byte unsigned value in the 32-bit
-> DWARF format, or an 8-byte unsigned value in the 64-bit
-> DWARF format (see Section
-> {32bitand64bitdwarfformats})
-> that is used as the offset of the debugging information entry `D`
-> in the `.debug_info` section of the current executable
-> or shared object file.
-> The second operand, `B`, is a
-> signed LEB128 number.
 
-And add:
-
-> An implicit storage location `LP` is created for the
-> location of the pointer object `P`, and the location `LV` of
-> the object `V` is obtained from `D`. `LP` describes the
-> location of `P`, with an offset of 0, and the value in that
-> implicit storage represents (implicitly) the value of the
-> pointer, which is meant to point to `V`. `LV` describes the
-> location of the object `V`, with a byte offset of `B`.
-> 
-> The location `LP` is pushed onto the stack.
-
-In the non-normative paragraph that follows, change
-"The debugging information entry referenced by..." to
-"The debugging information entry `D` referenced by...."
-
-
-### Section 3.11 Composite Locations [adapted from 2.6.1.2]
+### Section 3.12 Composite Locations [adapted from 2.6.1.2]
 
 Insert the following (adapted from Section 2.6.1.2, and with the new
 `DW_OP_composite` operator):
@@ -845,7 +837,7 @@ Insert the following (adapted from Section 2.6.1.2, and with the new
 >     The *EP* value of the new tuple is set to *SP + L*.
 >
 >     Interpretation of the offset depends on the type of location. If the
->     location is an undefined location (see Section 3.10), the
+>     location is an undefined location (see Section 3.9), the
 >     `DW_OP_bit_piece` operation describes a piece consisting of the given
 >     number of bits whose values are undefined, and the offset is ignored. If
 >     the location is a memory location (see Section 3.7), the
@@ -898,7 +890,7 @@ Insert the following (adapted from Section 2.6.1.2, and with the new
 > - Otherwise, the DWARF expression is not valid.
 
 
-### Section 3.12 Dereferencing Operations [NEW]
+### Section 3.13 Dereferencing Operations [NEW]
 
 Add the following introductory paragraphs:
 
@@ -934,10 +926,6 @@ For `DW_OP_deref`, change the description to:
 > size (in bits) of an address on the target machine, are
 > retrieved from the location `L` and pushed onto the stack
 > as a value of the generic type.
->
-> If the location on the stack is an implicit pointer (see Section 3.10),
-> the location `LP` is dereferenced to obtain the location `LV`.
-> In this case, the offset of the location `LP` must be 0.
 
 For `DW_OP_deref_size`, change the description to:
 
@@ -978,7 +966,7 @@ For `DW_OP_xderef_type`, change "whose value value which is"
 to "whose value is". [This was a typo in the DWARF 5 spec.]
 
 
-### Section 3.13 Offset Operations [NEW]
+### Section 3.14 Offset Operations [NEW]
 
 Add:
 
@@ -1003,12 +991,12 @@ Add:
 >     component of the original location and pushes the updated location
 >     onto the stack.
 > 
->     _A bit offset of `N × byte_size` is equivalent to a byte offset of `N`._
+>     *A bit offset of `N × byte_size` is equivalent to a byte offset of `N`.*
 >
 > The resulting offset remain valid for the location.
 
 
-### Section 3.14  Control Flow Operations [was 2.5.2.5]
+### Section 3.15  Control Flow Operations [was 2.5.2.5]
 
 Move the contents of old section 2.5.2.5 here.
 
@@ -1049,7 +1037,7 @@ to:
 > between the calling and called expressions.
 
 
-### Section 3.15 Type Conversions [was 2.5.2.6]
+### Section 3.16 Type Conversions [was 2.5.2.6]
 
 Move and renumber Section 2.5.2.6 to here.
 
@@ -1062,7 +1050,7 @@ Under `DW_OP_reinterpret`, in the next-to-last sentence, change
 "converted" to "reinterpreted".
 
 
-### Section 3.16 Special Operations [was 2.5.2.7]
+### Section 3.17 Special Operations [was 2.5.2.7]
 
 Move and renumber Section 2.5.2.7 to here.
 
@@ -1079,7 +1067,7 @@ For `DW_OP_user_extended`, in the last (non-normative) paragraph,
 change "the standard" to "this specification".
 
 
-### Section 3.17 Value Lists [was 2.5.2]
+### Section 3.18 Value Lists [was 2.5.2]
 
 Place the contents of old section 2.5.2 Value Lists here.
 
@@ -1090,7 +1078,7 @@ Place the contents of old section 2.5.2 Value Lists here.
 > any of the DWARF operations described in Section
 > {locationdescriptions}.*</span>
 
-### Section 3.18 Location Lists [was 2.6.2]
+### Section 3.19 Location Lists [was 2.6.2]
 
 Place the contents of old Section 2.6.2 Location Lists here.
 
@@ -1131,6 +1119,18 @@ _Remove_ the second non-normative paragraph:
 > form of a location description is not valid for a data member contained
 > in an entity that is not byte aligned because DWARF operations do not
 > allow for manipulating or computing bit offsets.*</span>
+
+### Section 5.7.8 Member Function Entries
+
+Replace the paragraph describing `DW_AT_vtable_elem_location` with:
+
+> An entry for a virtual function also has a
+> `DW_AT_vtable_elem_location` attribute whose value contains a
+> location expression yielding the location of the slot for
+> the function within the virtual function table for the
+> enclosing class. The location of an object of the enclosing
+> type is pushed onto the expression stack before the location
+> expression is evaluated.
 
 ### Section 5.14 Pointer to Member Type Entries
 
@@ -1235,3 +1235,7 @@ places:
 
 - In the `DW_AT_lower_bound` and `DW_AT_upper_bound` attributes at `11$`
 (immediately following `DW_OP_push_object_location`).
+
+
+[1]: https://llvm.org/docs/AMDGPUDwarfExtensionsForHeterogeneousDebugging.html
+[2]: ../../doc/Issue-230524-1-diffs.html
