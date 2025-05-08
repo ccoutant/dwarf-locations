@@ -481,18 +481,14 @@ With:
 > bytes then two overlays can be used to position portions of the registers
 > over undefined storage.
 
-    DW_OP_undefined
-    DW_OP_reg3
-    DW_OP_lit0
-    DW_OP_lit4
-    DW_OP_overlay
     DW_OP_reg10
+    DW_OP_reg3
     DW_OP_lit4
-    DW_OP_lit2
+    DW_OP_lit4
     DW_OP_overlay
 
->   A variable whose first four bytes reside in register 3 and whose next two
->   bytes reside in register 10.
+>   A six byte variable whose first four bytes reside in register 3 and whose
+>   next two bytes reside in register 10.
 
     DW_OP_undefined
     DW_OP_reg0
@@ -557,25 +553,23 @@ With:
 
     DW_OP_undefined
     DW_OP_reg0
-    DW_OP_shl (31)
-    DW_OP_lit0
+    DW_OP_shr (31)
+    DW_OP_lit15
     DW_OP_lit1
     DW_OP_bit_overlay
     DW_OP_reg1
-    DW_OP_lit8
+    DW_OP_lit0
     DW_OP_lit8
     DW_OP_bit_overlay
 
->   A 16 bit variable whose first bit resides in the 31st bit of register 0, whose
->   next seven bits are undefined and whose second byte resides in the lower half
->   of a 16 bit register 1.
+>   A 16 bit variable whose most significant bit resides in the 31st bit of
+>   register 0, whose next seven bits are undefined and whose second byte resides
+>   in the lower half of a 16 bit register 1.
 
 *Note: this needs to be checked for endian problems. It is a very
 weird expression and it is not entirely clear to me which bits within
 reg1 were intended to be represented in the final value. I changed the
-describing text to match what I inferred the original intent was. Also
-it wasn't perfectly clear to me if they meant bit 31 or the bit
-numbered 31 starting from 0.
+describing text to match what I inferred the original intent was.
 
 ### Section D.13 Figure D.66 replace:
 
