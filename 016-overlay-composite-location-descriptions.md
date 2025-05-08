@@ -149,9 +149,9 @@ The first being that `DW_OP_piece` has an ABI dependency:
 
      2.5.4.5 Composite Location Descriptions, point 2.:
 
-	"If the piece is located in a register, but does not occupy the
-	entire register, the placement of the piece within that register
-	is defined by the ABI. "
+        "If the piece is located in a register, but does not occupy the
+        entire register, the placement of the piece within that register
+        is defined by the ABI. "
 
 While this is not often a problem with normal relatively small CPU
 registers. GPUs make much more heavy use of vector registers which are
@@ -191,10 +191,10 @@ operators with something like:
          | ... C  B  A  9  8  7  ... |        | ... C  B  A  9  8  7  ... |
     vreg0| ...   XX XX XX XX  ...    |   vreg1| ...   YY YY YY YY  ...    |
          +---------------------------+        +---------------------------+
-	                   \                         /
-			    \                       /
-			     v                     v
-			    [XX XX XX XX YY YY YY YY]
+                           \                         /
+                            \                       /
+                             v                     v
+                            [XX XX XX XX YY YY YY YY]
 
 
 This also works if those vector registers were spilled to memory:
@@ -627,8 +627,8 @@ With:
             DW_OP_lit4 DW_OP_lit4 DW_OP_overlay
         DW_LLE_start_end[<label2 in main> .. <label3 in main>)
             DW_OP_lit2 DW_OP_stack_value DW_OP_lit3 DW_OP_stack_value
-	    DW_OP_lit4 DW_OP_lit4 DW_OP_overlay
-	DW_LLE_end_of_list
+            DW_OP_lit4 DW_OP_lit4 DW_OP_overlay
+        DW_LLE_end_of_list
 
 ### Section D.18 SIMD Lane Example
 
@@ -657,27 +657,27 @@ Replace figure D.86 with:
     ...
 
     .vallist.0:
-	range [.l1, .l2)
-	    DW_OP_lit8
-	end-of-list
+        range [.l1, .l2)
+            DW_OP_lit8
+        end-of-list
 
     .loclist.1:          # src
         range [.l0, .l1)
 	    DW_OP_reg0
-	range [.l1, .l2)
-	    DW_OP_reg0        # base location of the array
-	    DW_OP_regx v1     # location of the overlay
-	    DW_OP_breg3 (0)
-	    DW_OP_lit4
-	    DW_OP_mul         # the offset of the overlay in bytes
-	    DW_OP_constu (32) # sizeof(int)*num_lanes
-	    DW_OP_overlay
-	range [.l2, .l4)
-	    DW_OP_reg0
+        range [.l1, .l2)
+            DW_OP_reg0        # base location of the array
+            DW_OP_regx v1     # location of the overlay
+            DW_OP_breg3 (0)
+            DW_OP_lit4
+            DW_OP_mul         # the offset of the overlay in bytes
+            DW_OP_constu (32) # sizeof(int)*num_lanes
+            DW_OP_overlay
+        range [.l2, .l4)
+            DW_OP_reg0
     .loclist.2:          # dst
         range [.l0, .l1)
-	    DW_OP_reg1
-	range [.l1, .l2)
+            DW_OP_reg1
+        range [.l1, .l2)
             DW_OP_reg1
             DW_OP_regx v0
             DW_OP_breg3 (0)
