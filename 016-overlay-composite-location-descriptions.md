@@ -523,7 +523,7 @@ Add the following rows to Table 8.9 "DWARF Operation Encodings":
 
 ### Appendix D.1.3 DWARF Location Description Examples
 
-Replace the piece examples:
+After the piece example:
 
     DW_OP_reg3
     DW_OP_piece (4)
@@ -532,6 +532,39 @@ Replace the piece examples:
 
 >   A variable whose first four bytes reside in register 3 and whose next two
 >   bytes reside in register 10.
+
+add
+
+> a similar effect can be done with an overlay:
+
+    DW_OP_reg3
+    DW_OP_reg10
+    DW_OP_lit4
+    DW_OP_lit2
+    DW_OP_overlay
+
+Then add:
+
+> There is a difference in these two examples though: The first one
+> creates a six byte location. The second one creates a location that
+> is either 6 bytes long if reg3 is less than 6 bytes long or a
+> location as long as reg3 if it is longer than 6 bytes. In this case,
+> the difference probably doesn't matter. However, if a producer wants
+> to strictly limit the width of the expression to six bytes then two
+> overlays can be used to position portions of the registers over
+> undefined storage.
+
+    DW_OP_undefined
+    DW_OP_reg3
+    DW_OP_lit0
+    DW_OP_lit4
+    DW_OP_overlay
+    DW_OP_reg10
+    DW_OP_lit4
+    DW_OP_lit2
+    DW_OP_overlay
+
+Then after:
 
     DW_OP_reg0
     DW_OP_piece (4)
@@ -543,31 +576,11 @@ Replace the piece examples:
 >   middle four bytes are unavailable (perhaps due to optimization), and
 >   whose last four bytes are in memory, 12 bytes before the frame base.
 
-With:
+Add:
 
-    DW_OP_reg3
-    DW_OP_reg10
-    DW_OP_lit4
-    DW_OP_lit2
-    DW_OP_overlay
-
->   A variable whose first four bytes reside in register 3 and whose next two
->   bytes reside in reside in register 10. Any remaining bytes read will be
->   read from register 3 if that is possible. If it is not possible then the
->   DWARF expression is ill formed.
->
-> If a producer wants to strictly limit the width of the expression to six
-> bytes then two overlays can be used to position portions of the registers
-> over undefined storage.
-
-    DW_OP_reg10
-    DW_OP_reg3
-    DW_OP_lit4
-    DW_OP_lit4
-    DW_OP_overlay
-
->   A six byte variable whose first four bytes reside in register 3 and whose
->   next two bytes reside in register 10.
+> A similar effect can be done with overlays a couple of different
+> ways. The most general way places all the pieces over undefined
+> storage.
 
     DW_OP_undefined
     DW_OP_reg0
@@ -579,11 +592,32 @@ With:
     DW_OP_lit4
     DW_OP_overlay
 
->   A twelve byte value whose first four bytes reside in register zero, whose
->   middle four bytes are unavailable (perhaps due to optimization), and
->   whose last four bytes are in memory, 12 bytes before the frame base.
+> However, another way to do it if reg0 is only 32b is to create an
+> overlay on top of reg0 and leave a hole in it by using an offset
+> greater than the size of reg0. The hole in the overlay is inferred
+> to be undefined.
 
-Replace:
+    DW_OP_reg0       # this is only 32b or 4 bytes long
+    DW_OP_fbreg (-12)
+    DW_OP_lit8       # This offset is 4 bytes beyond the last byte of reg0
+    DW_OP_lit4
+    DW_OP_overlay
+
+> If reg0 is more than 32b and less than 96b or if only 12 bytes are
+> likely to be read by the consumer then the undefined bits can be
+> explicitly overlayed onto the reg0's upper bytes.
+
+   DW_OP_reg0
+   DW_OP_undefined
+   DW_OP_lit4
+   DW_OP_lit4
+   DW_OP_overlay
+   DW_OP_fbreg (-12)
+   DW_OP_lit8
+   DW_OP_lit4
+   DW_OP_overlay
+
+After:
 
     DW_OP_lit1
     DW_OP_stack_value
@@ -599,11 +633,14 @@ Replace:
 >   followed by the four byte value computed from the sum of the contents of
 >   r3 and r4
 
-With:
+The equivilent expression using overlays would be:
 
+    DW_OP_undefined
     DW_OP_lit1
-    DW_OP_shl (32)
     DW_OP_stack_value
+    DW_OP_lit0
+    DW_OP_lit4
+    DW_OP_overlay
     DW_OP_breg3 (0)
     DW_OP_breg4 (0)
     DW_OP_plus
@@ -612,12 +649,12 @@ With:
     DW_OP_lit4
     DW_OP_overlay
 
->   The object value is found in an anonymous (virtual) location whose value
->   consists of two parts, given in memory address order: the 4 byte value 1
->   followed by the four byte value computed from the sum of the contents of
->   r3 and r4
+*Note: I believe that this example is too contrived. I would consider
+removing it. I can't think of any case where a variable would stored
+like that. I think that we have better examples of where implicit
+storage is used.
 
-Replace:
+After:
 
     DW_OP_reg0
     DW_OP_bit_piece (1, 31)
@@ -628,27 +665,33 @@ Replace:
 >   A variable whose first bit resides in the 31st bit of register 0, whose next
 >   seven bits are undefined and whose second byte resides in register 1.
 
-With:
+Add:
+
+> A similar expression done with bit overlays:
 
     DW_OP_undefined
     DW_OP_reg0
-    DW_OP_shr (31)
-    DW_OP_lit15
+    DW_OP_lit31
+    DW_OP_bit_offset
+    DW_OP_lit0
     DW_OP_lit1
     DW_OP_bit_overlay
     DW_OP_reg1
-    DW_OP_lit0
+    DW_OP_lit8
     DW_OP_lit8
     DW_OP_bit_overlay
 
->   A 16 bit variable whose most significant bit resides in the 31st bit of
->   register 0, whose next seven bits are undefined and whose second byte resides
->   in the lower half of a 16 bit register 1.
+> While this looks considerably longer, the piece operators take
+> inline operands while the overlay operators have stack operands. The
+> extra stack operands take more operations, but the same number of
+> bytes in most cases.
 
-*Note: this needs to be checked for endian problems. It is a very
-weird expression and it is not entirely clear to me which bits within
-reg1 were intended to be represented in the final value. I changed the
-describing text to match what I inferred the original intent was.
+*Note: Again I think that this example is rather contrived. I think we
+should substitute an example using predicate registers that are
+spilled to memory while a pair of nested conditional loops run on a
+vector register. Spilling predicate registers is something realistic
+that happens. Because it is a spilled register, the endianness matters
+and the problems with bit piece become obvious.
 
 ### Section D.13 Figure D.66 replace:
 
@@ -666,22 +709,20 @@ With:
            DW_AT_name("s")
            DW_AT_type(reference to S at 1$)
            DW_AT_location(expression=
-                DW_OP_breg5 (1) DW_OP_stack_value DW_OP_breg5 (2) DW_OP_stack_value
-                DW_OP_lit2 DW_OP_lit1 DW_OP_overlay
-                DW_OP_breg5 (3) DW_OP_lit3 DW_OP_lit1 DW_OP_overlay)
+                DW_OP_undefined
+		DW_OP_breg5 (1), DW_OP_lit0, DW_OP_lit2, DW_OP_overlay
+		DW_OP_breg5 (2), DW_OP_lit2, DW_OP_lit1, DW_OP_overlay
+		DW_OP_breg5 (3), DW_OP_lit3, DW_OP_lit1, DW_OP_overlay)
 
-*Note: this needs to be checked. I'm not sure that I have a clear
- understanding of how implicit storage works. Is the value widened to
- the size of a generic type. I'm not sure what "represented using the
- encoding and byte order of the value's type" means when it follows a
- DW_OP_breg5 (1). I would assume that would leave a 1-byte value on
- the top of the stack. However, the overlay specifies that it should
- take up two bytes and thus it would need to be implicitly
- widened. Also this expression seems weird to me because the implicit
- describes the entire structure rather than the members of the
- structure. What if the user tries to "p s.a" would the debugger be
- smart enough to take the implicit location of s and extract the a
- member from its implicit storage.
+*Note: This expression seems weird to me because the location
+describes the entire structure rather than the members of the
+structure. What if the user tries to "p s.a" would the debugger be
+smart enough to take the storage location of s and extract the a
+member from its storage.
+
+*FIXME: Add a more realistic example where a structure stays in memory
+while one of its members is promoted to a register -- where we can use
+the memory location as the base.
 
 ### Section D.13 Figure D.68 replace:
 
@@ -744,7 +785,7 @@ Replace figure D.86 with:
         range [.l0, .l1)
 	    DW_OP_reg0
         range [.l1, .l2)
-            DW_OP_reg0        # base location of the array
+            DW_OP_breg0        # base location of the array
             DW_OP_regx v1     # location of the overlay
             DW_OP_breg3 (0)
             DW_OP_lit4
