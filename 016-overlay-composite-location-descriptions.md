@@ -111,6 +111,40 @@ An overlay can also be used to create a composite location without
 using `DW_OP_piece`. For example GPUs often store doubles in two
 32b parts. An overlay can be used to concatenate the locations.
 
+    DW_OP_addr 0x100
+    DW_OP_addr 0x200
+    DW_OP_lit4  # offset 4
+    DW_OP_lit4  # size 4
+    DW_OP_overlay
+
+            +-----------------------------------------+
+    overlay |                 200 201 202 203         |
+    base    | 100 101 102 103                 108 ... |
+            +-----------------------------------------+
+
+A similar construct using the piece operators would be:
+
+    DW_OP_addr 0x100
+    DW_OP_piece (4)
+    DW_OP_addr 0x200
+    DW_OP_piece (4)
+
+However, there is a difference. The piece operator creates a location
+which is 8 bytes long. It is assumed that the value to be read are
+those eight bytes. With locations on the stack, a composite piece
+location can be offset but offsetting into that location is only
+meaningful for those 8 bytes. On the other hand, an overlay creates a
+location with an intial offset of zero which extends out to the full
+extent of the underlying base storage. Thus in this example, if the
+base address space is 64b long, any offset that does not overlow the
+generic type would be valid. In this way, composite overlay locations
+are more similar to an address where the consumer determines how many
+bytes to read from the location.
+
+If producer wants to make a location more like what is created when
+using piece operators. They can use two overlays and have the first
+overlay's base be undefined.
+
     DW_OP_undefined
     DW_OP_addr 0x100
     DW_OP_lit0  # offset 0
@@ -121,26 +155,63 @@ using `DW_OP_piece`. For example GPUs often store doubles in two
     DW_OP_lit4  # size 4
     DW_OP_overlay
 
-                +--------------------------------------+
-    2nd overlay |                      200 201 202 203 |
-                |+------------------------------------+|
-    1st overlay ||     100 101 102 103                ||
-    base        || ... <undefined> ...                ||
-                |+------------------------------------+|
-                +--------------------------------------+
+                +----------------------------------+
+    2nd overlay |                  200 201 202 203 |
+                |+--------------------------------+|
+    1st overlay || 100 101 102 103                ||
+    base        || <undefined> ...                ||
+                |+--------------------------------+|
+                +----------------------------------+
 
- *Note: this was directly from Cary's email about how to do
- concatenation with overlays. He copied the example from Pedro's note
- I do not understand why we need the first overlay with the undefined
- except that it constrains the size of the storage location to be 8
- bytes long rather than being as long as the first storage in the
- overlay. A simpler example is:
+In this case, offsetting beyond the eight defined bytes would not
+reference bytes beginning at 0x100; it would yeild undefined bits. It
+is currently believed that in most cases the extra step of making the
+underlying storage undefined is unnecessary. The one exception to this
+is when a portion of the location is undefined. DW_OP_piece can
+concatenate an empty piece of a specific size to a previous piece to
+leave a section undefined.
 
-    DW_OP_addr 0x100
-    DW_OP_addr 0x200
-    DW_OP_lit4  # offset 4
-    DW_OP_lit4  # size 4
+     DW_OP_reg0
+     DW_OP_piece (4)
+     DW_OP_piece (4)
+
+While to do the same thing with overlays the undefined portion must be
+explicit. Either by using it as the underlying base storage:
+
+    DW_OP_undefined
+    DW_OP_reg0
+    DW_OP_lit0
+    DW_OP_lit4
     DW_OP_overlay
+
+or by making the actual bytes undefined:
+
+    DW_OP_reg0
+    DW_OP_undefined
+    DW_OP_lit0
+    DW_OP_lit4
+    DW_OP_overlay
+
+In the former case, any offset into that location beyond the first
+four bytes up to the size of the generic type is meaningful but will
+be undefined. In the latter case, the range of meaningful offsets is
+limited to the maximum of the size of the underlying base storage and
+overlay itself. Thus if reg0 were 4 bytes, then the meaningful offsets
+of the overlay location would be 8 bytes. However, if the size of reg0
+were 64 bytes, then the range of meaniful offsets would be 64 bytes.
+
+If an overlay leaves a gap between the maximum size of the underlying
+base storage and the overlay, then those bits are inferred to be
+undefined and the size of the overlay grows to include the overlaid
+section. For example:
+
+    DW_OP_reg0  # assume a normal 64b general purpos register
+    DW_OP_reg1  # another 64b register
+    DW_OP_lit16 # well beyond the 8 bytes of reg0
+    DW_OP_lit8
+    DW_OP_overlay
+
+would leave the offsets between 8 and 15 undefined.
 
 Using an overlay this way as opposed to using the piece operators has
 two big advantages.
@@ -395,41 +466,49 @@ Rename Section 3.11 to "Composite Piece Description Operations"
 Add a new Section 3.12 after "Composite Piece Description Operations",
 called "Overlay Composites" With the the following operations:
 
-> 1.  `DW_OP_overlay`
->     `DW_OP_overlay` consumes the top four elements of the stack. The
->     top-of-stack (first) entry is an integral type value that
->     represents the width of the region being overlayed on the base
->     location in bytes. The second from the top element is an
->     integral type value that represents the offset in bytes from the
->     start of the base location where the overlay is positioned. The
->     third element from the top is the location that is being
->     overlayed on top of the base location. The fourth element from
->     the top of the stack is the base location onto which the overlay
->     is being placed. These four elements are popped and a new
->     composite location is pushed. The composite location left on the
->     stack presents the underlying base location with the overlayed
->     location of the specified size positioned over the base location
->     at the specified offset.
+> 1.  `DW_OP_overlay` `DW_OP_overlay` consumes the top four elements
+>     of the stack. The top-of-stack (first) entry is an integral type
+>     value that represents the width of the region being overlayed on
+>     the base location in bytes. The second from the top element is
+>     an integral type value that represents the offset in bytes from
+>     the start of the base location where the overlay is
+>     positioned. The third element from the top is the location that
+>     is being overlayed on top of the base location. The fourth
+>     element from the top of the stack is the base location onto
+>     which the overlay is being placed. These four elements are
+>     popped and a new composite location is pushed. The composite
+>     overlay location left on the stack presents the underlying base
+>     location with the overlayed location of the specified size
+>     positioned over the base location at the specified offset. This
+>     location is given an initial offset of zero but an offset from
+>     this location can be as large the maximum of the overlay itself
+>     and the the underlying base storage. Any offsets beyond the
+>     underlying base storage before the overlaid region is inferred
+>     to be undefined.
 >
 >     The action is the same for `DW_OP_bit_overlay`, except that the
 >     overlay size and overlay offset are specified in bits rather
 >     than bytes.
-
-> 2.  `DW_OP_bit_overlay`
->     `DW_OP_bit_overlay` consumes the top four elements of the
->     stack. The top-of-stack (first) entry is an integral type value
->     that represents the width of the region being overlayed on the
->     base location in bits. The second from the top element is an
->     integral type value that represents the offset in bits from the
->     start of the base location where the overlay is positioned. The
->     third element from the top is the location that is being
->     overlayed on top of the base location. The fourth element from
->     the top of the stack is the base location onto which the overlay
->     is being placed. These four elements are popped and a new
->     composite location is pushed. The composite location left on the
->     stack presents the underlying base location with the overlayed
->     location of the specified size positioned over the base location
->     at the specified offset.
+>
+> 2.  `DW_OP_bit_overlay` `DW_OP_bit_overlay` consumes the top four
+>     elements of the stack. The top-of-stack (first) entry is an
+>     integral type value that represents the width of the region
+>     being overlayed on the base location in bits. The second from
+>     the top element is an integral type value that represents the
+>     offset in bits from the start of the base location where the
+>     overlay is positioned. The third element from the top is the
+>     location that is being overlayed on top of the base
+>     location. The fourth element from the top of the stack is the
+>     base location onto which the overlay is being placed. These four
+>     elements are popped and a new composite location is pushed. The
+>     composite location left on the stack presents the underlying
+>     base location with the overlayed location of the specified size
+>     positioned over the base location at the specified offset. This
+>     location is given an initial offset of zero but an offset from
+>     this location can be as large the maximum of the overlay itself
+>     and the the underlying base storage. Any offsets beyond the
+>     underlying base storage before the overlaid region is inferred
+>     to be undefined.
 
 ### Section 8.7.1 "DWARF Expressions"
 
@@ -442,7 +521,7 @@ Add the following rows to Table 8.9 "DWARF Operation Encodings":
 > | `DW_OP_overlay`                    | TBA   | 0                  |       |
 > | `DW_OP_bit_overlay`                | TBA   | 0                  |       |
 
-### Appendix D.1.4 DWARF Location Description Examples
+### Appendix D.1.3 DWARF Location Description Examples
 
 Replace the piece examples:
 
