@@ -748,7 +748,7 @@ With:
 
 ### Section D.18 SIMD Lane Example
 
-Replace figure D.86 with:
+Replace figure "D.8? SIMD Lane Example: DWARF Encoding" with:
 
     DW_TAG_subprogram
     DW_AT_name ("vec_add")
@@ -771,9 +771,9 @@ Replace figure D.86 with:
         DW_AT_type (reference to type int)
         DW_AT_location .loclist.3
     ...
-    $DP1: DW_TAG_dwarf_procedure
+    $DP1: DW_TAG_dwarf_procedure # Used by src in loclist.1
               DW_AT_location [
-                DW_OP_breg0 (0)   # base location of the array
+                DW_OP_breg1 (0)   # base location of the array
                 DW_OP_regx v1     # location of the overlay
                 DW_OP_breg3 (0)
                 DW_OP_lit4
@@ -781,9 +781,9 @@ Replace figure D.86 with:
                 DW_OP_constu (32) # sizeof(int)*num_lanes
                 DW_OP_overlay
                 ]
-    $DP2:  DW_TAG_dwarf_procedure
+    $DP2:  DW_TAG_dwarf_procedure # Used by dst in loclist.2
               DW_AT_location [
-                DW_OP_breg1 (0)
+                DW_OP_breg0 (0)
                 DW_OP_regx v0
                 DW_OP_breg3 (0)
                 DW_OP_lit4
@@ -798,18 +798,18 @@ Replace figure D.86 with:
 
     .loclist.1:          # src
         range [.l0, .l1)
-	    DW_OP_reg0
+	    DW_OP_reg1
         range [.l1, .l2)
             DW_OP_implicit_pointer ($DP1, 0)
         range [.l2, .l4)
-            DW_OP_reg0
+            DW_OP_reg1
     .loclist.2:          # dst
         range [.l0, .l1)
-            DW_OP_reg1
+            DW_OP_reg0
         range [.l1, .l2)
             DW_OP_implicit_pointer ($DP2, 0)
         range [.l2, .l4)
-            DW_OP_reg1
+            DW_OP_reg0
     .loclist.3:          # i
         range [.l0, .l1)
             DW_OP_reg3
