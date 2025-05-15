@@ -617,7 +617,7 @@ Add:
    DW_OP_lit4
    DW_OP_overlay
 
-After:
+After the example below:
 
     DW_OP_lit1
     DW_OP_stack_value
@@ -628,12 +628,14 @@ After:
     DW_OP_stack_value
     DW_OP_piece (4)
 
->   The object value is found in an anonymous (virtual) location whose value
->   consists of two parts, given in memory address order: the 4 byte value 1
->   followed by the four byte value computed from the sum of the contents of
->   r3 and r4
+> The object value is found in an anonymous (virtual) location whose value
+> consists of two parts, given in memory address order: the 4 byte value 1
+> followed by the four byte value computed from the sum of the contents of
+> r3 and r4
 
-The equivilent expression using overlays would be:
+Add: 
+
+> The equivilent expression using overlays would be:
 
     DW_OP_undefined
     DW_OP_lit1
@@ -714,12 +716,6 @@ With:
 		DW_OP_breg5 (2), DW_OP_lit2, DW_OP_lit1, DW_OP_overlay
 		DW_OP_breg5 (3), DW_OP_lit3, DW_OP_lit1, DW_OP_overlay)
 
-*Note: This expression seems weird to me because the location
-describes the entire structure rather than the members of the
-structure. What if the user tries to "p s.a" would the debugger be
-smart enough to take the storage location of s and extract the a
-member from its storage.
-
 *FIXME: Add a more realistic example where a structure stays in memory
 while one of its members is promoted to a register -- where we can use
 the memory location as the base.
@@ -759,11 +755,11 @@ Replace figure D.86 with:
     DW_AT_num_lanes .vallist.0
     DW_TAG_formal_parameter
         DW_AT_name ("dst")
-        DW_AT_type (reference to type pointer to int)
+        DW_AT_type (reference to type: pointer to int)
         DW_AT_location .loclist.1
     DW_TAG_formal_parameter
         DW_AT_name ("src")
-        DW_AT_type (reference to type pointer to int)
+        DW_AT_type (reference to type: pointer to int)
         DW_AT_location .loclist.2
     DW_TAG_formal_parameter
         DW_AT_name ("len")
@@ -775,7 +771,26 @@ Replace figure D.86 with:
         DW_AT_type (reference to type int)
         DW_AT_location .loclist.3
     ...
-
+    $DP1: DW_TAG_dwarf_procedure
+              DW_AT_location [
+                DW_OP_breg0 (0)   # base location of the array
+                DW_OP_regx v1     # location of the overlay
+                DW_OP_breg3 (0)
+                DW_OP_lit4
+                DW_OP_mul         # the offset of the overlay in bytes
+                DW_OP_constu (32) # sizeof(int)*num_lanes
+                DW_OP_overlay
+                ]
+    $DP2:  DW_TAG_dwarf_procedure
+              DW_AT_location [
+                DW_OP_breg1 (0)
+                DW_OP_regx v0
+                DW_OP_breg3 (0)
+                DW_OP_lit4
+                DW_OP_mul
+                DW_OP_constu (32)
+                DW_OP_overlay
+                ]
     .vallist.0:
         range [.l1, .l2)
             DW_OP_lit8
@@ -785,26 +800,14 @@ Replace figure D.86 with:
         range [.l0, .l1)
 	    DW_OP_reg0
         range [.l1, .l2)
-            DW_OP_breg0        # base location of the array
-            DW_OP_regx v1     # location of the overlay
-            DW_OP_breg3 (0)
-            DW_OP_lit4
-            DW_OP_mul         # the offset of the overlay in bytes
-            DW_OP_constu (32) # sizeof(int)*num_lanes
-            DW_OP_overlay
+            DW_OP_implicit_pointer ($DP1, 0)
         range [.l2, .l4)
             DW_OP_reg0
     .loclist.2:          # dst
         range [.l0, .l1)
             DW_OP_reg1
         range [.l1, .l2)
-            DW_OP_reg1
-            DW_OP_regx v0
-            DW_OP_breg3 (0)
-            DW_OP_lit4
-            DW_OP_mul
-            DW_OP_constu (32)
-            DW_OP_overlay
+            DW_OP_implicit_pointer ($DP2, 0)
         range [.l2, .l4)
             DW_OP_reg1
     .loclist.3:          # i
