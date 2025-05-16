@@ -547,12 +547,12 @@ Then add:
 
 > There is a difference in these two examples though: The first one
 > creates a six byte location. The second one creates a location that
-> is either 6 bytes long if reg3 is less than 6 bytes long or a
-> location as long as reg3 if it is longer than 6 bytes. In this case,
-> the difference probably doesn't matter. However, if a producer wants
-> to strictly limit the width of the expression to six bytes then two
-> overlays can be used to position portions of the registers over
-> undefined storage.
+> is either 6 bytes long if reg3 is less than or equal to 6 bytes long
+> or a location as long as reg3 if it is longer than 6 bytes. In this
+> case, the difference probably doesn't matter because the consumer is
+> only expecting to read 6 bytes. However, if a producer wants to
+> ensure that any bits in r3 which extend beyond the 6 bytes of the
+> overlay are masked off they can use an expression like this:
 
     DW_OP_undefined
     DW_OP_reg3
