@@ -564,7 +564,7 @@ Then add:
     DW_OP_lit2
     DW_OP_overlay
 
-Then after:
+Then after the example:
 
     DW_OP_reg0
     DW_OP_piece (4)
@@ -617,6 +617,10 @@ Add:
    DW_OP_lit4
    DW_OP_overlay
 
+*Note: I believe that both of these examples are illustative of
+overlays and how they are different than the current piece operators
+and so I think keeping them is fine.
+
 After the example below:
 
     DW_OP_lit1
@@ -651,10 +655,10 @@ Add:
     DW_OP_lit4
     DW_OP_overlay
 
-*Note: I believe that this example is too contrived. I would consider
-removing it. I can't think of any case where a variable would stored
-like that. I think that we have better examples of where implicit
-storage is used.
+*Note: Initially I believed that this example was too
+ contrived. However, I went through the GCC testsuite and found an
+ example where it does in fact do this. So I recind my previous
+ comment about it being too contrived.
 
 After:
 
@@ -664,8 +668,9 @@ After:
     DW_OP_reg1
     DW_OP_piece (1)
 
->   A variable whose first bit resides in the 31st bit of register 0, whose next
->   seven bits are undefined and whose second byte resides in register 1.
+>   A variable whose first bit resides in the 31st bit of register 0,
+>   whose next seven bits are undefined and whose second byte resides
+>   in register 1.
 
 Add:
 
@@ -688,14 +693,16 @@ Add:
 > extra stack operands take more operations, but the same number of
 > bytes in most cases.
 
-*Note: Again I think that this example is rather contrived. I think we
-should substitute an example using predicate registers that are
-spilled to memory while a pair of nested conditional loops run on a
-vector register. Spilling predicate registers is something realistic
-that happens. Because it is a spilled register, the endianness matters
-and the problems with bit piece become obvious.
+*Note: I think we should add an example using predicate
+registers that are spilled to memory while a pair of nested
+conditional loops run on a vector register. Spilling predicate
+registers is something realistic that happens. Because it is a spilled
+register, the endianness matters and the problems with bit piece
+become obvious.
 
-### Section D.13 Figure D.66 replace:
+### Section D.13 Figure D.66 C implicit pointer example #1
+
+Replace:
 
     21$:   DW_TAG_variable
            DW_AT_name("s")
@@ -716,11 +723,13 @@ With:
 		DW_OP_breg5 (2), DW_OP_lit2, DW_OP_lit1, DW_OP_overlay
 		DW_OP_breg5 (3), DW_OP_lit3, DW_OP_lit1, DW_OP_overlay)
 
-*FIXME: Add a more realistic example where a structure stays in memory
-while one of its members is promoted to a register -- where we can use
-the memory location as the base.
+*FIXME: Add an example where a structure stays in memory while one of
+its members is promoted to a register -- where we can use the memory
+location as the base.
 
-### Section D.13 Figure D.68 replace:
+### Section D.13 Figure D.68 C implicit pointer example #2
+
+Replace:
 
     98$: DW_LLE_start_end[<label0 in main> .. <label1 in main>)
             DW_OP_lit1 DW_OP_stack_value DW_OP_piece(4)
@@ -736,14 +745,17 @@ the memory location as the base.
 With:
 
     98$: DW_LLE_start_end[<label0 in main> .. <label1 in main>)
-            DW_OP_lit1 DW_OP_stack_value DW_OP_lit2 DW_OP_stack_value
-            DW_OP_lit4 DW_OP_lit4 DW_OP_overlay
+            DW_OP_undefined
+	    DW_OP_lit1 DW_OP_stack_value DW_OP_lit4 DW_OP_lit4 DW_OP_overlay
+            DW_OP_lit2 DW_OP_stack_value DW_OP_lit0 DW_OP_lit4 DW_OP_overlay
         DW_LLE_start_end[<label1 in main> .. <label2 in main>)
-            DW_OP_lit2 DW_OP_stack_value DW_OP_lit2 DW_OP_stack_value
-            DW_OP_lit4 DW_OP_lit4 DW_OP_overlay
+	    DW_OP_undefined
+            DW_OP_lit2 DW_OP_stack_value DW_OP_lit4 DW_OP_lit4 DW_OP_overlay
+	    DW_OP_lit2 DW_OP_stack_value DW_OP_lit0 DW_OP_lit4 DW_OP_overlay
         DW_LLE_start_end[<label2 in main> .. <label3 in main>)
-            DW_OP_lit2 DW_OP_stack_value DW_OP_lit3 DW_OP_stack_value
-            DW_OP_lit4 DW_OP_lit4 DW_OP_overlay
+            DW_OP_undefined
+            DW_OP_lit2 DW_OP_stack_value DW_OP_lit4 DW_OP_lit4 DW_OP_overlay
+	    DW_OP_lit3 DW_OP_stack_value DW_OP_lit0 DW_OP_lit4 DW_OP_overlay
         DW_LLE_end_of_list
 
 ### Section D.18 SIMD Lane Example
