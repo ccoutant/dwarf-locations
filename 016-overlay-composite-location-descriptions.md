@@ -710,10 +710,10 @@ With:
            DW_AT_name("s")
            DW_AT_type(reference to S at 1$)
            DW_AT_location(expression=
-                DW_OP_undefined
-		DW_OP_breg5 (1), DW_OP_lit0, DW_OP_lit2, DW_OP_overlay
-		DW_OP_breg5 (2), DW_OP_lit2, DW_OP_lit1, DW_OP_overlay
-		DW_OP_breg5 (3), DW_OP_lit3, DW_OP_lit1, DW_OP_overlay)
+                DW_OP_breg5 (1) DW_OP_stack_value
+		DW_OP_breg5 (2) DW_OP_stack_value
+                DW_OP_lit2 DW_OP_lit1 DW_OP_overlay
+                DW_OP_breg5 (3) DW_OP_lit3 DW_OP_lit1 DW_OP_overlay)
 
 *FIXME: Add an example where a structure stays in memory while one of
 its members is promoted to a register -- where we can use the memory
@@ -737,17 +737,14 @@ Replace:
 With:
 
     98$: DW_LLE_start_end[<label0 in main> .. <label1 in main>)
-            DW_OP_undefined
-	    DW_OP_lit1 DW_OP_stack_value DW_OP_lit4 DW_OP_lit4 DW_OP_overlay
-            DW_OP_lit2 DW_OP_stack_value DW_OP_lit0 DW_OP_lit4 DW_OP_overlay
+            DW_OP_lit1 DW_OP_stack_value DW_OP_lit2 DW_OP_stack_value
+            DW_OP_lit4 DW_OP_lit4 DW_OP_overlay
         DW_LLE_start_end[<label1 in main> .. <label2 in main>)
-	    DW_OP_undefined
-            DW_OP_lit2 DW_OP_stack_value DW_OP_lit4 DW_OP_lit4 DW_OP_overlay
-	    DW_OP_lit2 DW_OP_stack_value DW_OP_lit0 DW_OP_lit4 DW_OP_overlay
+            DW_OP_lit2 DW_OP_stack_value DW_OP_lit2 DW_OP_stack_value
+            DW_OP_lit4 DW_OP_lit4 DW_OP_overlay
         DW_LLE_start_end[<label2 in main> .. <label3 in main>)
-            DW_OP_undefined
-            DW_OP_lit2 DW_OP_stack_value DW_OP_lit4 DW_OP_lit4 DW_OP_overlay
-	    DW_OP_lit3 DW_OP_stack_value DW_OP_lit0 DW_OP_lit4 DW_OP_overlay
+            DW_OP_lit2 DW_OP_stack_value DW_OP_lit3 DW_OP_stack_value
+            DW_OP_lit4 DW_OP_lit4 DW_OP_overlay
         DW_LLE_end_of_list
 
 ### Section D.18 SIMD Lane Example
