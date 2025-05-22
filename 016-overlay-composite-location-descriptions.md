@@ -472,7 +472,6 @@ called "Overlay Composites".
 > storage with a piece of the overlay storage spliced in, extending
 > the base storage if necessary with undefined storage.*
 >
-
 > 1.  `DW_OP_overlay` `DW_OP_overlay` consumes the top four elements
 >     of the stack. The top-of-stack (first) entry is a non-zero
 >     unsigned integral type value that represents the width of the
@@ -483,18 +482,24 @@ called "Overlay Composites".
 >     location that is being overlayed on top of the base
 >     location. The fourth element from the top of the stack is the
 >     base location onto which the overlay is being placed. These four
->     elements are popped and a new composite location is pushed.  The
+>     elements are popped and a new composite location is pushed. The
 >     composite overlay location left on the stack presents the
 >     underlying base location with the overlayed location of the
 >     specified size positioned over the base location at the
->     specified offset.
-
+>     specified offset. The resulting composite may be larger than the
+>     original base storage and any gaps between the extent of the
+>     base storage and the overlay are undefined.
+>
+> *For example two 32b registers can be combined into an 8-byte by
+>  overlaying the second one with an offset of 4. Undefined storage
+>  can also be implicitly inserted into a composite by simply placing
+>  an overlay at an offset that leaves a gap between the extent of the
+>  base storage and the beginning of the overlay.
 >
 >     The action is the same for `DW_OP_bit_overlay`, except that the
 >     overlay size and overlay offset are specified in bits rather
 >     than bytes.
 >
-
 > 2.  `DW_OP_bit_overlay` `DW_OP_bit_overlay` consumes the top four
 >     elements of the stack. The top-of-stack (first) entry is a
 >     non-zero unsigned integral type value that represents the width
@@ -508,7 +513,10 @@ called "Overlay Composites".
 >     elements are popped and a new composite location is pushed. The
 >     composite location left on the stack presents the underlying
 >     base location with the overlayed location of the specified size
->     positioned over the base location at the specified offset.
+>     positioned over the base location at the specified offset.The
+>     resulting composite may be larger than the original base storage
+>     and any gaps between the extent of the base storage and the
+>     overlay are undefined.
 
 ### Section 8.7.1 "DWARF Expressions"
 
