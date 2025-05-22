@@ -491,14 +491,14 @@ called "Overlay Composites".
 >     base storage and the overlay are undefined.
 >
 > *For example two 32b registers can be combined into an 8-byte by
->  overlaying the second one with an offset of 4. Undefined storage
->  can also be implicitly inserted into a composite by simply placing
->  an overlay at an offset that leaves a gap between the extent of the
->  base storage and the beginning of the overlay.
+> overlaying the second one with an offset of 4. Undefined storage
+> can also be implicitly inserted into a composite by simply placing
+> an overlay at an offset that leaves a gap between the extent of the
+> base storage and the beginning of the overlay.
 >
->     The action is the same for `DW_OP_bit_overlay`, except that the
->     overlay size and overlay offset are specified in bits rather
->     than bytes.
+> The action is the same for `DW_OP_bit_overlay`, except that the
+> overlay size and overlay offset are specified in bits rather than
+> bytes.
 >
 > 2.  `DW_OP_bit_overlay` `DW_OP_bit_overlay` consumes the top four
 >     elements of the stack. The top-of-stack (first) entry is a
@@ -541,7 +541,7 @@ After the piece example:
 >   A variable whose first four bytes reside in register 3 and whose next two
 >   bytes reside in register 10.
 
-add
+Add:
 
 > a similar effect can be done with an overlay:
 
@@ -559,7 +559,7 @@ Then add:
 > or a location as long as reg3 if it is longer than 6 bytes. In this
 > case, the difference probably doesn't matter because the consumer is
 > only expecting to read 6 bytes. However, if a producer wants to
-> ensure that any bits in r3 which extend beyond the 6 bytes of the
+> ensure that any bits in reg3 which extend beyond the 6 bytes of the
 > overlay are masked off they can use an expression like this:
 
     DW_OP_undefined
@@ -619,15 +619,15 @@ Add:
 > explicitly overlayed onto the reg0's upper bytes. This undefined
 > storage will extend beyond the value in fbreg(-12).
 
-   DW_OP_reg0
-   DW_OP_undefined
-   DW_OP_lit4
-   DW_OP_lit4
-   DW_OP_overlay
-   DW_OP_fbreg (-12)
-   DW_OP_lit8
-   DW_OP_lit4
-   DW_OP_overlay
+    DW_OP_reg0
+    DW_OP_undefined
+    DW_OP_lit4
+    DW_OP_lit4
+    DW_OP_overlay
+    DW_OP_fbreg (-12)
+    DW_OP_lit8
+    DW_OP_lit4
+    DW_OP_overlay
 
 After the example below:
 
@@ -693,7 +693,7 @@ Add:
 > extra stack operands take more operations, but the same number of
 > bytes in most cases.
 
-*Note: I think we should add an example using predicate
+*FIXME: I think we should add an example using predicate
 registers that are spilled to memory while a pair of nested
 conditional loops run on a vector register. Spilling predicate
 registers is something realistic that happens. Because it is a spilled
