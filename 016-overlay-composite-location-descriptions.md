@@ -464,51 +464,51 @@ Rename Section 3.11 to "Composite Piece Description Operations"
 
 ### Add Section 3.12
 Add a new Section 3.12 after "Composite Piece Description Operations",
-called "Overlay Composites" With the the following operations:
+called "Overlay Composites".
+
+> *Conceptually, these new composite operators create a new composite
+> location which is pushed on the stack with an offset the same as the
+> base location, and composite storage that is the base location
+> storage with a piece of the overlay storage spliced in, extending
+> the base storage if necessary with undefined storage.*
+>
 
 > 1.  `DW_OP_overlay` `DW_OP_overlay` consumes the top four elements
->     of the stack. The top-of-stack (first) entry is an integral type
->     value that represents the width of the region being overlayed on
->     the base location in bytes. The second from the top element is
->     an integral type value that represents the offset in bytes from
->     the start of the base location where the overlay is
->     positioned. The third element from the top is the location that
->     is being overlayed on top of the base location. The fourth
->     element from the top of the stack is the base location onto
->     which the overlay is being placed. These four elements are
->     popped and a new composite location is pushed. The composite
->     overlay location left on the stack presents the underlying base
->     location with the overlayed location of the specified size
->     positioned over the base location at the specified offset. This
->     location is given an initial offset of zero but an offset from
->     this location can be as large the maximum of the overlay itself
->     and the the underlying base storage. Any offsets beyond the
->     underlying base storage before the overlaid region is inferred
->     to be undefined.
+>     of the stack. The top-of-stack (first) entry is a non-zero
+>     unsigned integral type value that represents the width of the
+>     region being overlayed on the base location in bytes. The second
+>     from the top element is another unsigned integral type value
+>     that represents the offset in bytes from the base location where
+>     the overlay is positioned. The third element from the top is the
+>     location that is being overlayed on top of the base
+>     location. The fourth element from the top of the stack is the
+>     base location onto which the overlay is being placed. These four
+>     elements are popped and a new composite location is pushed.  The
+>     composite overlay location left on the stack presents the
+>     underlying base location with the overlayed location of the
+>     specified size positioned over the base location at the
+>     specified offset.
+
 >
 >     The action is the same for `DW_OP_bit_overlay`, except that the
 >     overlay size and overlay offset are specified in bits rather
 >     than bytes.
 >
+
 > 2.  `DW_OP_bit_overlay` `DW_OP_bit_overlay` consumes the top four
->     elements of the stack. The top-of-stack (first) entry is an
->     integral type value that represents the width of the region
->     being overlayed on the base location in bits. The second from
->     the top element is an integral type value that represents the
->     offset in bits from the start of the base location where the
->     overlay is positioned. The third element from the top is the
+>     elements of the stack. The top-of-stack (first) entry is a
+>     non-zero unsigned integral type value that represents the width
+>     of the region being overlayed on the base location in bits. The
+>     second from the top element is an unsigned integral type value
+>     that represents the offset in bits from the base location where
+>     the overlay is positioned. The third element from the top is the
 >     location that is being overlayed on top of the base
 >     location. The fourth element from the top of the stack is the
 >     base location onto which the overlay is being placed. These four
 >     elements are popped and a new composite location is pushed. The
 >     composite location left on the stack presents the underlying
 >     base location with the overlayed location of the specified size
->     positioned over the base location at the specified offset. This
->     location is given an initial offset of zero but an offset from
->     this location can be as large the maximum of the overlay itself
->     and the the underlying base storage. Any offsets beyond the
->     underlying base storage before the overlaid region is inferred
->     to be undefined.
+>     positioned over the base location at the specified offset.
 
 ### Section 8.7.1 "DWARF Expressions"
 
@@ -592,20 +592,24 @@ Add:
     DW_OP_lit4
     DW_OP_overlay
 
-> However, another way to do it if reg0 is only 32b is to create an
-> overlay on top of reg0 and leave a hole in it by using an offset
-> greater than the size of reg0. The hole in the overlay is inferred
-> to be undefined.
+> However, another more compact way to do it if reg0 is at least 32b
+> but not more than 96b or if the consumer is unlikely to read more
+> than 12 bytes is to create an overlay on top of reg0.
 
-    DW_OP_reg0       # this is only 32b or 4 bytes long
+    DW_OP_reg0
     DW_OP_fbreg (-12)
-    DW_OP_lit8       # This offset is 4 bytes beyond the last byte of reg0
     DW_OP_lit4
+    DW_OP_lit8
     DW_OP_overlay
 
-> If reg0 is more than 32b and less than 96b or if only 12 bytes are
-> likely to be read by the consumer then the undefined bits can be
-> explicitly overlayed onto the reg0's upper bytes.
+> If reg0 is less than 32b this will leave a hole of undefined storage
+> between the last bits of reg0 and the beginning of the value in
+> fbreg(-12).
+>
+> If reg0 is more than 32b and less than 96b or if more than 12 bytes
+> are likely to be read by the consumer then the undefined bits can be
+> explicitly overlayed onto the reg0's upper bytes. This undefined
+> storage will extend beyond the value in fbreg(-12).
 
    DW_OP_reg0
    DW_OP_undefined
@@ -616,10 +620,6 @@ Add:
    DW_OP_lit8
    DW_OP_lit4
    DW_OP_overlay
-
-*Note: I believe that both of these examples are illustative of
-overlays and how they are different than the current piece operators
-and so I think keeping them is fine.
 
 After the example below:
 
@@ -641,12 +641,9 @@ Add:
 
 > The equivilent expression using overlays would be:
 
-    DW_OP_undefined
     DW_OP_lit1
-    DW_OP_stack_value
-    DW_OP_lit0
-    DW_OP_lit4
-    DW_OP_overlay
+    DW_OP_stack_value # while 1 can fit into a single byte stack_value
+                      # promotes it to a generic type
     DW_OP_breg3 (0)
     DW_OP_breg4 (0)
     DW_OP_plus
@@ -654,11 +651,6 @@ Add:
     DW_OP_lit4
     DW_OP_lit4
     DW_OP_overlay
-
-*Note: Initially I believed that this example was too
- contrived. However, I went through the GCC testsuite and found an
- example where it does in fact do this. So I recind my previous
- comment about it being too contrived.
 
 After:
 
