@@ -459,11 +459,11 @@ that `DW_OP_piece` composites are not.
 
 ## Proposal
 
-### Section 3.11
-Rename Section 3.11 to "Composite Piece Description Operations"
+### Section 3.12
+Rename Section 3.12 to "Composite Piece Description Operations"
 
-### Add Section 3.12
-Add a new Section 3.12 after "Composite Piece Description Operations",
+### Add Section 3.13
+Add a new Section 3.13 after "Composite Piece Description Operations",
 called "Overlay Composites".
 
 > *Conceptually, these new composite operators create a new composite
