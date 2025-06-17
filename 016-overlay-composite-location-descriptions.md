@@ -130,20 +130,24 @@ A similar construct using the piece operators would be:
     DW_OP_piece (4)
 
 However, there is a difference. The piece operator creates a location
-which is 8 bytes long. It is assumed that the value to be read are
-those eight bytes. With locations on the stack, a composite piece
-location can be offset but offsetting into that location is only
-meaningful for those 8 bytes. On the other hand, an overlay creates a
-location with an intial offset of zero which extends out to the full
-extent of the underlying base storage. Thus in this example, if the
-base address space is 64b long, any offset that does not overlow the
-generic type would be valid. In this way, composite overlay locations
-are more similar to an address where the consumer determines how many
-bytes to read from the location.
+referencing composite storage which is 8 bytes long. It is assumed
+that the value to be read are those eight bytes. With locations on the
+stack, a composite piece location can be offset but offsetting into
+that location is only meaningful for those 8 bytes. Offsetting beyond
+those 8 bytes is an error.
 
-If producer wants to make a location more like what is created when
-using piece operators. They can use two overlays and have the first
-overlay's base be undefined.
+On the other hand, an overlay creates a location with an intial offset
+of zero which extends out to the full extent of the underlying base
+storage. Thus in this example, if the base address space is 64b long,
+any offset that does not overlow the generic type would be valid. In
+this way, composite overlay locations are more similar to an address
+where the consumer determines how many bytes to read from the
+location.
+
+If producer wants to make a location a bit more like what is created
+when using piece operators and ensure that the composite storage that
+a location references only contains 8 usable bytes, then two overlay
+can be placed over undefined storage. 
 
     DW_OP_undefined
     DW_OP_addr 0x100
@@ -155,21 +159,21 @@ overlay's base be undefined.
     DW_OP_lit4  # size 4
     DW_OP_overlay
 
-                +----------------------------------+
-    2nd overlay |                  200 201 202 203 |
-                |+--------------------------------+|
-    1st overlay || 100 101 102 103                ||
-    base        || <undefined> ...                ||
-                |+--------------------------------+|
-                +----------------------------------+
+                +---------------------------------------+
+    2nd overlay |                  200 201 202 203      |
+                |+-------------------------------------+|
+    1st overlay || 100 101 102 103                     ||
+    base        ||             ... <undefined> ...     ||
+                |+-------------------------------------+|
+                +--------------------------------------++
 
-In this case, offsetting beyond the eight defined bytes would not
-reference bytes beginning at 0x100; it would yeild undefined bits. It
-is currently believed that in most cases the extra step of making the
-underlying storage undefined is unnecessary. The one exception to this
-is when a portion of the location is undefined. DW_OP_piece can
-concatenate an empty piece of a specific size to a previous piece to
-leave a section undefined.
+In this case, offsetting beyond the eight defined bytes would not be
+an error and it would not reference bytes beginning at 0x100; it would
+yield undefined bits. It is currently believed that in most cases the
+extra step of making the underlying storage undefined is
+unnecessary. The one exception to this is when a portion of the
+location is undefined. DW_OP_piece can concatenate an empty piece of a
+specific size to a previous piece to leave a section undefined.
 
      DW_OP_reg0
      DW_OP_piece (4)
