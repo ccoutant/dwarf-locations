@@ -470,57 +470,62 @@ Rename Section 3.12 to "Composite Piece Description Operations"
 Add a new Section 3.13 after "Composite Piece Description Operations",
 called "Overlay Composites".
 
-> *Conceptually, these new composite operators create a new composite
-> location which is pushed on the stack with an offset the same as the
-> base location, and composite storage that is the base location
-> storage with a piece of the overlay storage spliced in, extending
-> the base storage if necessary with undefined storage.*
+> 1.  `DW_OP_bit_overlay` `DW_OP_bit_overlay` pops four elements from
+>     the stack. The first (top of stack) is an integral type value OW
+>     that represents the width in bits of the region being overlaid
+>     on the base location. The second is an integral type value BO
+>     that represents the offset in bits from the start of the base
+>     location where the overlay is positioned. The third is the
+>     overlay location OL that is being overlaid on top of the base
+>     location. The fourth is the base location BL onto which the
+>     overlay is being placed. BLO is the offset in bits of BL. BLS is
+>     the storage size in bits of BL. U is an undefined location with
+>     offset 0.
 >
-> 1.  `DW_OP_overlay` `DW_OP_overlay` consumes the top four elements
->     of the stack. The top-of-stack (first) entry is a non-zero
->     unsigned integral type value that represents the width of the
->     region being overlayed on the base location in bytes. The second
->     from the top element is another unsigned integral type value
->     that represents the offset in bytes from the base location where
->     the overlay is positioned. The third element from the top is the
->     location that is being overlayed on top of the base
->     location. The fourth element from the top of the stack is the
->     base location onto which the overlay is being placed. These four
->     elements are popped and a new composite location is pushed. The
->     composite overlay location left on the stack presents the
->     underlying base location with the overlayed location of the
->     specified size positioned over the base location at the
->     specified offset. The resulting composite may be larger than the
->     original base storage and any gaps between the extent of the
->     base storage and the overlay are undefined.
+> *Conceptually, a new composite location is pushed on the stack with
+> an offset the same as the base location, and composite storage that
+> is the base location storage with a piece of the overlay storage
+> spliced in, extending the base storage if necessary with undefined
+> storage.*
 >
-> *For example two 32b registers can be combined into an 8-byte by
-> overlaying the second one with an offset of 4. Undefined storage
-> can also be implicitly inserted into a composite by simply placing
-> an overlay at an offset that leaves a gap between the extent of the
-> base storage and the beginning of the overlay.
+>   - If OW or BO are less than zero, then the expression is invalid.
 >
-> The action is the same for `DW_OP_bit_overlay`, except that the
-> overlay size and overlay offset are specified in bits rather than
-> bytes.
+>   - If OW is zero and BLO + BO is less than or equal to BLS, then BL
+>     is pushed on the stack. There is no overlay to modify the base
+>     location.
 >
-> 2.  `DW_OP_bit_overlay` `DW_OP_bit_overlay` consumes the top four
->     elements of the stack. The top-of-stack (first) entry is a
->     non-zero unsigned integral type value that represents the width
->     of the region being overlayed on the base location in bits. The
->     second from the top element is an unsigned integral type value
->     that represents the offset in bits from the base location where
->     the overlay is positioned. The third element from the top is the
->     location that is being overlayed on top of the base
->     location. The fourth element from the top of the stack is the
->     base location onto which the overlay is being placed. These four
->     elements are popped and a new composite location is pushed. The
->     composite location left on the stack presents the underlying
->     base location with the overlayed location of the specified size
->     positioned over the base location at the specified offset.The
->     resulting composite may be larger than the original base storage
->     and any gaps between the extent of the base storage and the
->     overlay are undefined.
+>   - If OW is zero and BLO + BO is greater than BLS, then a new
+>     composite location is pushed on the stack with offset BLO and
+>     composite storage consisting of the tuples:
+>
+>     - If BLS is greater than zero, then (0, BLS - 1, BL).
+>
+>     - (BLS, BLO + BO, U).
+>
+>     *There is no overlay, but the storage of the base location is
+>     expanded with undefined storage to the overlay's position.*
+>
+> Otherwise, a new composite location is pushed on the stack with
+> offset BLO and composite storage consisting of the tuples:
+>
+>   - If BLO + BO is greater than zero, then (0, min(BLO + BO - 1, BLS),
+>     BL). *The base storage that is comes before the position of the
+>     overlay.*
+>
+>   - If BL0 + BO is greater than BLS, then (BLS, BLO + BO - 1,
+>     U). *Undefined storage to fill the gap between the end of the
+>     base location storage and the position of the overlay.*
+>
+>   - (BLO + BO, BLO + BO + OW - 1, OL). *The overlay slice positioned
+>     relative to the base location.*
+>
+>   - If BLO + BO + OW is less than BLS, then (BLO + BO + OW, BLS - 1,
+>     bit_offset(BL, BLO + BO + OW)). *The base storage that comes
+>     after the position of the overlay.*
+>
+> 2.  `DW_OP_overlay` `DW_OP_overlay` is the same as `DW_OP_bit_overlay`
+>     except that the first and second values popped off the stack are
+>     multiplied by the byte size.
 
 ### Section 8.7.1 "DWARF Expressions"
 
