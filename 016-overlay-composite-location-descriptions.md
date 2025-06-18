@@ -111,6 +111,44 @@ An overlay can also be used to create a composite location without
 using `DW_OP_piece`. For example GPUs often store doubles in two
 32b parts. An overlay can be used to concatenate the locations.
 
+    DW_OP_addr 0x100
+    DW_OP_addr 0x200
+    DW_OP_lit4  # offset 4
+    DW_OP_lit4  # size 4
+    DW_OP_overlay
+
+            +-----------------------------------------+
+    overlay |                 200 201 202 203         |
+    base    | 100 101 102 103                 108 ... |
+            +-----------------------------------------+
+
+A similar construct using the piece operators would be:
+
+    DW_OP_addr 0x100
+    DW_OP_piece (4)
+    DW_OP_addr 0x200
+    DW_OP_piece (4)
+
+However, there is a difference. The piece operator creates a location
+referencing composite storage which is 8 bytes long. It is assumed
+that the value to be read are those eight bytes. With locations on the
+stack, a composite piece location can be offset but offsetting into
+that location is only meaningful for those 8 bytes. Offsetting beyond
+those 8 bytes is an error.
+
+On the other hand, an overlay creates a location with an intial offset
+of zero which extends out to the full extent of the underlying base
+storage. Thus in this example, if the base address space is 64b long,
+any offset that does not overlow the generic type would be valid. In
+this way, composite overlay locations are more similar to an address
+where the consumer determines how many bytes to read from the
+location.
+
+If producer wants to make a location a bit more like what is created
+when using piece operators and ensure that the composite storage that
+a location references only contains 8 usable bytes, then two overlay
+can be placed over undefined storage. 
+
     DW_OP_undefined
     DW_OP_addr 0x100
     DW_OP_lit0  # offset 0
@@ -121,26 +159,63 @@ using `DW_OP_piece`. For example GPUs often store doubles in two
     DW_OP_lit4  # size 4
     DW_OP_overlay
 
-                +--------------------------------------+
-    2nd overlay |                      200 201 202 203 |
-                |+------------------------------------+|
-    1st overlay ||     100 101 102 103                ||
-    base        || ... <undefined> ...                ||
-                |+------------------------------------+|
-                +--------------------------------------+
+                +---------------------------------------+
+    2nd overlay |                  200 201 202 203      |
+                |+-------------------------------------+|
+    1st overlay || 100 101 102 103                     ||
+    base        ||             ... <undefined> ...     ||
+                |+-------------------------------------+|
+                +--------------------------------------++
 
- *Note: this was directly from Cary's email about how to do
- concatenation with overlays. He copied the example from Pedro's note
- I do not understand why we need the first overlay with the undefined
- except that it constrains the size of the storage location to be 8
- bytes long rather than being as long as the first storage in the
- overlay. A simpler example is:
+In this case, offsetting beyond the eight defined bytes would not be
+an error and it would not reference bytes beginning at 0x100; it would
+yield undefined bits. It is currently believed that in most cases the
+extra step of making the underlying storage undefined is
+unnecessary. The one exception to this is when a portion of the
+location is undefined. DW_OP_piece can concatenate an empty piece of a
+specific size to a previous piece to leave a section undefined.
 
-    DW_OP_addr 0x100
-    DW_OP_addr 0x200
-    DW_OP_lit4  # offset 4
-    DW_OP_lit4  # size 4
+     DW_OP_reg0
+     DW_OP_piece (4)
+     DW_OP_piece (4)
+
+While to do the same thing with overlays the undefined portion must be
+explicit. Either by using it as the underlying base storage:
+
+    DW_OP_undefined
+    DW_OP_reg0
+    DW_OP_lit0
+    DW_OP_lit4
     DW_OP_overlay
+
+or by making the actual bytes undefined:
+
+    DW_OP_reg0
+    DW_OP_undefined
+    DW_OP_lit0
+    DW_OP_lit4
+    DW_OP_overlay
+
+In the former case, any offset into that location beyond the first
+four bytes up to the size of the generic type is meaningful but will
+be undefined. In the latter case, the range of meaningful offsets is
+limited to the maximum of the size of the underlying base storage and
+overlay itself. Thus if reg0 were 4 bytes, then the meaningful offsets
+of the overlay location would be 8 bytes. However, if the size of reg0
+were 64 bytes, then the range of meaniful offsets would be 64 bytes.
+
+If an overlay leaves a gap between the maximum size of the underlying
+base storage and the overlay, then those bits are inferred to be
+undefined and the size of the overlay grows to include the overlaid
+section. For example:
+
+    DW_OP_reg0  # assume a normal 64b general purpos register
+    DW_OP_reg1  # another 64b register
+    DW_OP_lit16 # well beyond the 8 bytes of reg0
+    DW_OP_lit8
+    DW_OP_overlay
+
+would leave the offsets between 8 and 15 undefined.
 
 Using an overlay this way as opposed to using the piece operators has
 two big advantages.
@@ -149,9 +224,9 @@ The first being that `DW_OP_piece` has an ABI dependency:
 
      2.5.4.5 Composite Location Descriptions, point 2.:
 
-	"If the piece is located in a register, but does not occupy the
-	entire register, the placement of the piece within that register
-	is defined by the ABI. "
+        "If the piece is located in a register, but does not occupy the
+        entire register, the placement of the piece within that register
+        is defined by the ABI. "
 
 While this is not often a problem with normal relatively small CPU
 registers. GPUs make much more heavy use of vector registers which are
@@ -184,17 +259,17 @@ operators with something like:
 
 *Note that the small 'v' indicates where the offset into the base
   location is.*
-  
+
     yields:
          +---------------------------+        +---------------------------+
          |                 v         |        |                 v         |
          | ... C  B  A  9  8  7  ... |        | ... C  B  A  9  8  7  ... |
     vreg0| ...   XX XX XX XX  ...    |   vreg1| ...   YY YY YY YY  ...    |
          +---------------------------+        +---------------------------+
-	                   \                         /
-			    \                       /
-			     v                     v
-			    [XX XX XX XX YY YY YY YY]
+                           \                         /
+                            \                       /
+                             v                     v
+                            [XX XX XX XX YY YY YY YY]
 
 
 This also works if those vector registers were spilled to memory:
@@ -388,49 +463,68 @@ that `DW_OP_piece` composites are not.
 
 ## Proposal
 
-Rename Section 3.11 to "Composite Piece Description Operations"
+### Section 3.12
+Rename Section 3.12 to "Composite Piece Description Operations"
 
-Add a new Section 3.12 after "Composite Piece Description Operations",
-called "Overlay Composites" With the the following operations:
+### Add Section 3.13
+Add a new Section 3.13 after "Composite Piece Description Operations",
+called "Overlay Composites".
 
-> 1.  `DW_OP_overlay`
->     `DW_OP_overlay` consumes the top four elements of the stack. The
->     top-of-stack (first) entry is an integral type value that
->     represents the width of the region being overlayed on the base
->     location in bytes. The second from the top element is an
->     integral type value that represents the offset in bytes from the
->     start of the base location where the overlay is positioned. The
->     third element from the top is the location that is being
->     overlayed on top of the base location. The fourth element from
->     the top of the stack is the base location onto which the overlay
->     is being placed. These four elements are popped and a new
->     composite location is pushed. The composite location left on the
->     stack presents the underlying base location with the overlayed
->     location of the specified size positioned over the base location
->     at the specified offset.
+> *Conceptually, these new composite operators create a new composite
+> location which is pushed on the stack with an offset the same as the
+> base location, and composite storage that is the base location
+> storage with a piece of the overlay storage spliced in, extending
+> the base storage if necessary with undefined storage.*
 >
->     The action is the same for `DW_OP_bit_overlay`, except that the
->     overlay size and overlay offset are specified in bits rather
->     than bytes.
+> 1.  `DW_OP_overlay` `DW_OP_overlay` consumes the top four elements
+>     of the stack. The top-of-stack (first) entry is a non-zero
+>     unsigned integral type value that represents the width of the
+>     region being overlayed on the base location in bytes. The second
+>     from the top element is another unsigned integral type value
+>     that represents the offset in bytes from the base location where
+>     the overlay is positioned. The third element from the top is the
+>     location that is being overlayed on top of the base
+>     location. The fourth element from the top of the stack is the
+>     base location onto which the overlay is being placed. These four
+>     elements are popped and a new composite location is pushed. The
+>     composite overlay location left on the stack presents the
+>     underlying base location with the overlayed location of the
+>     specified size positioned over the base location at the
+>     specified offset. The resulting composite may be larger than the
+>     original base storage and any gaps between the extent of the
+>     base storage and the overlay are undefined.
+>
+> *For example two 32b registers can be combined into an 8-byte by
+> overlaying the second one with an offset of 4. Undefined storage
+> can also be implicitly inserted into a composite by simply placing
+> an overlay at an offset that leaves a gap between the extent of the
+> base storage and the beginning of the overlay.
+>
+> The action is the same for `DW_OP_bit_overlay`, except that the
+> overlay size and overlay offset are specified in bits rather than
+> bytes.
+>
+> 2.  `DW_OP_bit_overlay` `DW_OP_bit_overlay` consumes the top four
+>     elements of the stack. The top-of-stack (first) entry is a
+>     non-zero unsigned integral type value that represents the width
+>     of the region being overlayed on the base location in bits. The
+>     second from the top element is an unsigned integral type value
+>     that represents the offset in bits from the base location where
+>     the overlay is positioned. The third element from the top is the
+>     location that is being overlayed on top of the base
+>     location. The fourth element from the top of the stack is the
+>     base location onto which the overlay is being placed. These four
+>     elements are popped and a new composite location is pushed. The
+>     composite location left on the stack presents the underlying
+>     base location with the overlayed location of the specified size
+>     positioned over the base location at the specified offset.The
+>     resulting composite may be larger than the original base storage
+>     and any gaps between the extent of the base storage and the
+>     overlay are undefined.
 
-> 2.  `DW_OP_bit_overlay`
->     `DW_OP_bit_overlay` consumes the top four elements of the
->     stack. The top-of-stack (first) entry is an integral type value
->     that represents the width of the region being overlayed on the
->     base location in bits. The second from the top element is an
->     integral type value that represents the offset in bits from the
->     start of the base location where the overlay is positioned. The
->     third element from the top is the location that is being
->     overlayed on top of the base location. The fourth element from
->     the top of the stack is the base location onto which the overlay
->     is being placed. These four elements are popped and a new
->     composite location is pushed. The composite location left on the
->     stack presents the underlying base location with the overlayed
->     location of the specified size positioned over the base location
->     at the specified offset.
+### Section 8.7.1 "DWARF Expressions"
 
-In Section 8.7.1 "DWARF Expressions", add the following
-rows to Table 8.9 "DWARF Operation Encodings":
+Add the following rows to Table 8.9 "DWARF Operation Encodings":
 
 > Table 8.9: DWARF Operation Encodings
 >
@@ -438,3 +532,305 @@ rows to Table 8.9 "DWARF Operation Encodings":
 > | ---------------------------------- | ----- | ------------------ | ----- |
 > | `DW_OP_overlay`                    | TBA   | 0                  |       |
 > | `DW_OP_bit_overlay`                | TBA   | 0                  |       |
+
+### Appendix D.1.3 DWARF Location Description Examples
+
+After the piece example:
+
+    DW_OP_reg3
+    DW_OP_piece (4)
+    DW_OP_reg10
+    DW_OP_piece (2)
+
+>   A variable whose first four bytes reside in register 3 and whose next two
+>   bytes reside in register 10.
+
+Add:
+
+> a similar effect can be done with an overlay:
+
+    DW_OP_reg3
+    DW_OP_reg10
+    DW_OP_lit4
+    DW_OP_lit2
+    DW_OP_overlay
+
+Then add:
+
+> There is a difference in these two examples though: The first one
+> creates a six byte location. The second one creates a location that
+> is either 6 bytes long if reg3 is less than or equal to 6 bytes long
+> or a location as long as reg3 if it is longer than 6 bytes. In this
+> case, the difference probably doesn't matter because the consumer is
+> only expecting to read 6 bytes. However, if a producer wants to
+> ensure that any bits in reg3 which extend beyond the 6 bytes of the
+> overlay are masked off they can use an expression like this:
+
+    DW_OP_undefined
+    DW_OP_reg3
+    DW_OP_lit0
+    DW_OP_lit4
+    DW_OP_overlay
+    DW_OP_reg10
+    DW_OP_lit4
+    DW_OP_lit2
+    DW_OP_overlay
+
+Then after the example:
+
+    DW_OP_reg0
+    DW_OP_piece (4)
+    DW_OP_piece (4)
+    DW_OP_fbreg (-12)
+    DW_OP_piece (4)
+
+>   A twelve byte value whose first four bytes reside in register zero, whose
+>   middle four bytes are unavailable (perhaps due to optimization), and
+>   whose last four bytes are in memory, 12 bytes before the frame base.
+
+Add:
+
+> A similar effect can be done with overlays a couple of different
+> ways. The most general way places all the pieces over undefined
+> storage.
+
+    DW_OP_undefined
+    DW_OP_reg0
+    DW_OP_lit0
+    DW_OP_lit4
+    DW_OP_overlay
+    DW_OP_fbreg (-12)
+    DW_OP_lit8
+    DW_OP_lit4
+    DW_OP_overlay
+
+> However, another more compact way to do it if reg0 is at least 32b
+> but not more than 96b or if the consumer is unlikely to read more
+> than 12 bytes is to create an overlay on top of reg0.
+
+    DW_OP_reg0
+    DW_OP_fbreg (-12)
+    DW_OP_lit4
+    DW_OP_lit8
+    DW_OP_overlay
+
+> If reg0 is less than 32b this will leave a hole of undefined storage
+> between the last bits of reg0 and the beginning of the value in
+> fbreg(-12).
+>
+> If reg0 is more than 32b and less than 96b or if more than 12 bytes
+> are likely to be read by the consumer then the undefined bits can be
+> explicitly overlayed onto the reg0's upper bytes. This undefined
+> storage will extend beyond the value in fbreg(-12).
+
+    DW_OP_reg0
+    DW_OP_undefined
+    DW_OP_lit4
+    DW_OP_lit4
+    DW_OP_overlay
+    DW_OP_fbreg (-12)
+    DW_OP_lit8
+    DW_OP_lit4
+    DW_OP_overlay
+
+After the example below:
+
+    DW_OP_lit1
+    DW_OP_stack_value
+    DW_OP_piece (4)
+    DW_OP_breg3 (0)
+    DW_OP_breg4 (0)
+    DW_OP_plus
+    DW_OP_stack_value
+    DW_OP_piece (4)
+
+> The object value is found in an anonymous (virtual) location whose value
+> consists of two parts, given in memory address order: the 4 byte value 1
+> followed by the four byte value computed from the sum of the contents of
+> r3 and r4
+
+Add: 
+
+> The equivilent expression using overlays would be:
+
+    DW_OP_lit1
+    DW_OP_stack_value # while 1 can fit into a single byte stack_value
+                      # promotes it to a generic type
+    DW_OP_breg3 (0)
+    DW_OP_breg4 (0)
+    DW_OP_plus
+    DW_OP_stack_value
+    DW_OP_lit4
+    DW_OP_lit4
+    DW_OP_overlay
+
+After:
+
+    DW_OP_reg0
+    DW_OP_bit_piece (1, 31)
+    DW_OP_bit_piece (7, 0)
+    DW_OP_reg1
+    DW_OP_piece (1)
+
+>   A variable whose first bit resides in the 31st bit of register 0,
+>   whose next seven bits are undefined and whose second byte resides
+>   in register 1.
+
+Add:
+
+> A similar expression done with bit overlays:
+
+    DW_OP_undefined
+    DW_OP_reg0
+    DW_OP_lit31
+    DW_OP_bit_offset
+    DW_OP_lit0
+    DW_OP_lit1
+    DW_OP_bit_overlay
+    DW_OP_reg1
+    DW_OP_lit8
+    DW_OP_lit8
+    DW_OP_bit_overlay
+
+> While this looks considerably longer, the piece operators take
+> inline operands while the overlay operators have stack operands. The
+> extra stack operands take more operations, but the same number of
+> bytes in most cases.
+
+*FIXME: I think we should add an example using predicate
+registers that are spilled to memory while a pair of nested
+conditional loops run on a vector register. Spilling predicate
+registers is something realistic that happens. Because it is a spilled
+register, the endianness matters and the problems with bit piece
+become obvious.
+
+### Section D.13 Figure D.66 C implicit pointer example #1
+
+Replace:
+
+    21$:   DW_TAG_variable
+           DW_AT_name("s")
+           DW_AT_type(reference to S at 1$)
+           DW_AT_location(expression=
+                DW_OP_breg5(1) DW_OP_stack_value DW_OP_piece(2)
+                DW_OP_breg5(2) DW_OP_stack_value DW_OP_piece(1)
+                DW_OP_breg5(3) DW_OP_stack_value DW_OP_piece(1))
+
+With:
+
+    21$:   DW_TAG_variable
+           DW_AT_name("s")
+           DW_AT_type(reference to S at 1$)
+           DW_AT_location(expression=
+                DW_OP_breg5 (1) DW_OP_stack_value
+		DW_OP_breg5 (2) DW_OP_stack_value
+                DW_OP_lit2 DW_OP_lit1 DW_OP_overlay
+                DW_OP_breg5 (3) DW_OP_lit3 DW_OP_lit1 DW_OP_overlay)
+
+*FIXME: Add an example where a structure stays in memory while one of
+its members is promoted to a register -- where we can use the memory
+location as the base.
+
+### Section D.13 Figure D.68 C implicit pointer example #2
+
+Replace:
+
+    98$: DW_LLE_start_end[<label0 in main> .. <label1 in main>)
+            DW_OP_lit1 DW_OP_stack_value DW_OP_piece(4)
+            DW_OP_lit2 DW_OP_stack_value DW_OP_piece(4)
+        DW_LLE_start_end[<label1 in main> .. <label2 in main>)
+            DW_OP_lit2 DW_OP_stack_value DW_OP_piece(4)
+            DW_OP_lit2 DW_OP_stack_value DW_OP_piece(4)
+        DW_LLE_start_end[<label2 in main> .. <label3 in main>)
+            DW_OP_lit2 DW_OP_stack_value DW_OP_piece(4)
+            DW_OP_lit3 DW_OP_stack_value DW_OP_piece(4)
+        DW_LLE_end_of_list
+
+With:
+
+    98$: DW_LLE_start_end[<label0 in main> .. <label1 in main>)
+            DW_OP_lit1 DW_OP_stack_value DW_OP_lit2 DW_OP_stack_value
+            DW_OP_lit4 DW_OP_lit4 DW_OP_overlay
+        DW_LLE_start_end[<label1 in main> .. <label2 in main>)
+            DW_OP_lit2 DW_OP_stack_value DW_OP_lit2 DW_OP_stack_value
+            DW_OP_lit4 DW_OP_lit4 DW_OP_overlay
+        DW_LLE_start_end[<label2 in main> .. <label3 in main>)
+            DW_OP_lit2 DW_OP_stack_value DW_OP_lit3 DW_OP_stack_value
+            DW_OP_lit4 DW_OP_lit4 DW_OP_overlay
+        DW_LLE_end_of_list
+
+### Section D.18 SIMD Lane Example
+
+Replace figure "D.8? SIMD Lane Example: DWARF Encoding" with:
+
+    DW_TAG_subprogram
+    DW_AT_name ("vec_add")
+    DW_AT_num_lanes .vallist.0
+    DW_TAG_formal_parameter
+        DW_AT_name ("dst")
+        DW_AT_type (reference to type: pointer to int)
+        DW_AT_location .loclist.1
+    DW_TAG_formal_parameter
+        DW_AT_name ("src")
+        DW_AT_type (reference to type: pointer to int)
+        DW_AT_location .loclist.2
+    DW_TAG_formal_parameter
+        DW_AT_name ("len")
+        DW_AT_type (reference to type int)
+        DW_AT_location DW_OP_reg2
+    ...
+    DW_TAG_variable
+        DW_AT_name ("i")
+        DW_AT_type (reference to type int)
+        DW_AT_location .loclist.3
+    ...
+    $DP1: DW_TAG_dwarf_procedure # Used by src in loclist.1
+              DW_AT_location [
+                DW_OP_breg1 (0)   # base location of the array
+                DW_OP_regx v1     # location of the overlay
+                DW_OP_breg3 (0)
+                DW_OP_lit4
+                DW_OP_mul         # the offset of the overlay in bytes
+                DW_OP_constu (32) # sizeof(int)*num_lanes
+                DW_OP_overlay
+                ]
+    $DP2:  DW_TAG_dwarf_procedure # Used by dst in loclist.2
+              DW_AT_location [
+                DW_OP_breg0 (0)
+                DW_OP_regx v0
+                DW_OP_breg3 (0)
+                DW_OP_lit4
+                DW_OP_mul
+                DW_OP_constu (32)
+                DW_OP_overlay
+                ]
+    .vallist.0:
+        range [.l1, .l2)
+            DW_OP_lit8
+        end-of-list
+
+    .loclist.1:          # src
+        range [.l0, .l1)
+	    DW_OP_reg1
+        range [.l1, .l2)
+            DW_OP_implicit_pointer ($DP1, 0)
+        range [.l2, .l4)
+            DW_OP_reg1
+    .loclist.2:          # dst
+        range [.l0, .l1)
+            DW_OP_reg0
+        range [.l1, .l2)
+            DW_OP_implicit_pointer ($DP2, 0)
+        range [.l2, .l4)
+            DW_OP_reg0
+    .loclist.3:          # i
+        range [.l0, .l1)
+            DW_OP_reg3
+        range [.l1, .l2)
+            DW_OP_breg3 (0)
+            DW_OP_push_lane
+            DW_OP_plus
+            DW_OP_stack_value
+        range [.l2, .l4)
+            DW_OP_reg3
+        end-of-list
