@@ -147,9 +147,9 @@ location.
 If producer wants to make a location a bit more like what is created
 when using piece operators and ensure that the composite storage that
 a location references only contains 8 usable bytes, then two overlay
-can be placed over undefined storage. 
+can be placed over an empty composite location.
 
-    DW_OP_undefined
+    DW_OP_composite
     DW_OP_addr 0x100
     DW_OP_lit0  # offset 0
     DW_OP_lit4  # size 4
@@ -159,27 +159,26 @@ can be placed over undefined storage.
     DW_OP_lit4  # size 4
     DW_OP_overlay
 
-                +---------------------------------------+
-    2nd overlay |                  200 201 202 203      |
-                |+-------------------------------------+|
-    1st overlay || 100 101 102 103                     ||
-    base        ||             ... <undefined> ...     ||
-                |+-------------------------------------+|
-                +--------------------------------------++
+                +----------------------------------+
+    2nd overlay |                  200 201 202 203 |
+                |+--------------------------------+|
+    1st overlay || 100 101 102 103                ||
+    base        || <empty composite>              ||
+                |+--------------------------------+|
+                +---------------------------------++
 
-In this case, offsetting beyond the eight defined bytes would not be
-an error and it would not reference bytes beginning at 0x100; it would
-yield undefined bits. It is currently believed that in most cases the
-extra step of making the underlying storage undefined is
-unnecessary. The one exception to this is when a portion of the
-location is undefined. DW_OP_piece can concatenate an empty piece of a
-specific size to a previous piece to leave a section undefined.
+It is currently believed that in most cases the extra step of making
+the underlying storage an empty composite is unnecessary.
+
+When a portion of the location is undefined. DW_OP_piece can
+concatenate an empty piece of a specific size to a previous piece to
+leave a section undefined.
 
      DW_OP_reg0
      DW_OP_piece (4)
      DW_OP_piece (4)
 
-While to do the same thing with overlays the undefined portion must be
+To do the same thing with overlays, the undefined portion must be
 explicit. Either by using it as the underlying base storage:
 
     DW_OP_undefined
@@ -250,8 +249,8 @@ registers to make a 64b double. This can be done with the piece
 operators with something like:
 
     DW_OP_regx vreg0
-    DW_OP_offset 8 # this could also be computed using DW_OP_push_lane
-                   # I just picked a number
+    DW_OP_offset 8 # This could also be computed using DW_OP_push_lane
+                   # but in this example, I just picked a number.
     DW_OP_piece 4
     DW_OP_regx vreg1
     DW_OP_offset 8
@@ -566,7 +565,7 @@ Then add:
 > ensure that any bits in reg3 which extend beyond the 6 bytes of the
 > overlay are masked off they can use an expression like this:
 
-    DW_OP_undefined
+    DW_OP_composite
     DW_OP_reg3
     DW_OP_lit0
     DW_OP_lit4
@@ -591,10 +590,10 @@ Then after the example:
 Add:
 
 > A similar effect can be done with overlays a couple of different
-> ways. The most general way places all the pieces over undefined
-> storage.
+> ways. The most general way places all the pieces over an empty
+> composite.
 
-    DW_OP_undefined
+    DW_OP_composite
     DW_OP_reg0
     DW_OP_lit0
     DW_OP_lit4
@@ -604,9 +603,10 @@ Add:
     DW_OP_lit4
     DW_OP_overlay
 
-> However, another more compact way to do it if reg0 is at least 32b
-> but not more than 96b or if the consumer is unlikely to read more
-> than 12 bytes is to create an overlay on top of reg0.
+> However, the preferred way is more compact but it will only work if
+> reg0 is at least 32b but not more than 96b or if the consumer is
+> unlikely to read more than 12 bytes, is to create an overlay on top
+> of reg0.
 
     DW_OP_reg0
     DW_OP_fbreg (-12)
@@ -614,9 +614,9 @@ Add:
     DW_OP_lit8
     DW_OP_overlay
 
-> If reg0 is less than 32b this will leave a hole of undefined storage
-> between the last bits of reg0 and the beginning of the value in
-> fbreg(-12).
+> As long reg0 is less than 32b this will leave a hole of undefined
+> storage between the last bits of reg0 and the beginning of the value
+> in fbreg(-12).
 >
 > If reg0 is more than 32b and less than 96b or if more than 12 bytes
 > are likely to be read by the consumer then the undefined bits can be
@@ -680,7 +680,7 @@ Add:
 
 > A similar expression done with bit overlays:
 
-    DW_OP_undefined
+    DW_OP_composite
     DW_OP_reg0
     DW_OP_lit31
     DW_OP_bit_offset
