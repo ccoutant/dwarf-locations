@@ -2,11 +2,11 @@
 
 ## Problem Description
 
-It is common in SIMD vectorization for the compiler to generate code that
-promotes portions of an array into vector registers. For example, if the
-hardware has vector registers with 8 elements, and 8 wide SIMD instructions, the
-compiler may vectorize a loop so that is executes 8 iterations concurrently for
-each vectorized loop iteration.
+It is common in SIMD vectorization for the compiler to generate code
+that promotes portions of an array into vector registers. For example,
+if the hardware has vector registers with 8 elements, and 8-wide SIMD
+instructions, the compiler may vectorize a loop so that it executes 8
+iterations concurrently for each vectorized loop iteration.
 
 On the first iteration of the generated vectorized loop, iterations 0 to 7 of
 the source language loop will be executed using SIMD instructions. Then on the
@@ -42,22 +42,24 @@ remains in memory. Consider the loop in this C function, for example:
             dst[i] += src[i];
     }
 
-Inside the loop body, the machine code loads src[i] and dst[i] into registers,
-adds them, and stores the result back into dst[i].
+Inside the vectorized loop body, the machine code loads
+src[i]..src[i+7] and dst[i]..dst[i+7] into registers, adds them, and
+stores the result back into dst[i].dst[i+7].
 
-Considering the location of dst and src in the loop body, the elements dst[i]
-and src[i] would be located in registers, all other elements are located in
-memory. Let register R0 contain the base address of dst, register R1 contain i,
-and register R2 contain the registerized dst[i] element.
+Considering the location of dst and src in the loop body, the elements
+dst[i]..dst[i+7] and src[i]..src[i+7] would be located in vector
+registers, all other elements are located in memory. Let register R0
+contain the base address of dst, register R1 contain i, and vector
+register R2 contain the registerized dst[i]..dst[i+7] elements.
 
-     + dst's address stored in register 0
+     + dst's address stored in R0
      v
-     +---------------------------------------------------+
-     | 0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 |
-     +---------------------------------------------------+
+     +------------------------------------------------------+
+     | 0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F 10 ...|
+     +------------------------------------------------------+
 
-     register 1 contains i
-     register 2 has copy of a portion of dst
+     R1 contains i
+     R2 has copy of a portion of dst
      +------------------------+
      + 0  1  2  3  4  5  6  7 |
      +------------------------+
@@ -76,36 +78,37 @@ register location overlaid at a runtime offset involving i:
     `DW_OP_lit4`
     `DW_OP_mul`
 
-    // 4. The size of the register element:
-    `DW_OP_lit4`
+    // 4. The size of the vector register:
+    `DW_OP_lit8`
 
     // 5. Make a composite location description for dst that is the memory #1
     //    with the register #2 positioned as an overlay at offset #3 of size #4:
     `DW_OP_overlay`
 
-On the first iteration of the vectorized loop the overlay would look like:
+On the first iteration of the vectorized loop, the overlay would look like:
 
          +------------------------+
-    reg2 | 0  1  2  3  4  5  6  7 |
+     R2  | 0  1  2  3  4  5  6  7 |
          +-------------------------------------------------------+
     dst  | 0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F 10 ... |
          +-------------------------------------------------------+
 
-A consumer accessing dst[8] would reference the unsigned int reg0+32
-but when a consumer accesses dst[2] it would reference the unsigned
-int located at the 9th byte of reg2.
+A consumer accessing dst[8] would reference the unsigned int R0+8 but
+when a consumer accesses dst[2] it would reference the byte located at
+dst+2.
 
-Then on the second iteration of the loop after i had been incremented by 8:
+Then on the second iteration of the vectorized loop after i had been
+incremented by 8:
 
                                  +------------------------+
-    reg2                         | 8  9  A  B  C  D  E  F |
+     R2                          | 8  9  A  B  C  D  E  F |
          +-------------------------------------------------------+
     dst  | 0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F 10 ... |
          +-------------------------------------------------------+
 
 The situation would be reversed. A consumer accessing dst[8] would
-reference the unsigned int at byte 0 of reg0 but when a consumer
-accesses dst[2] it would reference the unsigned int located reg0+8
+reference the first byte of R0 but when a consumer accesses dst[2], it
+would reference the unsigned int located R0+2.
 
 An overlay can also be used to create a composite location without
 using `DW_OP_piece`. For example GPUs often store doubles in two
