@@ -2,11 +2,11 @@
 
 ## Problem Description
 
-It is common in SIMD vectorization for the compiler to generate code that
-promotes portions of an array into vector registers. For example, if the
-hardware has vector registers with 8 elements, and 8 wide SIMD instructions, the
-compiler may vectorize a loop so that is executes 8 iterations concurrently for
-each vectorized loop iteration.
+It is common in SIMD vectorization for the compiler to generate code
+that promotes portions of an array into vector registers. For example,
+if the hardware has vector registers with 8 elements, and 8-wide SIMD
+instructions, the compiler may vectorize a loop so that it executes 8
+iterations concurrently for each vectorized loop iteration.
 
 On the first iteration of the generated vectorized loop, iterations 0 to 7 of
 the source language loop will be executed using SIMD instructions. Then on the
@@ -42,22 +42,24 @@ remains in memory. Consider the loop in this C function, for example:
             dst[i] += src[i];
     }
 
-Inside the loop body, the machine code loads src[i] and dst[i] into registers,
-adds them, and stores the result back into dst[i].
+Inside the vectorized loop body, the machine code loads
+src[i]..src[i+7] and dst[i]..dst[i+7] into registers, adds them, and
+stores the result back into dst[i].dst[i+7].
 
-Considering the location of dst and src in the loop body, the elements dst[i]
-and src[i] would be located in registers, all other elements are located in
-memory. Let register R0 contain the base address of dst, register R1 contain i,
-and register R2 contain the registerized dst[i] element.
+Considering the location of dst and src in the loop body, the elements
+dst[i]..dst[i+7] and src[i]..src[i+7] would be located in vector
+registers, all other elements are located in memory. Let register R0
+contain the base address of dst, register R1 contain i, and vector
+register R2 contain the registerized dst[i]..dst[i+7] elements.
 
-     + dst's address stored in register 0
+     + dst's address stored in R0
      v
-     +---------------------------------------------------+
-     | 0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 |
-     +---------------------------------------------------+
+     +------------------------------------------------------+
+     | 0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F 10 ...|
+     +------------------------------------------------------+
 
-     register 1 contains i
-     register 2 has copy of a portion of dst
+     R1 contains i
+     R2 has copy of a portion of dst
      +------------------------+
      + 0  1  2  3  4  5  6  7 |
      +------------------------+
@@ -76,36 +78,37 @@ register location overlaid at a runtime offset involving i:
     `DW_OP_lit4`
     `DW_OP_mul`
 
-    // 4. The size of the register element:
-    `DW_OP_lit4`
+    // 4. The size of the vector register:
+    `DW_OP_lit8`
 
     // 5. Make a composite location description for dst that is the memory #1
     //    with the register #2 positioned as an overlay at offset #3 of size #4:
     `DW_OP_overlay`
 
-On the first iteration of the vectorized loop the overlay would look like:
+On the first iteration of the vectorized loop, the overlay would look like:
 
          +------------------------+
-    reg2 | 0  1  2  3  4  5  6  7 |
+     R2  | 0  1  2  3  4  5  6  7 |
          +-------------------------------------------------------+
     dst  | 0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F 10 ... |
          +-------------------------------------------------------+
 
-A consumer accessing dst[8] would reference the unsigned int reg0+32
-but when a consumer accesses dst[2] it would reference the unsigned
-int located at the 9th byte of reg2.
+A consumer accessing dst[8] would reference the unsigned int R0+8 but
+when a consumer accesses dst[2] it would reference the byte located at
+dst+2.
 
-Then on the second iteration of the loop after i had been incremented by 8:
+Then on the second iteration of the vectorized loop after i had been
+incremented by 8:
 
                                  +------------------------+
-    reg2                         | 8  9  A  B  C  D  E  F |
+     R2                          | 8  9  A  B  C  D  E  F |
          +-------------------------------------------------------+
     dst  | 0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F 10 ... |
          +-------------------------------------------------------+
 
 The situation would be reversed. A consumer accessing dst[8] would
-reference the unsigned int at byte 0 of reg0 but when a consumer
-accesses dst[2] it would reference the unsigned int located reg0+8
+reference the first byte of R0 but when a consumer accesses dst[2], it
+would reference the unsigned int located R0+2.
 
 An overlay can also be used to create a composite location without
 using `DW_OP_piece`. For example GPUs often store doubles in two
@@ -147,9 +150,9 @@ location.
 If producer wants to make a location a bit more like what is created
 when using piece operators and ensure that the composite storage that
 a location references only contains 8 usable bytes, then two overlay
-can be placed over undefined storage. 
+can be placed over an empty composite location.
 
-    DW_OP_undefined
+    DW_OP_composite
     DW_OP_addr 0x100
     DW_OP_lit0  # offset 0
     DW_OP_lit4  # size 4
@@ -159,27 +162,26 @@ can be placed over undefined storage.
     DW_OP_lit4  # size 4
     DW_OP_overlay
 
-                +---------------------------------------+
-    2nd overlay |                  200 201 202 203      |
-                |+-------------------------------------+|
-    1st overlay || 100 101 102 103                     ||
-    base        ||             ... <undefined> ...     ||
-                |+-------------------------------------+|
-                +--------------------------------------++
+                +----------------------------------+
+    2nd overlay |                  200 201 202 203 |
+                |+--------------------------------+|
+    1st overlay || 100 101 102 103                ||
+    base        || <empty composite>              ||
+                |+--------------------------------+|
+                +---------------------------------++
 
-In this case, offsetting beyond the eight defined bytes would not be
-an error and it would not reference bytes beginning at 0x100; it would
-yield undefined bits. It is currently believed that in most cases the
-extra step of making the underlying storage undefined is
-unnecessary. The one exception to this is when a portion of the
-location is undefined. DW_OP_piece can concatenate an empty piece of a
-specific size to a previous piece to leave a section undefined.
+It is currently believed that in most cases the extra step of making
+the underlying storage an empty composite is unnecessary.
+
+When a portion of the location is undefined. DW_OP_piece can
+concatenate an empty piece of a specific size to a previous piece to
+leave a section undefined.
 
      DW_OP_reg0
      DW_OP_piece (4)
      DW_OP_piece (4)
 
-While to do the same thing with overlays the undefined portion must be
+To do the same thing with overlays, the undefined portion must be
 explicit. Either by using it as the underlying base storage:
 
     DW_OP_undefined
@@ -250,8 +252,8 @@ registers to make a 64b double. This can be done with the piece
 operators with something like:
 
     DW_OP_regx vreg0
-    DW_OP_offset 8 # this could also be computed using DW_OP_push_lane
-                   # I just picked a number
+    DW_OP_offset 8 # This could also be computed using DW_OP_push_lane
+                   # but in this example, I just picked a number.
     DW_OP_piece 4
     DW_OP_regx vreg1
     DW_OP_offset 8
@@ -566,7 +568,7 @@ Then add:
 > ensure that any bits in reg3 which extend beyond the 6 bytes of the
 > overlay are masked off they can use an expression like this:
 
-    DW_OP_undefined
+    DW_OP_composite
     DW_OP_reg3
     DW_OP_lit0
     DW_OP_lit4
@@ -591,10 +593,10 @@ Then after the example:
 Add:
 
 > A similar effect can be done with overlays a couple of different
-> ways. The most general way places all the pieces over undefined
-> storage.
+> ways. The most general way places all the pieces over an empty
+> composite.
 
-    DW_OP_undefined
+    DW_OP_composite
     DW_OP_reg0
     DW_OP_lit0
     DW_OP_lit4
@@ -604,9 +606,10 @@ Add:
     DW_OP_lit4
     DW_OP_overlay
 
-> However, another more compact way to do it if reg0 is at least 32b
-> but not more than 96b or if the consumer is unlikely to read more
-> than 12 bytes is to create an overlay on top of reg0.
+> However, the preferred way is more compact but it will only work if
+> reg0 is at least 32b but not more than 96b or if the consumer is
+> unlikely to read more than 12 bytes, is to create an overlay on top
+> of reg0.
 
     DW_OP_reg0
     DW_OP_fbreg (-12)
@@ -614,9 +617,9 @@ Add:
     DW_OP_lit8
     DW_OP_overlay
 
-> If reg0 is less than 32b this will leave a hole of undefined storage
-> between the last bits of reg0 and the beginning of the value in
-> fbreg(-12).
+> As long reg0 is less than 32b this will leave a hole of undefined
+> storage between the last bits of reg0 and the beginning of the value
+> in fbreg(-12).
 >
 > If reg0 is more than 32b and less than 96b or if more than 12 bytes
 > are likely to be read by the consumer then the undefined bits can be
@@ -680,7 +683,7 @@ Add:
 
 > A similar expression done with bit overlays:
 
-    DW_OP_undefined
+    DW_OP_composite
     DW_OP_reg0
     DW_OP_lit31
     DW_OP_bit_offset
