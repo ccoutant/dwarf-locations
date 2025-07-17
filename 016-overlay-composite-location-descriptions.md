@@ -500,7 +500,7 @@ called "Overlay Composites".
 > overlaying the second one with an offset of 4. Undefined storage
 > can also be implicitly inserted into a composite by simply placing
 > an overlay at an offset that leaves a gap between the extent of the
-> base storage and the beginning of the overlay.
+> base storage and the beginning of the overlay.*
 >
 > The action is the same for `DW_OP_bit_overlay`, except that the
 > overlay size and overlay offset are specified in bits rather than
