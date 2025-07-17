@@ -524,7 +524,6 @@ called "Overlay Composites".
 >     and any gaps between the extent of the base storage and the
 >     overlay are undefined.
 >
-
 > *The composite storage created with overlays can be layered on top
 > of other composite storage. This can conceptually be thought of as
 > recursively applying one overlay on top of another. However, an
