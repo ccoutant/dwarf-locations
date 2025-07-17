@@ -523,6 +523,14 @@ called "Overlay Composites".
 >     resulting composite may be larger than the original base storage
 >     and any gaps between the extent of the base storage and the
 >     overlay are undefined.
+>
+
+> *The composite storage created with overlays can be layered on top
+> of other composite storage. This can conceptually be thought of as
+> recursively applying one overlay on top of another. However, an
+> inplementation may evaluate multiple overlays iterately so long as
+> the observable result is the same as if they had been evaluated
+> recursively.*
 
 ### Section 8.7.1 "DWARF Expressions"
 
