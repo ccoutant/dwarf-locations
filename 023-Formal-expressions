@@ -22,15 +22,15 @@ could be executed by a simple interpreter.
 ### Add a new Appendix G
 
 Add a new "Appendix G" Called "DWARF Expressions semantics
-(Informative)" after "Appendix F" moving the subsequent apendices
+(Informative)" after "Appendix F" moving the subsequent appendices
 further down the alphabet.
 
 >  The exact behavior of some DWARF expression operators is not
 >  precisely defined in the text of standard. Instead an informal
 >  description of the behavior is given. This could lead to differing
->  interpretations by different tool devlopers. As an aid to tool
->  authors, a simple DWARF expression parser has been implemnted in
->  OCaml a functional programming language so that producers and
+>  interpretations by different tool developers. As an aid to tool
+>  authors, a simple DWARF expression parser has been implemented in
+>  Ocaml a functional programming language so that producers and
 >  consumers can compare their implementation to an objective standard
 >  of how the authors thought that expressions would be processed.
 >
