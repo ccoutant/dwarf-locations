@@ -527,7 +527,7 @@ called "Overlay Composites".
 > *The composite storage created with overlays can be layered on top
 > of other composite storage. This can conceptually be thought of as
 > recursively applying one overlay on top of another. However, an
-> inplementation may evaluate multiple overlays iterately so long as
+> inplementation may evaluate multiple overlays iteratively so long as
 > the observable result is the same as if they had been evaluated
 > recursively.*
 
