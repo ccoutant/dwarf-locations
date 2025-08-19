@@ -43,17 +43,17 @@ With:
 > *The description of the inputs and each of each operation will be as
 > follows:*
 >
-> DW_OP_name<br/>
->   operands:<br/>
->     first_operand [encoding type]<br/>
->     second_operand [encoding type]<br/>
->   stack parameters:<br/>
->     T [expected types]: <optional> parameter1_name   # 4th entry on the stack<br/>
->     Z [expected types]: <optional> parameter2_name   # 3rd entry on the stack<br/>
->     Y [expected types]: <optional> parameter3_name  # 2nd entry on stack<br/>
->     X [expected types]: <optional> parameter4_name   # top of stack<br/>
->   stack output:<br/>
->     X [resulting type]<br/>
+> 1. DW_OP_name
+>   - operands:
+>     - first_operand [encoding type]
+>     - second_operand [encoding type]
+>   - stack parameters:
+>     - T [expected types]: <optional> parameter1_name   # 4th entry on the stack
+>     - Z [expected types]: <optional> parameter2_name   # 3rd entry on the stack
+>     - Y [expected types]: <optional> parameter3_name  # 2nd entry on stack
+>     - X [expected types]: <optional> parameter4_name   # top of stack
+>   - stack output:
+>     - X [resulting type]
 >
 > *The top four elements of the stack are given the names X, Y, Z, T as
 > a matter of descriptive typographical convenience. In these
