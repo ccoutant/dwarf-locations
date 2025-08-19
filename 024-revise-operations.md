@@ -19,7 +19,7 @@ DWARF operations potentially have three sources of input, operands
 which are encoded in their byte stream, values on the stack, and the
 context in which they are executed. They also can also modify the
 stack and leave items on the stack. For every operand each of these
-sources of input, output, and side effecs are specified in a
+sources of input, output, and side effects are specified in a
 standardized format similar to how other stack machine operations have
 been documented in the past.
 
@@ -37,28 +37,30 @@ With:
 > A DWARF expression is encoded as a stream of operations, each
 > operation consisting of an opcode followed by zero or more literal
 > operands. The number of operands is implied by the opcode. An may
-> also recieve parameters from the stack and make use of information
+> also receive parameters from the stack and make use of information
 > from its evaluation context.
-
-> *The description of the inputs of each operation will be as followes:
+>
+> *The description of the inputs and each of each operation will be as
+> follows:
+>
 > DW_OP_name
 >   operands:
 >     first_operand [encoding type]
->     second_operand [encodeing type]
+>     second_operand [encoding type]
 >   stack parameters:
 >     T [expected types]: <optional> parameter1_name   # 4th entry on the stack
 >     Z [expected types]: <optional> parameter2_name   # 3rd entry on the stack
->     Y [expected types]: <optional>  parameter3_name  # 2nd entry on stack
+>     Y [expected types]: <optional> parameter3_name  # 2nd entry on stack
 >     X [expected types]: <optional> parameter4_name   # top of stack
 >   stack output:
 >     X [resulting type]
 >
 
 > The top four elements of the stack are given the names X, Y, Z, T as
-> a matter of desciptive typographical convienence. In these
+> a matter of descriptive typographical convenience. In these
 > descriptions the stack is presented as growing down with the deepest
 > entry presented first. Unless otherwise stated, it is assumed that
-> all stack parameters are consumed by the operation amd all stack
+> all stack parameters are consumed by the operation and all stack
 > output is pushed onto the stack.*
 
 In Section 3.2 replace the operation descriptions as follows:
@@ -67,8 +69,8 @@ In Section 3.2 replace the operation descriptions as follows:
 >   stack parameters:
 >     X [*any*]
 >   stack output:
->     X: X
 >     Y: X
+>     X: X
 > 
 >    The DW_OP_dup operation duplicates the entry at the top of the stack.
 >
@@ -134,7 +136,7 @@ requested may suggest that it is not needed.
 >     Y: Z
 >     X: Y
 
-In section 3.3 replace the operation desctions as follows:
+In section 3.3 replace the operation descriptions as follows:
 
 > 1. DW_OP_lit0`, ..., `DW_OP_lit31`
 >   stack output:
@@ -259,3 +261,7 @@ DE_OP_const_type2 which drops the size operand.
 >
 
 
+
+LocalWords:  DW lit0 lit31 const1u const2u const4u const8u const addr
+LocalWords:  const1s const2s const4s const8s constu consts constx
+LocalWords:  type2
