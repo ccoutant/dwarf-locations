@@ -15,13 +15,13 @@ template, rather than explaining these in the textual description of
 the operand. This issue proposes such a template and converts each
 operand to that template.
 
-DWARF operations potentially have three sources of input, operands
+DWARF operations potentially have three sources of input: operands
 which are encoded in their byte stream, values on the stack, and the
-context in which they are executed. They also can also modify the
-stack and leave items on the stack. For every operand each of these
-sources of input, output, and side effects are specified in a
-standardized format similar to how other stack machine operations have
-been documented in the past.
+context in which they are executed. They can also modify the stack and
+leave items on the stack. For every operand each of these sources of
+input, output, and side effects are specified in a standardized format
+similar to how other stack machine operations have been documented in
+the past.
 
 Proposed Changes
 ----------------
@@ -36,7 +36,7 @@ With:
 
 > A DWARF expression is encoded as a stream of operations, each
 > operation consisting of an opcode followed by zero or more literal
-> operands. The number of operands is implied by the opcode. An may
+> operands. The number of operands is implied by the opcode. It may
 > also receive parameters from the stack and make use of information
 > from its evaluation context.
 >
@@ -103,7 +103,7 @@ requested may suggest that it is not needed.
 >         - Y [*any*]
 >         - X [*any*]
 >       - stack output:
->     Z: Y
+>         - Z: Y
 >         - Y: X
 >         - X: Y
 >
@@ -148,7 +148,7 @@ In section 3.3 replace the operation descriptions as follows:
 >       - operand:
 >         - constant [unsigned integer of the specified width]
 >       - stack output:
->         - X [unsigned integral]: constant
+>         - X [unsigned integer]: constant
 >
 >    The single operand of a `DW_OP_const<n>u` operation provides a 1, 2, 4, or
 >    8-byte unsigned integer constant, respectively.
@@ -246,9 +246,10 @@ was a mistake and you should flat out say that and possibly suggest
 >   referred to as the `overlay base`.  It begins at `base location`
 >   offset by `base offset` and has a size of `overlay width`.
 >
->   *If the `overlay width` is zero. Then the consumer may leave the
->   `base location` on the top of the stack rather than creating
->   composite storage.*
+>   *If the `overlay width` is zero and offset is within the bounds of
+>   the base location's storage, then the consumer may leave the `base
+>   location` on the top of the stack rather than creating composite
+>   storage.*
 >
 >   If the `overlay base` extends beyond the bounds of the storage of
 >   `base location`, the storage of the resulting location is first
