@@ -525,7 +525,7 @@ In section 3.7 replace the operation descriptions as follows:
 >   target machine. The value of this operand is treated as an address
 >   in the default address space and the corresponding memory location
 >   is pushed onto the stack.
-> 
+>
 > 2. `DW_OP_addrx`
 >    - operands:
 >       - offset into .debug_addr [ULEB128]
@@ -539,7 +539,7 @@ In section 3.7 replace the operation descriptions as follows:
 >   of the associated compilation unit. The address obtained is
 >   treated as an address in the default address space and the
 >   corresponding memory location is pushed onto the stack.
-> 
+>
 > 3. `DW_OP_fbreg`
 >    - operands:
 >       - offset from frame base [LEB128]
@@ -559,7 +559,7 @@ In section 3.7 replace the operation descriptions as follows:
   any previous operator descriptions. Also why is there an elipse
   following the operator in 005? (removed)
 
-> 
+>
 > 4. `DW_OP_breg0`, ..., `DW_OP_breg31`
 >    - operands:
 >       - offset from register [LEB128]
@@ -572,7 +572,7 @@ In section 3.7 replace the operation descriptions as follows:
 >   space. The offset is added to the address obtained from the
 >   register and the resulting memory location is pushed onto the
 >   stack.
-> 
+>
 > 5. `DW_OP_bregx`
 >    - operands:
 >       - register number [ULEB128]
@@ -625,7 +625,7 @@ In section 3.10 replace the operation descriptions as follows:
 >       - length [ULEB128]
 >       - implicit storage bytes
 >    - stack output:
->       - implicit value storage [location]
+>       - L implicit value storage [location]
 >
 >   The `DW_OP_implicit_value` operation specifies an immediate value
 >   using two operands: an unsigned LEB128 length, followed by a
@@ -636,9 +636,9 @@ In section 3.10 replace the operation descriptions as follows:
 
 > 2. `DW_OP_stack_value`
 >    - stack operands:
->      - value [any]
+>      - V value [any]
 >    - stack output:
->       - implicit value storage [location]
+>      - L implicit value storage [location]
 >
 >   The `DW_OP_stack_value` operation specifies that the object does
 >   not exist in memory but its value is nonetheless known and is at
@@ -647,3 +647,106 @@ In section 3.10 replace the operation descriptions as follows:
 >   implicit storage containing the value `V`, represented using the
 >   encoding and byte order of the value's type. The offset of `L` is
 >   set to 0, and `L` is pushed onto the stack.
+
+In section 3.11 replace the operation descriptions as follows:
+
+> 1. `DW_OP_implicit_pointer`
+>    - operands:
+>      - value DIE [4 or 8 byte unsigned integral]
+>      - ofset [LEB128]
+>    - stack output:
+>      - implicit pointer [location]
+>
+>   The `DW_OP_implicit_pointer` operation has two operands: a
+>   reference to a debugging information entry that describes the
+>   dereferenced object's value, and a signed number that is treated
+>   as a byte offset from the start of that value.  The first operand
+>   is a 4-byte unsigned value in the 32-bit DWARF format, or an
+>   8-byte unsigned value in the 64-bit DWARF format (see Section
+>   {32bitand64bitdwarfformats}) that is used as the offset of the
+>   debugging information entry in the `.debug_info` section of the
+>   current executable or shared object file.  The second operand, the
+>   byte offset, is a signed LEB128 number.
+>
+>   An implicit pointer storage location is created for the location
+>   of the pointer object and is pushed onto the stack.
+>
+>   *The debugging information entry referenced by a
+>   `DW_OP_implicit_pointer` operation is typically a
+>   `DW_TAG_variable` or `DW_TAG_formal_parameter` entry whose
+>   `DW_AT_location` attribute gives a second DWARF expression or a
+>   location list that describes the value of the object, but the
+>   referenced entry may be any entry that contains a `DW_AT_location`
+>   or `DW_AT_const_value` attribute (for example,
+>   `DW_TAG_dwarf_procedure`).  By using the second DWARF expression,
+>   a consumer can reconstruct the value of the object when asked to
+>   dereference the pointer described by the original DWARF expression
+>   containing the `DW_OP_implicit_pointer` operation.*
+
+In section 3.12 replace the operation descriptions as follows:
+
+> 1. `DW_OP_composite`
+>    - stack output:
+>      - composite [location]
+>
+>   The `DW_OP_composite` operator has no operands. It pushes a new,
+>   empty, composite location onto the stack, with an offset of 0.
+>
+>   *This operator is provided so that a new series of piece
+>   operations can be started to form a composite location when the
+>   state of the stack is unknown (e.g., following a `DW_OP_call`
+>   operation), or when a new composite is to be started (e.g., rather
+>   than add to a previous composite location on the stack).*
+
+>
+> 2. `DW_OP_piece`
+>    - operands:
+>       - size in bytes [ULEB128]
+>    - stack output:
+>      - composite [location]
+>
+>   The `DW_OP_piece` operation takes a single operand, which is an
+>   unsigned LEB128 number. The number describes the size *N*, in
+>   bytes, of the piece of the object to be appended to the composite
+>   `LC`.  The *EP* value of the new tuple is set to *SP + N ×
+>   byte_size.
+>
+>   If `LP` is a register location, but the piece does not occupy the
+>   entire register, the placement of the piece within that register
+>   is defined by the ABI.
+
+>
+> 3. `DW_OP_bit_piece`
+>    - operands:
+>       - size in bits [ULEB128]
+>       - offset in bits [ULEB128]
+>    - stack output:
+>      - composite [location]
+>
+>   The `DW_OP_bit_piece` operation takes two operands. The first is
+>   an unsigned LEB128 number that gives the size *N*, in bits, of the
+>   piece to be appended.  The second is an unsigned LEB128 number
+>   that gives the offset in bits to be applied to the location `LP`.
+>   The *EP* value of the new tuple is set to *SP + L*.
+>
+>   Interpretation of the offset depends on the type of location. If
+>   the location is an undefined location (see Section 3.9), the
+>   `DW_OP_bit_piece` operation describes a piece consisting of the
+>   given number of bits whose values are undefined, and the offset is
+>   ignored. If the location is a memory location (see Section 3.7),
+>   the `DW_OP_bit_piece` operation describes a sequence of bits
+>   relative to the location whose address is on the top of the DWARF
+>   stack using the bit numbering and direction conventions that are
+>   appropriate to the current language on the target system. In all
+>   other cases, the source of the piece is given by either a register
+>   location (see Section 3.8) or an implicit value location (see
+>   Section 3.9); the offset is from the least significant bit of the
+>   source value.
+>
+>   *The `DW_OP_bit_piece` operator is used instead of `DW_OP_piece`
+>   when the piece to be assembled into a value or assigned to is not
+>   byte-sized or is not at the start of a register or addressable
+>   unit of memory.*
+>
+>   *Whether or not a `DW_OP_piece` operation is equivalent to any
+>   `DW_OP_bit_piece` operation with an offset of 0 is ABI dependent.*
