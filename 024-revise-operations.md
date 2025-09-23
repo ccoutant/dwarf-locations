@@ -441,7 +441,7 @@ In section 3.6 replace the operation descriptions as follows:
   context. See also `DW_OP_form_tls_location`
 
 > 2. `DW_OP_form_tls_location`
->    - stack output:
+>    - stack operands:
 >      - thread [integral type]
 >    - stack output:
 >      - location for TLS for thread [location]
@@ -575,7 +575,7 @@ In section 3.7 replace the operation descriptions as follows:
 > 
 > 5. `DW_OP_bregx`
 >    - operands:
->       - register number [unsigned int[
+>       - register number [ULEB128]
 >       - offset from register [LEB128]
 >    - stack output:
 >       - location [location]
@@ -585,3 +585,65 @@ In section 3.7 replace the operation descriptions as follows:
 >   number. The second operand is a signed LEB128 byte offset. It is
 >   the same as `DW_OP_breg<n>` except it uses the register and offset
 >   provided by the operands.
+
+In section 3.8 replace the operation descriptions as follows:
+
+> 1. `DW_OP_reg0`, `DW_OP_reg1`, ..., `DW_OP_reg31`
+>    - stack output:
+>       - register [location]
+>
+>   The `DW_OP_reg<n>` operations encode the names of up to 32
+>   registers, numbered from 0 through 31, inclusive. A location that
+>   names the designated register, with an offset of 0, is formed and
+>   pushed on the stack.
+>
+
+> 2. `DW_OP_regx`
+>    - operands:
+>       - register number [ULEB128]
+>    - stack output:
+>       - register [location]
+>
+>   The `DW_OP_regx` operation has a single unsigned LEB128 literal
+>   operand that encodes the name of a register. A location that names
+>   the designated register, with an offset of 0, is formed and pushed
+>   on the stack.
+
+In section 3.9 replace the operation descriptions as follows:
+
+> 1. `DW_OP_undefined`
+>    - stack output:
+>       - undefined [location]
+>
+>   The `DW_OP_undefined` operation pushes an undefined location with
+>   an offset of 0 onto the stack.
+
+In section 3.10 replace the operation descriptions as follows:
+
+> 1. `DW_OP_implicit_value`
+>    - operands:
+>       - length [ULEB128]
+>       - implicit storage bytes
+>    - stack output:
+>       - implicit value storage [location]
+>
+>   The `DW_OP_implicit_value` operation specifies an immediate value
+>   using two operands: an unsigned LEB128 length, followed by a
+>   sequence of bytes of the given length that contain the value. A
+>   location `L` is formed for a block of implicit storage which
+>   contains the given byte sequence. The offset of `L` is set to 0,
+>   and `L` is pushed onto the stack.
+
+> 2. `DW_OP_stack_value`
+>    - stack operands:
+>      - value [any]
+>    - stack output:
+>       - implicit value storage [location]
+>
+>   The `DW_OP_stack_value` operation specifies that the object does
+>   not exist in memory but its value is nonetheless known and is at
+>   the top of the DWARF expression stack. The value `V` on top of the
+>   stack is popped, and a location for `L` is formed for a block of
+>   implicit storage containing the value `V`, represented using the
+>   encoding and byte order of the value's type. The offset of `L` is
+>   set to 0, and `L` is pushed onto the stack.
