@@ -359,7 +359,7 @@ believe that mod should be added to that list.
 
 **NOTE FOR DISCUSSION:** It looks to me like the comment should be
   non-normative text. I made it so. Also the justification for
-  DW_OP_plus_uconst seems questionable to me. I do not see why you
+  `DW_OP_plus_uconst` seems questionable to me. I do not see why you
   could not just use: `DW_OP_uconst <some number> DW_OP_plus`. Is this
   a historic limitation? Should this text be reconsidered?
 
@@ -386,7 +386,7 @@ believe that mod should be added to that list.
 >   the former second entry right logically (filling with zero bits)
 >   by the number of bits specified by the former top of the stack,
 >   and pushes the result.
-
+>
 > 14. `DW_OP_shra`
 >    - stack operands
 >      - X: bits to shift [integral base type or generic type]
@@ -398,7 +398,7 @@ believe that mod should be added to that list.
 >   the former second entry right arithmetically (divide the magnitude
 >   by 2, keep the same sign for the result) by the number of bits
 >   specified by the former top of the stack, and pushes the result.
-
+>
 > 15. `DW_OP_xor`
 >    - stack operands
 >      - X [integral base type or generic type]
@@ -437,7 +437,8 @@ In section 3.6 replace the operation descriptions as follows:
 >     `DW_OP_push_object_address`.  The old name is still supported in
 >     DWARF 6 for compatibility.*
 
-**NOTE FOR DISCUSSION**: is "supported' the right word in this context.
+**NOTE FOR DISCUSSION**: is "supported' the right word in this
+  context. See also `DW_OP_form_tls_location`
 
 > 2. `DW_OP_form_tls_location`
 >    - stack output:
@@ -480,3 +481,107 @@ In section 3.6 replace the operation descriptions as follows:
 >     *In previous versions of DWARF, this operator was named
 >     `DW_OP_form_tls_address`.  The old name is still supported in
 >     DWARF 6 for compatibility.*
+>
+> 3. `DW_OP_call_frame_cfa`
+>    - stack output:
+>      - call frame location [location]
+>
+>   The `DW_OP_call_frame_cfa` operation pushes the value of the
+>   current call frame address (CFA), obtained from the Call Frame
+>   Information (see Section X on page Y and Section Z on page
+>   T).
+>
+>   *Although the value of `DW_AT_frame_base` can be computed using
+>   other DWARF expression operators, in some cases this would require
+>   an extensive location list because the values of the registers
+>   used in computing the CFA change during a subroutine. If the Call
+>   Frame Information is present, then it already encodes such
+>   changes, and it is space efficient to reference that.*
+
+**NOTE FOR DISCUSSION**: Do we want to rename this
+  `DW_OP_call_frame_cfl` like we did for `DW_OP_push_object_address`
+  and `DW_OP_form_tls_location`? Note we haven't started working on
+  017-call-frame-entry_registers
+
+> 4. `DW_OP_push_lane`
+>    - stack output:
+>      - lane number [unsigned integer]
+>
+>   The DW_OP_push_lane operation pushes a lane index value of the
+>   generic type, which provides the context of the lane in which the
+>   expression is being evaluated (see Section X on page Y and
+>   Section Z on page T).
+
+In section 3.7 replace the operation descriptions as follows:
+
+> 1. `DW_OP_addr`
+>    - operands:
+>       - address [unsigned integer]
+>    - stack output:
+>       - location [location]
+>
+>   The `DW_OP_addr` operation has a single operand that encodes a
+>   machine address and whose size is the size of an address on the
+>   target machine. The value of this operand is treated as an address
+>   in the default address space and the corresponding memory location
+>   is pushed onto the stack.
+> 
+> 2. `DW_OP_addrx`
+>    - operands:
+>       - offset into .debug_addr [ULEB128]
+>    - stack output:
+>       - location [location]
+>
+>   The `DW_OP_addrx` operation has a single operand that encodes an
+>   unsigned LEB128 value, which is a zero-based index into the
+>   `.debug_addr` section, where a machine address is stored. This
+>   index is relative to the value of the `DW_AT_addr_base` attribute
+>   of the associated compilation unit. The address obtained is
+>   treated as an address in the default address space and the
+>   corresponding memory location is pushed onto the stack.
+> 
+> 3. `DW_OP_fbreg`
+>    - operands:
+>       - offset from frame base [LEB128]
+>    - stack output:
+>       - location [location]
+>
+>   The `DW_OP_fbreg` operation provides a signed LEB128 byte offset
+>   `B` from the location specified by the location expression in the
+>   `DW_AT_frame_base` attribute of the current function (see Section
+>   3.1).  The frame base location, offset by `B` bytes, is pushed
+>   onto the stack.
+>
+>   *This is typically a stack pointer register plus or minus some
+>   offset.*
+
+**NOTE FOR DISCUSSION**: The use of a variable B here doesn't match
+  any previous operator descriptions. Also why is there an elipse
+  following the operator in 005? (removed)
+
+> 
+> 4. `DW_OP_breg0`, ..., `DW_OP_breg31`
+>    - operands:
+>       - offset from register [LEB128]
+>    - stack output:
+>       - location [location]
+>
+>   The single operand of the `DW_OP_breg<n>` operations provides a
+>   signed LEB128 byte offset. The contents of the specified register
+>   (0–31) are treated as a memory address in the default address
+>   space. The offset is added to the address obtained from the
+>   register and the resulting memory location is pushed onto the
+>   stack.
+> 
+> 5. `DW_OP_bregx`
+>    - operands:
+>       - register number [unsigned int[
+>       - offset from register [LEB128]
+>    - stack output:
+>       - location [location]
+>
+>   The `DW_OP_bregx` operation has two operands. The first operand is
+>   a register number which is specified by an unsigned LEB128
+>   number. The second operand is a signed LEB128 byte offset. It is
+>   the same as `DW_OP_breg<n>` except it uses the register and offset
+>   provided by the operands.
