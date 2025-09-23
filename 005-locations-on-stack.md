@@ -689,7 +689,6 @@ Include the descriptions of the following operations:
 
 - `DW_OP_implicit_value`
 - `DW_OP_stack_value`
-- `DW_OP_implicit_pointer`
 
 For `DW_OP_implicit_value`, add:
 
