@@ -70,7 +70,7 @@ In Section 3.2 replace the operation descriptions as follows:
 >       - stack output:
 >         - Y: X
 >         - X: X
-> 
+>
 >    The DW_OP_dup operation duplicates the entry at the top of the stack.
 >
 > 2. `DW_OP_drop`
@@ -198,7 +198,7 @@ In section 3.3 replace the operation descriptions as follows:
 >
 > 7. `DW_OP_const_type`
 >       - operands:
->         - type die offset [LEB128 encoded offset]
+>         - type DIE offset [LEB128 encoded offset]
 >         - size [1-byte unsigned integer]
 >         - constant
 >       - stack output:
@@ -219,43 +219,264 @@ In section 3.3 replace the operation descriptions as follows:
 >   operation can be parsed easily without reference to the .debug_info
 >   section.*
 
-**NOTE:** I'm not really buying the non-normative explanation. I think it
-was a mistake and you should flat out say that and possibly suggest
-`DW_OP_const_type2` which drops the size operand.
+In section 3.4 replace the operation descriptions as follows:
 
-> 1. `DW_OP_overlay`
->      - stack parameters:
->        - T [location]: base location
->        - Z [location]: overlay location
->        - Y [unsigned int]: base offset
->        - X [unsigned int]: overlay width
->       - stack output:
->         - X [location]: composite_location
+> 1. `DW_OP_regval_type`
+>      - operands:
+>        - register number [LEB128 encoded register number]
+>        - offset of a DIE in the current CU [LEB128 offset]
+>      - stack output:
+>        - contents of a given register interpreted as a value of a given type
 >
->   `DW_OP_overlay` pushes a new composite location whose storage is the
->   result of replacing a slice in the storage of `base location` with
->   a slice from the storage of `overlay location`.
+>   The `DW_OP_regval_type` operation pushes the contents of a given
+>   register interpreted as a value of a given type. The first operand
+>   is an unsigned LEB128 number, which identifies a register whose
+>   contents is to be pushed onto the stack. The second operand is an
+>   unsigned LEB128 number that represents the offset of a debugging
+>   information entry in the current compilation unit, which must be a
+>   DW_TAG_base_type entry that provides the type of the value
+>   contained in the specified register.
+
+In section 3.5 replace the operation descriptions as follows:
+
+> 1. `DW_OP_abs`
+>    - stack operands
+>      - X [numeric type]
+>    - stack output:
+>      - X [numeric type]
 >
->   The slice of bytes obtained from the storage of `overlay location`
->   is referred to as the `overlay`.  The `overlay` begins at `overlay
->   location` and has a size of `overlay width`.  The `overlay`
->   must not extend outside of the bounds of the storage of `overlay
->   location`.
+>   The `DW_OP_abs` operation pops the top stack entry, interprets it
+>   as a signed value and pushes its absolute value. If the absolute
+>   value cannot be represented, the result is undefined.
 >
->   The slice of bytes replaced in the storage of `base location` is
->   referred to as the `overlay base`.  It begins at `base location`
->   offset by `base offset` and has a size of `overlay width`.
+> 2. `DW_OP_and`
+>    - stack operands
+>      - X [integral base type or generic type]
+>      - Y [integral base type or generic type]
+>    - stack output:
+>      - X [integral base type or generic type]
 >
->   *If the `overlay width` is zero and offset is within the bounds of
->   the base location's storage, then the consumer may leave the `base
->   location` on the top of the stack rather than creating composite
->   storage.*
+>   The `DW_OP_and` operation pops the top two stack values, performs
+>   a bitwise and operation on the two, and pushes the result.
 >
->   If the `overlay base` extends beyond the bounds of the storage of
->   `base location`, the storage of the resulting location is first
->   extended by adding undefined storage sufficient to cover the
->   `overlay base`.
+> 3. `DW_OP_div`
+>    - stack operands
+>      - X [numeric type]
+>      - Y [numeric type]
+>    - stack output:
+>      - X [numeric type]
 >
->   The offset of the resulting location is the offset of `base
->   location`.
+>   The `DW_OP_div` operation pops the top two stack values, divides
+>   the former second entry by the former top of the stack using
+>   signed division, and pushes the result.
 >
+> 4. `DW_OP_minus`
+>    - stack operands
+>      - X [numeric type]
+>      - Y [numeric type]
+>    - stack output:
+>      - X [numeric type]
+>
+>   The `DW_OP_minus` operation pops the top two stack values,
+>   subtracts the former top of the stack from the former second
+>   entry, and pushes the result.
+>
+> 5. `DW_OP_mod`
+>    - stack operands
+>      - X [integral base type or generic type]
+>      - Y [integral base type or generic type]
+>    - stack output:
+>      - X [integral base type or generic type]
+>
+>   The `DW_OP_mod` operation pops the top two stack values and pushes
+>   the result of the calculation: former second stack entry modulo
+>   the former top of the stack.
+
+**NOTE FOR DISCUSSION** Why doesn't this take any numeric type the way
+that DW_OP_div does? Ref: 2.5.2.4 Line 24-27 pg. 37 in DWARF6 draft. I
+believe that mod should be added to that list.
+
+> 6. `DW_OP_mul`
+>    - stack operands
+>      - X [numeric type]
+>      - Y [numeric type]
+>    - stack output:
+>      - X [numeric type]
+>
+>   The `DW_OP_mul` operation pops the top two stack entries,
+>   multiplies them together, and pushes the result.
+>
+> 7. `DW_OP_neg`
+>
+>   The `DW_OP_neg` operation pops the top stack entry, interprets it
+>   as a signed value and pushes its negation. If the negation cannot
+>   be represented, the result is undefined.
+>
+> 8. `DW_OP_not`
+>    - stack operands
+>      - X [integral base type or generic type]
+>    - stack output:
+>      - X [integral base type or generic type]
+>
+>   The `DW_OP_not` operation pops the top stack entry, and pushes its
+>   bitwise complement.
+>
+> 9. `DW_OP_or`
+>    - stack operands
+>      - X [integral base type or generic type]
+>      - Y [integral base type or generic type]
+>    - stack output:
+>      - X [integral base type or generic type]
+>
+>   The `DW_OP_or` operation pops the top two stack entries, performs
+>   a bitwise or operation on the two, and pushes the result.
+>
+> 10. `DW_OP_plus`
+>    - stack operands
+>      - X [numeric type]
+>      - Y [numeric type]
+>    - stack output:
+>      - X [numeric type]
+>
+>   The `DW_OP_plus` operation pops the top two stack entries, adds
+>   them together, and pushes the result.
+>
+> 11. DW_OP_plus_uconst
+>    - stack operands
+>      - X [ULEB128]
+>      - Y [numeric type]
+>    - stack output:
+>      - X [numeric type]
+>
+>   The `DW_OP_plus_uconst` operation pops the top stack entry, adds
+>   it to the unsigned LEB128 constant operand interpreted as the same
+>   type as the operand popped from the top of the stack and pushes
+>   the result.
+>
+>   *This operation is supplied specifically to be able to
+>   encode more field offsets in two bytes than can be done with
+>   `DW_OP_lit<n> DW_OP_plus.`*
+
+**NOTE FOR DISCUSSION:** It looks to me like the comment should be
+  non-normative text. I made it so. Also the justification for
+  DW_OP_plus_uconst seems questionable to me. I do not see why you
+  could not just use: `DW_OP_uconst <some number> DW_OP_plus`. Is this
+  a historic limitation? Should this text be reconsidered?
+
+> 12. `DW_OP_shl`
+>    - stack operands
+>      - X: bits to shift [integral base type or generic type]
+>      - Y: value to be shifted [integral base type or generic type]
+>    - stack output:
+>      - X [integral base type or generic type]
+>
+>   The `DW_OP_shl` operation pops the top two stack entries, shifts
+>   the former second entry left (filling with zero bits) by the
+>   number of bits specified by the former top of the stack, and
+>   pushes the result.
+>
+> 13. `DW_OP_shr`
+>    - stack operands
+>      - X: bits to shift [integral base type or generic type]
+>      - Y: value to be shifted [integral base type or generic type]
+>    - stack output:
+>      - X [integral base type or generic type]
+>
+>   The `DW_OP_shr` operation pops the top two stack entries, shifts
+>   the former second entry right logically (filling with zero bits)
+>   by the number of bits specified by the former top of the stack,
+>   and pushes the result.
+
+> 14. `DW_OP_shra`
+>    - stack operands
+>      - X: bits to shift [integral base type or generic type]
+>      - Y: value to be shifted [integral base type or generic type]
+>    - stack output:
+>      - X [integral base type or generic type]
+>
+>   The `DW_OP_shra` operation pops the top two stack entries, shifts
+>   the former second entry right arithmetically (divide the magnitude
+>   by 2, keep the same sign for the result) by the number of bits
+>   specified by the former top of the stack, and pushes the result.
+
+> 15. `DW_OP_xor`
+>    - stack operands
+>      - X [integral base type or generic type]
+>      - Y [integral base type or generic type]
+>    - stack output:
+>      - X [integral base type or generic type]
+>
+>   The `DW_OP_xor` operation pops the top two stack entries, performs
+>   a bitwise exclusive-or operation on the two, and pushes the
+>   result.
+
+In section 3.6 replace the operation descriptions as follows:
+
+> 1. `DW_OP_push_object_location`
+>    - stack output:
+>      - object [location]
+>
+>     The `DW_OP_push_object_location` operation pushes the
+>     location of the current object (see section 3.1) onto the
+>     stack, as part of evaluation of a user-presented
+>     expression.
+>
+>     *This object may correspond to an independent variable described
+>     by its own debugging information entry; or it may be a component
+>     of an array, structure, or class whose address has been
+>     dynamically determined by an earlier step during user expression
+>     evaluation.*
+>
+>     *This operator provides explicit functionality (especially for
+>     arrays involving descriptors) that is analogous to the implicit
+>     push of the base address of a structure prior to evaluation of a
+>     `DW_AT_data_member_location` to access a data member of a
+>     structure. For an example, see Appendix D.2 on page 304.*
+>
+>     *In previous versions of DWARF, this operator was named
+>     `DW_OP_push_object_address`.  The old name is still supported in
+>     DWARF 6 for compatibility.*
+
+**NOTE FOR DISCUSSION**: is "supported' the right word in this context.
+
+> 2. `DW_OP_form_tls_location`
+>    - stack output:
+>      - thread [integral type]
+>    - stack output:
+>      - location for TLS for thread [location]
+>
+>     The `DW_OP_form_tls_location` operation pops a value from the
+>     stack, which must have an integral type, translates this value
+>     into a location in the thread-local storage for the current
+>     thread (see Section 3.1), and pushes the location onto the
+>     stack.  The meaning of the value on the top of the stack prior
+>     to this operation is defined by the run-time environment. If the
+>     run-time environment supports multiple thread-local storage
+>     blocks for a single thread, then the block corresponding to the
+>     executable or shared library containing this DWARF expression is
+>     used.
+>
+>     *Some implementations of C, C++, Fortran, and other languages,
+>     support a thread-local storage class. Variables with this
+>     storage class have distinct values and addresses in distinct
+>     threads, much as automatic variables have distinct values and
+>     addresses in each function invocation. Typically, there is a
+>     single block of storage containing all thread-local variables
+>     declared in the main executable, and a separate block for the
+>     variables declared in each shared library. Each thread-local
+>     variable can then be accessed in its block using an
+>     identifier. This identifier is typically an offset into the
+>     block and pushed onto the DWARF stack by one of the
+>     `DW_OP_const<n><x>` operations prior to the
+>     `DW_OP_form_tls_location` operation. Computing the address of
+>     the appropriate block can be complex (in some cases, the
+>     compiler emits a function call to do it), and difficult to
+>     describe using ordinary DWARF location expressions. Instead of
+>     forcing complex thread-local storage calculations into the DWARF
+>     expressions, the `DW_OP_form_tls_location` operation allows the
+>     consumer to perform the computation based on the run-time
+>     environment.*
+>
+>     *In previous versions of DWARF, this operator was named
+>     `DW_OP_form_tls_address`.  The old name is still supported in
+>     DWARF 6 for compatibility.*
