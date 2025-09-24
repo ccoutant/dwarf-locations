@@ -697,7 +697,6 @@ In section 3.12 replace the operation descriptions as follows:
 >   state of the stack is unknown (e.g., following a `DW_OP_call`
 >   operation), or when a new composite is to be started (e.g., rather
 >   than add to a previous composite location on the stack).*
-
 >
 > 2. `DW_OP_piece`
 >    - operands:
@@ -714,7 +713,6 @@ In section 3.12 replace the operation descriptions as follows:
 >   If `LP` is a register location, but the piece does not occupy the
 >   entire register, the placement of the piece within that register
 >   is defined by the ABI.
-
 >
 > 3. `DW_OP_bit_piece`
 >    - operands:
@@ -750,3 +748,249 @@ In section 3.12 replace the operation descriptions as follows:
 >
 >   *Whether or not a `DW_OP_piece` operation is equivalent to any
 >   `DW_OP_bit_piece` operation with an offset of 0 is ABI dependent.*
+
+In section 3.13 replace the operation descriptions as follows:
+
+> 1. `DW_OP_deref`
+>    - stack operands:
+>      - L location [location]
+>    - stack output:
+>      - value [generic type]
+>
+> The `DW_OP_deref` operation pops a location `L` from the
+> top of the stack. The first `S` bits, where `S` is the
+> size (in bits) of an address on the target machine, are
+> retrieved from the location `L` and pushed onto the stack
+> as a value of the generic type.
+>
+> 2. `DW_OP_deref_size`
+>    - operands:
+>      - size [1-byte integral]
+>    - stack operands:
+>      - L location [location]
+>    - stack output:
+>      - value [generic type]
+>
+> The `DW_OP_deref_size` takes a single 1-byte unsigned integral
+> operand that specifies the size `S`, in bytes, of the value to be
+> retrieved.  The size `S` must be no larger than the size of the
+> generic type. The operation behaves like the `DW_OP_deref`
+> operation: it pops a location `L` from the stack. The first `S`
+> bytes are retrieved from the location `L`, zero extended to the size
+> of the generic type, and pushed onto the stack as a value of the
+> generic type.
+>
+> 3. `DW_OP_deref_type`
+>    - operands:
+>      - size [1-byte integral]
+>      - DIE offset for type [ULEB128]
+>    - stack operands:
+>      - L location [location]
+>    - stack output:
+>      - value [specified type]
+>
+> The `DW_OP_deref_type` operation takes two operands. The first
+> operand is a 1-byte unsigned integer that specifies the byte size
+> `S` of the type given by the second operand. The second operand is
+> an unsigned LEB128 integer that represents the offset of a debugging
+> information entry in the current compilation unit, which must be a
+> `DW_TAG_base_type` entry that provides the type `T` of the value to
+> be retrieved. The size `S` must be the same as the byte size of the
+> base type represented by the type `T`. This operation pops a
+> location `L` from the stack. The first `S` bytes are retrieved from
+> the location `L` and pushed onto the stack as a value of type `T`.
+>
+> 4. `DW_OP_xderef`
+>    - stack operands:
+>      - L location [location]
+>      - address space identifier [integral]
+>    - stack output:
+>      - value [generic type]
+>
+>   The `DW_OP_xderef` operation provides an extended dereference
+>   mechanism.  The entry at the top of the stack is treated as an
+>   address. The second stack entry is treated as an “address space
+>   identifier” for those architectures that support multiple address
+>   spaces. Both of these entries must have integral types. The top
+>   two stack elements are popped, and a data item is retrieved
+>   through an implementation-defined address calculation and pushed
+>   as the new stack top together with the generic type. The size of
+>   the data retrieved from the dereferenced address is the size of
+>   the generic type.
+>
+> 5. `DW_OP_xderef_size`
+>    - operands:
+>      - size [1-byte integral]
+>    - stack operands:
+>      - L location [location]
+>      - address space identifier [integral]
+>    - stack output:
+>      - value [generic type]
+>
+>   The `DW_OP_xderef_size` operation behaves like the `DW_OP_xderef`
+>   operation. The entry at the top of the stack is treated as an
+>   address. The second stack entry is treated as an “address space
+>   identifier” for those architectures that support multiple address
+>   spaces. Both of these entries must have integral types. The top
+>   two stack elements are popped, and a data item is retrieved
+>   through an implementation-defined address calculation and pushed
+>   as the new stack top. In the DW_OP_xderef_size operation, however,
+>   the size in bytes of the data retrieved from the dereferenced
+>   address is specified by the single operand. This operand is a
+>   1-byte unsigned integral constant whose value may not be larger
+>   than the size of an address on the target machine. The data
+>   retrieved is zero extended to the size of an address on the target
+>   machine before being pushed onto the expression stack together
+>   with the generic type.
+>
+>   6. `DW_OP_xderef_type`
+>    - operands:
+>      - size [1-byte integral]
+>      - DIE offset for type [ULEB128]
+>    - stack operands:
+>      - L location [location]
+>      - address space identifier [integral]
+>    - stack output:
+>      - value [specified type]
+>
+>   The `DW_OP_xderef_type` operation behaves like the
+>   `DW_OP_xderef_size` operation: it pops the top two stack entries,
+>   treats them as an address and an address space identifier, and
+>   pushes the value retrieved. In the `DW_OP_xderef_type` operation,
+>   the size in bytes of the data retrieved from the dereferenced
+>   address is specified by the first operand. This operand is a
+>   1-byte unsigned integral constant whose is the same as the size of
+>   the base type referenced by the second operand. The second operand
+>   is an unsigned LEB128 integer that represents the offset of a
+>   debugging information entry in the current compilation unit, which
+>   must be a DW_TAG_base_type entry that provides the type of the
+>   data pushed.
+
+In section 3.14 replace the operation descriptions as follows:
+
+> 1. `DW_OP_offset`
+>    - stack operands:
+>      - displacement [signed integral]
+>      - location [location]
+>    - stack output:
+>      - X [location]
+>
+>   `DW_OP_offset` pops two stack entries. The first (top of stack)
+>   must be an integral type value, which represents a signed byte
+>   displacement. The second must be a location. It forms an updated
+>   location by adding the given byte displacement to the offset
+>   component of the original location and pushes the updated location
+>   onto the stack.
+>
+> 2. `DW_OP_bit_offset`
+>    - stack operands:
+>      - displacement in bits [signed integral]
+>      - location [location]
+>    - stack output:
+>      - X [location]
+>
+>   `DW_OP_bit_offset` pops two stack entries. The first (top of
+>   stack) must be an integral type value, which represents a signed
+>   bit displacement. The second must be a location. It forms an
+>   updated location by adding the given bit displacement to the
+>   offset component of the original location and pushes the updated
+>   location onto the stack.
+>
+>  *A bit offset of `N × byte_size` is equivalent to a byte offset of
+> `N`.*
+
+In section 3.15 replace the operation descriptions as follows:
+
+> 1. `DW_OP_le`, `DW_OP_ge`, `DW_OP_eq`, `DW_OP_lt`, `DW_OP_gt`, `DW_OP_ne`
+>    - stack operands:
+>      - X
+>      - Y
+>    - stack output:
+>      - 0 or 1 [generic type]
+>
+>   The six relational operators each:
+>   - pop the top two stack values, which have the same type, either the same
+>     base type or the generic type,
+>   - compare the operands:
+>     < former second entry >< relational operator >< former top entry >
+>   - push the constant value 1 onto the stack if the result of the
+>     operation is true or the constant value 0 if the result of the
+>     operation is false. The pushed value has the generic type.  If
+>     the operands have the generic type, the comparisons are
+>     performed as signed operations.
+>
+> 2. `DW_OP_skip`
+>    - operands:
+>      - bytes to skip [2-byte signed integer]
+>
+>   `DW_OP_skip` is an unconditional branch. Its single operand is a
+>   2-byte signed integer constant. The 2-byte constant is the number
+>   of bytes of the DWARF expression to skip forward or backward from
+>   the current operation, beginning after the 2-byte constant.
+>
+> 3. `DW_OP_bra`
+>    - operands:
+>      - bytes to skip [2-byte signed integer]
+>    - stack operands:
+>      - X
+>
+>   `DW_OP_bra` is a conditional branch. Its single operand is a
+>   2-byte signed integer constant. This operation pops the top of
+>   stack. If the value popped is not 0, the constant operand is the
+>   number of bytes of the DWARF expression to skip forward or
+>   backward from the current operation, beginning after the 2-byte
+>   constant.
+
+> 4. `DW_OP_call2`, `DW_OP_call4`
+>    - operands:
+>      - DIE offset [2 or 4 byte unsigned integral]
+>
+>   `DW_OP_call2`and `DW_OP_call4` perform DWARF procedure calls
+>   during evaluation of a DWARF expression or location
+>   description. For `DW_OP_call2` and `DW_OP_call4` the operand is
+>   the 2- or 4-byte unsigned offset, respectively, of a debugging
+>   information entry in the current compilation unit.
+>
+>   *Operand interpretation of `DW_OP_call2` and `DW_OP_call4` is
+>   exactly like that for `DW_FORM_ref2` and `DW_FORM_ref4`
+>   respectively (see Section 7.5.4 on page 222).*
+>
+>   These operations transfer control of DWARF expression evaluation
+>   to the `DW_AT_location` attribute of the referenced debugging
+>   information entry. If there is no such attribute, then there is no
+>   effect. Execution of the DWARF expression of a `DW_AT_location`
+>   attribute may pop elements from the stack and/or push values or
+>   locations onto the stack. Execution returns to the point following
+>   the call when the end of the attribute is reached. Values and
+>   locations on the stack at the time of the call may be used as
+>   parameters by the called expression, and elements (values or
+>   locations) left on the stack by the called expression may be used
+>   as return values by prior agreement between the calling and called
+>   expressions.
+>
+> 5. `DW_OP_call_ref`
+>    - operands:
+>      - .debug_info offset [4 or 8-byte unsigned integral]
+>
+>   The `DW_OP_call_ref` operator has a single operand.  In the 32-bit
+>   DWARF format, the operand is a 4-byte unsigned value; in the
+>   64-bit DWARF format, it is an 8-byte unsigned value (see Section
+>   7.4 on page 210). The operand is used as the offset of a debugging
+>   information entry in the .debug_info section of the current
+>   executable or shared object file.
+>
+>   *Operand interpretation of `DW_OP_call_ref` is exactly like that
+>   for `DW_FORM_ref_addr` (see Section 7.5.4 on page 222).*
+>
+>   This operation transfers control of DWARF expression evaluation
+>   to the `DW_AT_location` attribute of the referenced debugging
+>   information entry. If there is no such attribute, then there is no
+>   effect. Execution of the DWARF expression of a `DW_AT_location`
+>   attribute may pop elements from the stack and/or push values or
+>   locations onto the stack. Execution returns to the point following
+>   the call when the end of the attribute is reached. Values and
+>   locations on the stack at the time of the call may be used as
+>   parameters by the called expression, and elements (values or
+>   locations) left on the stack by the called expression may be used
+>   as return values by prior agreement between the calling and called
+>   expressions.
