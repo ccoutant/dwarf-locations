@@ -1154,3 +1154,11 @@ In section 3.17 replace the operation descriptions as follows:
 >   *The DW_OP_user_extended encoding space can be understood to
 >   supplement the space defined by DW_OP_lo_user and DW_OP_hi_user
 >   that is allocated by the standard for the same purpose.*
+
+Change the name of the third column in Table 8.9 from "No. of
+Operands" to "No. of Parameters".
+
+**NOTE FOR DISCUSSION** We should consider expanding table 8.9 to
+  include all the information in the header. We could easily expand it
+  to include the number of stack operands and their expected types as
+  well.
