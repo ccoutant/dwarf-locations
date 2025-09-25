@@ -65,10 +65,10 @@ With:
 >        - first_operand [*encoding type*]
 >        - second_operand [*encoding type*]
 >      - stack operands:
->        - T [*expected types*]: <*optional*> parameter1_name # 4th entry on the stack
->        - Z [*expected types*]: <*optional*> parameter2_name # 3rd entry on the stack
->        - Y [*expected types*]: <*optional*> parameter3_name # 2nd entry on stack
->        - X [*expected types*]: <*optional*> parameter4_name # top of stack
+>        - T [*expected types*]: <*optional*> operand1_name # 4th entry on the stack
+>        - Z [*expected types*]: <*optional*> operand2_name # 3rd entry on the stack
+>        - Y [*expected types*]: <*optional*> operand3_name # 2nd entry on stack
+>        - X [*expected types*]: <*optional*> operand4_name # top of stack
 >      - stack output:
 >        - X [*resulting type*]
 >
