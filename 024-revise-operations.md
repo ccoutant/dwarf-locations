@@ -15,13 +15,30 @@ template, rather than explaining these in the textual description of
 the operand. This issue proposes such a template and converts each
 operand to that template.
 
-DWARF operations potentially have three sources of input: operands
-which are encoded in their byte stream, values on the stack, and the
-context in which they are executed. They can also modify the stack and
-leave items on the stack. For every operand each of these sources of
-input, output, and side effects are specified in a standardized format
-similar to how other stack machine operations have been documented in
-the past.
+DWARF operations potentially have three sources of input: inline
+parameters which are encoded in their byte stream, operands on the
+stack, and the context in which they are executed. They can also
+modify the stack and leave items on the stack. For every operator each
+of these sources of input, output, and side effects are specified in a
+standardized format similar to how other stack machine operations have
+been documented in the past.
+
+Also as the DWARF standard has evolved, the use of of the word
+"operand" and "paramter" has been used inconsistently within the
+standard. In the past "operand" was often used to describe the "inline
+parameters" encoded in the DWARF expression byte stream while "stack
+paramters" or "stack entries" were used for the "stack operands" which
+were acted upon by the operator.  This proposal seeks to use the
+terminology consistently within Chapter 3 of the standard.
+
+**NOTE FOR DISCUSSION** While it makes sense within the context of
+  DWARF expressions to call things in the DWARF byte stream inline
+  parameters and the things on the stack "operands", there are many
+  other cases within the DWARF spec where the values within the DWARF
+  byte stream are refered to as "operands". It is going to be a very
+  big lift to change all those other uses of the word operand and
+  might be a bit much for the DWARF community.
+
 
 Proposed Changes
 ----------------
@@ -35,60 +52,71 @@ In Chapter 3 replace the following paragraph:
 With:
 
 > A DWARF expression is encoded as a stream of operations, each
-> operation consisting of an opcode followed by zero or more literal
-> operands. The number of operands is implied by the opcode. It may
-> also receive parameters from the stack and make use of information
-> from its evaluation context.
+> operation consisting of an opcode followed by zero or more inline
+> parameters. The number of inline parameters is implied by the
+> opcode. It may also receive operands from the stack and make use of
+> information from its evaluation context.
+
 >
 > *The structure description of the inputs and each of each operation
 > will be as follows:*
 > 1. `DW_OP_name`
->      - operands:
+>      - inline parameters:
 >        - first_operand [*encoding type*]
 >        - second_operand [*encoding type*]
->      - stack parameters:
->        - T [*expected types*]: <*optional*> parameter1_name   # 4th entry on the stack
->        - Z [*expected types*]: <*optional*> parameter2_name   # 3rd entry on the stack
->        - Y [*expected types*]: <*optional*> parameter3_name  # 2nd entry on stack
->        - X [*expected types*]: <*optional*> parameter4_name   # top of stack
+>      - stack operands:
+>        - T [*expected types*]: <*optional*> parameter1_name # 4th entry on the stack
+>        - Z [*expected types*]: <*optional*> parameter2_name # 3rd entry on the stack
+>        - Y [*expected types*]: <*optional*> parameter3_name # 2nd entry on stack
+>        - X [*expected types*]: <*optional*> parameter4_name # top of stack
 >      - stack output:
 >        - X [*resulting type*]
 >
 >
 > *The top four elements of the stack are given the names X, Y, Z, T as
 > a matter of descriptive typographical convenience. In these
-> descriptions the stack is presented as growing down with the deepest
+> descriptions, the stack is presented as growing down with the deepest
 > entry presented first. Unless otherwise stated, it is assumed that
-> all stack parameters are consumed by the operation and all stack
+> all stack operands are consumed by the operation and all stack
 > output is pushed onto the stack.*
+
+In Section 3.1 replace `operand` with `parameter` in the sentance:
+
+>   * For example, the evaluation of the expression E associated with
+>   a `DW_AT_location` attribute of the debug information entry
+>   operand of the `DW_OP_call<n>` operations is evaluated with the
+>   compilation unit that contains E and not the one that contains the
+>   `DW_OP_call<n>` operation expression.*
+
 
 In Section 3.2 replace the operation descriptions as follows:
 
 > 1. `DW_OP_dup`
->       - stack parameters:
+>       - stack operands:
 >         - X [*any*]
 >       - stack output:
 >         - Y: X
 >         - X: X
 >
->    The DW_OP_dup operation duplicates the entry at the top of the stack.
+>   The DW_OP_dup operation pops the operand at the top of the stack, then
+>   pushes it twice.
 >
 > 2. `DW_OP_drop`
->       - stack parameters:
+>       - stack operands:
 >         - Y [*any*]
 >         - X [*any*]
 >       - stack output:
 >         - X: Y
 >
->   The DW_OP_drop operation pops the entry at the top of the stack.
+>   The DW_OP_drop operation pops the operand at the top of the stack.
 >
 > 3. `DW_OP_pick`
->       - operand:
+>       - inline parameters:
 >         - stack index [unsigned 1-byte integral in the range 0-255 inclusive]
 >       - stack output:
 >         - X: stack entry @ stack index
 >
->    The single operand of the DW_OP_pick operation provides a 1-byte
+>    The single parameter of the DW_OP_pick operation provides a 1-byte
 >    index. A copy of the stack entry with the specified index (0
 >    through 255, inclusive) is pushed onto the stack.
 >
@@ -99,7 +127,7 @@ stack instead of as a literal operand. The fact that it hasn't been
 requested may suggest that it is not needed.
 
 > 4. `DW_OP_over`
->       - stack parameters:
+>       - stack operands:
 >         - Y [*any*]
 >         - X [*any*]
 >       - stack output:
@@ -108,25 +136,24 @@ requested may suggest that it is not needed.
 >         - X: Y
 >
 >    The `DW_OP_over` operation duplicates the entry currently second in
->    the stack at the top of the stack.
+>    the stack and pushes it to the top of the stack.
 >
-> *This is equivalent to a `DW_OP_pick` operation, with index 1.*
+>    *This is equivalent to a `DW_OP_pick 1` operation.*
 >
 > 5. `DW_OP_swap`
->       - stack parameters:
+>       - stack operands:
 >         - Y [*any*]
 >         - X [*any*]
 >       - stack output:
 >         - Y: X
 >         - X: Y
 >
->    The `DW_OP_swap` operation swaps the top two stack entries. The entry
->    at the top of the stack becomes the
->    second stack entry, and the second entry (including its type
->    identifier) becomes the top of the stack.
+>   The `DW_OP_swap` operation pops the top two stack entries then
+>   pushes them back onto the stack in the opposite order.
+>
 >
 > 6. `DW_OP_rot`
->       - stack parameters:
+>       - stack operands:
 >         - Z [*any*]
 >         - Y [*any*]
 >         - X [*any*]
@@ -134,6 +161,12 @@ requested may suggest that it is not needed.
 >         - Z: X
 >         - Y: Z
 >         - X: Y
+>
+>   The DW_OP_rot operation rotates the first three stack entries. The
+>   entry at the top of the stack (including its type identifier)
+>   becomes the third stack entry, the second entry (including its
+>   type identifier) becomes the top of the stack, and the third entry
+>   (including its type identifier) becomes the second entry.
 
 In section 3.3 replace the operation descriptions as follows:
 
@@ -145,48 +178,50 @@ In section 3.3 replace the operation descriptions as follows:
 >   through 31, inclusive.
 >
 > 2. `DW_OP_const1u`, `DW_OP_const2u`, `DW_OP_const4u`, `DW_OP_const8u`
->       - operand:
+>       - inline parameter:
 >         - constant [unsigned integer of the specified width]
 >       - stack output:
->         - X [unsigned integer]: constant
+>         - X [unsigned integer]
 >
->    The single operand of a `DW_OP_const<n>u` operation provides a 1, 2, 4, or
->    8-byte unsigned integer constant, respectively.
+>    The single inline parameter of a `DW_OP_const<n>u` operation
+>    provides a 1, 2, 4, or 8-byte unsigned integer constant,
+>    respectively.
 >
 > 3. `DW_OP_const1s`, `DW_OP_const2s`, `DW_OP_const4s`, `DW_OP_const8s`
->       - operand:
+>       - inline parameter:
 >         - constant [signed integer of the specified width]
 >       - stack output:
->         - X [signed integer]: constant
+>         - X [signed integer]
 >
->   The single operand of a `DW_OP_const<n>s` operation provides a 1, 2, 4, or
->   8-byte signed integer constant, respectively.
+>   The single inline parameter of a `DW_OP_const<n>s` operation
+>   provides a 1, 2, 4, or 8-byte signed integer constant,
+>   respectively.
 >
 > 4. `DW_OP_constu`
->       - operand:
->         - constant [LEB128 encoded unsigned integer]
+>       - inline parameter:
+>         - constant [ULEB128]
 >       - stack output:
->         - X [unsigned integer]: constant
+>         - X [unsigned integer]
 >
->   The single operand of the `DW_OP_constu` operation provides an unsigned
+>   The single inline parameter of the `DW_OP_constu` operation provides an unsigned
 >   LEB128 integer constant.
 >
 > 5. `DW_OP_consts`
->       - operand:
->         - constant [LEB128 encoded signed integer]
+>       - inline parameter:
+>         - constant [LEB128]
 >       - stack output:
->         - X [signed integer]: constant
+>         - X [signed integer]
 >
->   The single operand of the `DW_OP_consts` operation provides a signed
+>   The single inline parameter of the `DW_OP_consts` operation provides a signed
 >   LEB128 integer constant.
 >
 > 6. `DW_OP_constx`
->       - operand:
->         - debug_addr offset [LEB128 encoded unsigned integer]
+>       - inline parameter:
+>         - .debug_addr offset [LEB128]
 >       - stack output:
->         - X [unsigned integer]: debug_addr offset
+>         - X [unsigned integer]
 >
->   The `DW_OP_constx` operation has a single operand that encodes an
+>   The `DW_OP_constx` operation has a single inline parameter that encodes an
 >   unsigned LEB128 value, which is a zero-based index into the
 >   .debug_addr section, where a constant, the size of a generic type,
 >    is stored. This index is relative to the value of the DW_AT_addr_base
@@ -197,21 +232,21 @@ In section 3.3 replace the operation descriptions as follows:
 >   a relocatable address (for example, offsets to thread-local storage).*
 >
 > 7. `DW_OP_const_type`
->       - operands:
->         - type DIE offset [LEB128 encoded offset]
+>       - inline parameters:
+>         - type DIE offset [LEB128]
 >         - size [1-byte unsigned integer]
 >         - constant
 >       - stack output:
->         - X [*specified type*]: constant
+>         - X [*specified type*]
 >
->   The `DW_OP_const_type` operation takes three operands. The first
->   operand is an unsigned LEB128 integer that represents the offset of
+>   The `DW_OP_const_type` operation takes three inline parameters. The first
+>   is an unsigned LEB128 integer that represents the offset of
 >   a debugging information entry in the current compilation unit, which
 >   must be a `DW_TAG_base_type` entry that provides the type of the
->   constant provided.  The second operand is a 1-byte unsigned integer
+>   constant provided.  The second inline parameter is a 1-byte unsigned integer
 >   that specifies the size of the constant value, which is the same as
 >   the size of the base type referenced by the first operand. The third
->   operand is a sequence of bytes of the given size that is interpreted
+>   inline parameter is a sequence of bytes of the given size that is interpreted
 >   as a value of the referenced type.
 >
 >   *While the size of the constant can be inferred from the base type
@@ -222,133 +257,134 @@ In section 3.3 replace the operation descriptions as follows:
 In section 3.4 replace the operation descriptions as follows:
 
 > 1. `DW_OP_regval_type`
->      - operands:
->        - register number [LEB128 encoded register number]
->        - offset of a DIE in the current CU [LEB128 offset]
->      - stack output:
->        - contents of a given register interpreted as a value of a given type
+>       - inline parameters:
+>         - register number [LEB128]
+>         - offset of type DIE [LEB128]
+>       - stack output:
+>         - X [*specified type*]
 >
 >   The `DW_OP_regval_type` operation pushes the contents of a given
->   register interpreted as a value of a given type. The first operand
->   is an unsigned LEB128 number, which identifies a register whose
->   contents is to be pushed onto the stack. The second operand is an
->   unsigned LEB128 number that represents the offset of a debugging
->   information entry in the current compilation unit, which must be a
->   DW_TAG_base_type entry that provides the type of the value
->   contained in the specified register.
+>   register interpreted as a value of a given type. The first inline
+>   parameter is an unsigned LEB128 number, which identifies a
+>   register whose contents is to be pushed onto the stack. The second
+>   inline parameter is an unsigned LEB128 number that represents the
+>   offset of a debugging information entry in the current compilation
+>   unit, which must be a DW_TAG_base_type entry that provides the
+>   type of the value contained in the specified register.
 
 In section 3.5 replace the operation descriptions as follows:
 
 > 1. `DW_OP_abs`
->    - stack operands
->      - X [numeric type]
->    - stack output:
->      - X [numeric type]
+>       - stack operands
+>         - X [numeric type]
+>        - stack output:
+>          - X [numeric type]
 >
->   The `DW_OP_abs` operation pops the top stack entry, interprets it
->   as a signed value and pushes its absolute value. If the absolute
->   value cannot be represented, the result is undefined.
+>   The `DW_OP_abs` operation pops the operand from the stack,
+>   interprets it as a signed value and pushes its absolute value. If
+>   the absolute value cannot be represented, the result is undefined.
 >
 > 2. `DW_OP_and`
->    - stack operands
->      - X [integral base type or generic type]
->      - Y [integral base type or generic type]
->    - stack output:
->      - X [integral base type or generic type]
+>       - stack operands
+>         - Y [integral base type or generic type]
+>         - X [integral base type or generic type]
+>       - stack output:
+>         - X [integral base type or generic type]
 >
->   The `DW_OP_and` operation pops the top two stack values, performs
->   a bitwise and operation on the two, and pushes the result.
+>   The `DW_OP_and` operation pops the two operands, performs a
+>   bitwise and operation, and pushes the result.
 >
 > 3. `DW_OP_div`
->    - stack operands
->      - X [numeric type]
->      - Y [numeric type]
->    - stack output:
->      - X [numeric type]
+>       - stack operands
+>         - Y [numeric type] numerator
+>         - X [numeric type] denomenator
+>       - stack output:
+>         - X [numeric type]
 >
->   The `DW_OP_div` operation pops the top two stack values, divides
->   the former second entry by the former top of the stack using
->   signed division, and pushes the result.
+>   The `DW_OP_div` operation pops the top operands, divides the
+>   former second entry by the former top of the stack using signed
+>   division, and pushes the result.
 >
 > 4. `DW_OP_minus`
->    - stack operands
->      - X [numeric type]
->      - Y [numeric type]
->    - stack output:
->      - X [numeric type]
+>       - stack operands
+>         - Y [numeric type]
+>         - X [numeric type]
+>       - stack output:
+>         - X [numeric type]
 >
->   The `DW_OP_minus` operation pops the top two stack values,
->   subtracts the former top of the stack from the former second
->   entry, and pushes the result.
+>   The `DW_OP_minus` operation pops the two operands, subtracts the
+>   former top of the stack from the former second entry, and pushes
+>   the result.
 >
 > 5. `DW_OP_mod`
->    - stack operands
->      - X [integral base type or generic type]
->      - Y [integral base type or generic type]
->    - stack output:
->      - X [integral base type or generic type]
+>       - stack operands
+>         - Y [integral base type or generic type]
+>         - X [integral base type or generic type]
+>       - stack output:
+>         - X [integral base type or generic type]
 >
->   The `DW_OP_mod` operation pops the top two stack values and pushes
->   the result of the calculation: former second stack entry modulo
->   the former top of the stack.
-
-**NOTE FOR DISCUSSION** Why doesn't this take any numeric type the way
-that DW_OP_div does? Ref: 2.5.2.4 Line 24-27 pg. 37 in DWARF6 draft. I
-believe that mod should be added to that list.
-
+>   The `DW_OP_mod` operation pops the two operands and pushes the
+>   result of the calculation: former second stack entry modulo the
+>   former top of the stack.
+>
 > 6. `DW_OP_mul`
->    - stack operands
->      - X [numeric type]
->      - Y [numeric type]
->    - stack output:
->      - X [numeric type]
+>       - stack operands
+>         - Y [numeric type]
+>         - X [numeric type]
+>       - stack output:
+>         - X [numeric type]
 >
->   The `DW_OP_mul` operation pops the top two stack entries,
->   multiplies them together, and pushes the result.
+>   The `DW_OP_mul` operation pops the two operands, multiplies them
+>   together, and pushes the result.
 >
 > 7. `DW_OP_neg`
+>       - stack operands
+>         - X [integral base type or generic type]
+>       - stack output:
+>         - X [integral base type or generic type]
 >
->   The `DW_OP_neg` operation pops the top stack entry, interprets it
->   as a signed value and pushes its negation. If the negation cannot
->   be represented, the result is undefined.
+>   The `DW_OP_neg` operation pops the operand, interprets it as a
+>   signed value and pushes its negation. If the negation cannot be
+>   represented, the result is undefined.
 >
 > 8. `DW_OP_not`
->    - stack operands
->      - X [integral base type or generic type]
->    - stack output:
->      - X [integral base type or generic type]
+>       - stack operands
+>         - X [integral base type or generic type]
+>       - stack output:
+>         - X [integral base type or generic type]
 >
->   The `DW_OP_not` operation pops the top stack entry, and pushes its
->   bitwise complement.
+>   The `DW_OP_not` operation pops the operand, and pushes its bitwise
+>   complement.
 >
 > 9. `DW_OP_or`
->    - stack operands
->      - X [integral base type or generic type]
->      - Y [integral base type or generic type]
->    - stack output:
->      - X [integral base type or generic type]
+>       - stack operands
+>         - Y [integral base type or generic type]
+>         - X [integral base type or generic type]
+>       - stack output:
+>         - X [integral base type or generic type]
 >
->   The `DW_OP_or` operation pops the top two stack entries, performs
->   a bitwise or operation on the two, and pushes the result.
+>   The `DW_OP_or` operation pops the operands, performs a bitwise or
+>   operation on the two, and pushes the result.
 >
 > 10. `DW_OP_plus`
->    - stack operands
->      - X [numeric type]
->      - Y [numeric type]
->    - stack output:
->      - X [numeric type]
+>        - stack operands
+>          - Y [numeric type]
+>          - X [numeric type]
+>        - stack output:
+>          - X [numeric type]
 >
->   The `DW_OP_plus` operation pops the top two stack entries, adds
->   them together, and pushes the result.
+>   The `DW_OP_plus` operation pops the operands, adds them together,
+>   and pushes the result.
 >
 > 11. DW_OP_plus_uconst
->    - stack operands
->      - X [ULEB128]
->      - Y [numeric type]
->    - stack output:
->      - X [numeric type]
+>       - inline parameters:
+>         - X [ULEB128]
+>       - stack operands
+>         - Y [numeric type]
+>       - stack output:
+>         - X [numeric type]
 >
->   The `DW_OP_plus_uconst` operation pops the top stack entry, adds
+>   The `DW_OP_plus_uconst` operation pops the operand, adds
 >   it to the unsigned LEB128 constant operand interpreted as the same
 >   type as the operand popped from the top of the stack and pushes
 >   the result.
@@ -357,64 +393,63 @@ believe that mod should be added to that list.
 >   encode more field offsets in two bytes than can be done with
 >   `DW_OP_lit<n> DW_OP_plus.`*
 
-**NOTE FOR DISCUSSION:** It looks to me like the comment should be
-  non-normative text. I made it so. Also the justification for
-  `DW_OP_plus_uconst` seems questionable to me. I do not see why you
-  could not just use: `DW_OP_uconst <some number> DW_OP_plus`. Is this
-  a historic limitation? Should this text be reconsidered?
+**NOTE FOR DISCUSSION:** The justification for `DW_OP_plus_uconst`
+  seems questionable to me. I do not see why you could not just use:
+  `DW_OP_uconst <some number> DW_OP_plus`. Is this a historic
+  limitation? Should this text be reconsidered?
 
 > 12. `DW_OP_shl`
->    - stack operands
->      - X: bits to shift [integral base type or generic type]
->      - Y: value to be shifted [integral base type or generic type]
->    - stack output:
->      - X [integral base type or generic type]
+>        - stack operands
+>          - Y: value to be shifted [integral base type or generic type]
+>          - X: bits to shift [integral base type or generic type]
+>        - stack output:
+>          - X [integral base type or generic type]
 >
->   The `DW_OP_shl` operation pops the top two stack entries, shifts
->   the former second entry left (filling with zero bits) by the
->   number of bits specified by the former top of the stack, and
->   pushes the result.
+>   The `DW_OP_shl` operation pops the two operands, shifts Y, the
+>   former operand, left (filling with zero bits) by the number of
+>   bits specified in X, the former top of the stack. It then pushes
+>   the result.
 >
 > 13. `DW_OP_shr`
->    - stack operands
->      - X: bits to shift [integral base type or generic type]
->      - Y: value to be shifted [integral base type or generic type]
->    - stack output:
->      - X [integral base type or generic type]
+>        - stack operands
+>          - Y: value to be shifted [integral base type or generic type]
+>          - X: bits to shift [integral base type or generic type]
+>        - stack output:
+>          - X [integral base type or generic type]
 >
->   The `DW_OP_shr` operation pops the top two stack entries, shifts
->   the former second entry right logically (filling with zero bits)
->   by the number of bits specified by the former top of the stack,
->   and pushes the result.
+>   The `DW_OP_shr` operation pops the two operands, shifts Y,
+>   the former second entry, right logically (filling with zero bits)
+>   by the number of bits specified in X, the former top of the stack.
+>   It then pushes the result.
 >
 > 14. `DW_OP_shra`
->    - stack operands
->      - X: bits to shift [integral base type or generic type]
->      - Y: value to be shifted [integral base type or generic type]
->    - stack output:
->      - X [integral base type or generic type]
+>        - stack operands
+>          - Y: value to be shifted [integral base type or generic type]
+>          - X: bits to shift [integral base type or generic type]
+>        - stack output:
+>          - X [integral base type or generic type]
 >
->   The `DW_OP_shra` operation pops the top two stack entries, shifts
->   the former second entry right arithmetically (divide the magnitude
->   by 2, keep the same sign for the result) by the number of bits
->   specified by the former top of the stack, and pushes the result.
+>   The `DW_OP_shra` operation pops the two operands, shifts Y, the
+>   former second entry, right arithmetically (divide the magnitude by
+>   2, keeping the same sign for the result) by the number of bits
+>   specified in X, the former top of the stack. It then pushes the
+>   result.
 >
 > 15. `DW_OP_xor`
->    - stack operands
->      - X [integral base type or generic type]
->      - Y [integral base type or generic type]
->    - stack output:
->      - X [integral base type or generic type]
+>        - stack operands
+>          - Y [integral base type or generic type]
+>          - X [integral base type or generic type]
+>        - stack output:
+>          - X [integral base type or generic type]
 >
->   The `DW_OP_xor` operation pops the top two stack entries, performs
->   a bitwise exclusive-or operation on the two, and pushes the
->   result.
+>   The `DW_OP_xor` operation pops the two operands, performs a
+>   bitwise exclusive-or operation, and pushes the result.
 
 In section 3.6 replace the operation descriptions as follows:
 
 > 1. `DW_OP_push_object_location`
->    - stack output:
->      - object [location]
+>       - stack output:
+>         - X [location]
 >
 >     The `DW_OP_push_object_location` operation pushes the
 >     location of the current object (see section 3.1) onto the
@@ -434,28 +469,28 @@ In section 3.6 replace the operation descriptions as follows:
 >     structure. For an example, see Appendix D.2 on page 304.*
 >
 >     *In previous versions of DWARF, this operator was named
->     `DW_OP_push_object_address`.  The old name is still supported in
->     DWARF 6 for compatibility.*
-
-**NOTE FOR DISCUSSION**: is "supported' the right word in this
-  context. See also `DW_OP_form_tls_location`
-
-> 2. `DW_OP_form_tls_location`
->    - stack operands:
->      - thread [integral type]
->    - stack output:
->      - location for TLS for thread [location]
+>     `DW_OP_push_object_address`.  An alias to the old name is still
+>     provided in DWARF 6 for compatibility.*
 >
->     The `DW_OP_form_tls_location` operation pops a value from the
->     stack, which must have an integral type, translates this value
->     into a location in the thread-local storage for the current
->     thread (see Section 3.1), and pushes the location onto the
->     stack.  The meaning of the value on the top of the stack prior
->     to this operation is defined by the run-time environment. If the
->     run-time environment supports multiple thread-local storage
->     blocks for a single thread, then the block corresponding to the
->     executable or shared library containing this DWARF expression is
->     used.
+> 2. `DW_OP_form_tls_location`
+>       - stack operands:
+>         - X: thread ID [integral type]
+>       - stack output:
+>         - X [location] location for TLS for thread
+>
+>     The `DW_OP_form_tls_location` operation pops an integral type
+>     operand for the thread ID. The meaning of the value for the
+>     thread ID prior to this operation is defined by the run-time
+>     environment. If the run-time environment supports multiple
+>     thread-local storage blocks for a single thread, then the block
+>     corresponding to the executable or shared library containing
+>     this DWARF expression is used. This operation then translates
+>     this value into a location in the thread-local storage for the
+>     current thread (see Section 3.1), and pushes the location onto
+>     the stack.
+
+**Fixme** IMHO needs to be rewritten.
+
 >
 >     *Some implementations of C, C++, Fortran, and other languages,
 >     support a thread-local storage class. Variables with this
@@ -479,12 +514,12 @@ In section 3.6 replace the operation descriptions as follows:
 >     environment.*
 >
 >     *In previous versions of DWARF, this operator was named
->     `DW_OP_form_tls_address`.  The old name is still supported in
->     DWARF 6 for compatibility.*
+>     `DW_OP_form_tls_address`. An alias to the old name is still
+>     provided in DWARF 6 for compatibility.*
 >
 > 3. `DW_OP_call_frame_cfa`
->    - stack output:
->      - call frame location [location]
+>       - stack output:
+>         - X: [location] call frame location
 >
 >   The `DW_OP_call_frame_cfa` operation pushes the value of the
 >   current call frame address (CFA), obtained from the Call Frame
@@ -497,15 +532,10 @@ In section 3.6 replace the operation descriptions as follows:
 >   used in computing the CFA change during a subroutine. If the Call
 >   Frame Information is present, then it already encodes such
 >   changes, and it is space efficient to reference that.*
-
-**NOTE FOR DISCUSSION**: Do we want to rename this
-  `DW_OP_call_frame_cfl` like we did for `DW_OP_push_object_address`
-  and `DW_OP_form_tls_location`? Note we haven't started working on
-  017-call-frame-entry_registers
-
+>
 > 4. `DW_OP_push_lane`
->    - stack output:
->      - lane number [unsigned integer]
+>       - stack output:
+>         - X [unsigned integer] lane number
 >
 >   The DW_OP_push_lane operation pushes a lane index value of the
 >   generic type, which provides the context of the lane in which the
@@ -515,24 +545,24 @@ In section 3.6 replace the operation descriptions as follows:
 In section 3.7 replace the operation descriptions as follows:
 
 > 1. `DW_OP_addr`
->    - operands:
->       - address [unsigned integer]
->    - stack output:
->       - location [location]
+>       - inline parameters:
+>         - address [unsigned integer]
+>       - stack output:
+>         - X [location]
 >
->   The `DW_OP_addr` operation has a single operand that encodes a
+>   The `DW_OP_addr` operation has a single parameter that encodes a
 >   machine address and whose size is the size of an address on the
 >   target machine. The value of this operand is treated as an address
 >   in the default address space and the corresponding memory location
 >   is pushed onto the stack.
 >
 > 2. `DW_OP_addrx`
->    - operands:
->       - offset into .debug_addr [ULEB128]
->    - stack output:
->       - location [location]
+>       - inline parameters:
+>         - offset into .debug_addr [ULEB128]
+>       - stack output:
+>         - X [location]
 >
->   The `DW_OP_addrx` operation has a single operand that encodes an
+>   The `DW_OP_addrx` operation has a single parameter that encodes an
 >   unsigned LEB128 value, which is a zero-based index into the
 >   `.debug_addr` section, where a machine address is stored. This
 >   index is relative to the value of the `DW_AT_addr_base` attribute
@@ -541,10 +571,10 @@ In section 3.7 replace the operation descriptions as follows:
 >   corresponding memory location is pushed onto the stack.
 >
 > 3. `DW_OP_fbreg`
->    - operands:
->       - offset from frame base [LEB128]
->    - stack output:
->       - location [location]
+>       - inline parameters:
+>         - offset from frame base [LEB128]
+>       - stack output:
+>         - X [location]
 >
 >   The `DW_OP_fbreg` operation provides a signed LEB128 byte offset
 >   `B` from the location specified by the location expression in the
@@ -561,10 +591,10 @@ In section 3.7 replace the operation descriptions as follows:
 
 >
 > 4. `DW_OP_breg0`, ..., `DW_OP_breg31`
->    - operands:
->       - offset from register [LEB128]
->    - stack output:
->       - location [location]
+>       - inline parameters:
+>         - offset from register [LEB128]
+>       - stack output:
+>         - X [location] register storage
 >
 >   The single operand of the `DW_OP_breg<n>` operations provides a
 >   signed LEB128 byte offset. The contents of the specified register
@@ -574,23 +604,23 @@ In section 3.7 replace the operation descriptions as follows:
 >   stack.
 >
 > 5. `DW_OP_bregx`
->    - operands:
->       - register number [ULEB128]
->       - offset from register [LEB128]
->    - stack output:
->       - location [location]
+>       - inline parameters:
+>         - register number [ULEB128]
+>         - offset from register [LEB128]
+>       - stack output:
+>         - X [location] register storage
 >
->   The `DW_OP_bregx` operation has two operands. The first operand is
->   a register number which is specified by an unsigned LEB128
->   number. The second operand is a signed LEB128 byte offset. It is
->   the same as `DW_OP_breg<n>` except it uses the register and offset
->   provided by the operands.
+>   The `DW_OP_bregx` operation has two parameters. The first is a
+>   register number which is specified by an unsigned LEB128.  The
+>   second parameter is a signed LEB128 byte offset. It is the same as
+>   `DW_OP_breg<n>` except it uses the register and offset provided by
+>   the parameters.
 
 In section 3.8 replace the operation descriptions as follows:
 
 > 1. `DW_OP_reg0`, `DW_OP_reg1`, ..., `DW_OP_reg31`
->    - stack output:
->       - register [location]
+>       - stack output:
+>         - X [location] register storage
 >
 >   The `DW_OP_reg<n>` operations encode the names of up to 32
 >   registers, numbered from 0 through 31, inclusive. A location that
@@ -599,10 +629,10 @@ In section 3.8 replace the operation descriptions as follows:
 >
 
 > 2. `DW_OP_regx`
->    - operands:
->       - register number [ULEB128]
->    - stack output:
->       - register [location]
+>       - inline parameters:
+>         - register number [ULEB128]
+>       - stack output:
+>         - X [location] register storage
 >
 >   The `DW_OP_regx` operation has a single unsigned LEB128 literal
 >   operand that encodes the name of a register. A location that names
@@ -612,8 +642,8 @@ In section 3.8 replace the operation descriptions as follows:
 In section 3.9 replace the operation descriptions as follows:
 
 > 1. `DW_OP_undefined`
->    - stack output:
->       - undefined [location]
+>       - stack output:
+>         - X [location] undefined storage
 >
 >   The `DW_OP_undefined` operation pushes an undefined location with
 >   an offset of 0 onto the stack.
@@ -621,24 +651,28 @@ In section 3.9 replace the operation descriptions as follows:
 In section 3.10 replace the operation descriptions as follows:
 
 > 1. `DW_OP_implicit_value`
->    - operands:
->       - length [ULEB128]
->       - implicit storage bytes
->    - stack output:
->       - L implicit value storage [location]
+>       - inline parameters:
+>         - length [ULEB128]
+>         - implicit storage bytes
+>       - stack output:
+>         - X [location] implicit value storage
 >
 >   The `DW_OP_implicit_value` operation specifies an immediate value
->   using two operands: an unsigned LEB128 length, followed by a
+>   using two inline parameters: an unsigned LEB128 length, followed by a
 >   sequence of bytes of the given length that contain the value. A
 >   location `L` is formed for a block of implicit storage which
 >   contains the given byte sequence. The offset of `L` is set to 0,
 >   and `L` is pushed onto the stack.
 
+**NOTE FOR DISCUSSION** Cary says he has removed these single letter
+  abbreviations in some draft but it is not in his github or the
+  version of the proposal on dwarfstd.org
+
 > 2. `DW_OP_stack_value`
->    - stack operands:
->      - V value [any]
->    - stack output:
->      - L implicit value storage [location]
+>       - stack operands:
+>         - V value [any]
+>       - stack output:
+>         - X [location] implicit value storage
 >
 >   The `DW_OP_stack_value` operation specifies that the object does
 >   not exist in memory but its value is nonetheless known and is at
@@ -648,16 +682,19 @@ In section 3.10 replace the operation descriptions as follows:
 >   encoding and byte order of the value's type. The offset of `L` is
 >   set to 0, and `L` is pushed onto the stack.
 
+**NOTE FOR DISCUSSION** another one that uses single letter
+  abbreviations. I don't like the way it works in the new syntax.
+
 In section 3.11 replace the operation descriptions as follows:
 
 > 1. `DW_OP_implicit_pointer`
->    - operands:
->      - value DIE [4 or 8 byte unsigned integral]
->      - ofset [LEB128]
->    - stack output:
->      - implicit pointer [location]
+>       - inline parameters:
+>         - value DIE [4 or 8 byte unsigned integral]
+>         - ofset [LEB128]
+>       - stack output:
+>         - X [location] implicit pointer storage
 >
->   The `DW_OP_implicit_pointer` operation has two operands: a
+>   The `DW_OP_implicit_pointer` operation has two inline parameters: a
 >   reference to a debugging information entry that describes the
 >   dereferenced object's value, and a signed number that is treated
 >   as a byte offset from the start of that value.  The first operand
@@ -686,11 +723,11 @@ In section 3.11 replace the operation descriptions as follows:
 In section 3.12 replace the operation descriptions as follows:
 
 > 1. `DW_OP_composite`
->    - stack output:
->      - composite [location]
+>       - stack output:
+>         - X [location] composite storage
 >
->   The `DW_OP_composite` operator has no operands. It pushes a new,
->   empty, composite location onto the stack, with an offset of 0.
+>   The `DW_OP_composite` pushes a new, empty, composite location onto
+>   the stack, with an offset of 0.
 >
 >   *This operator is provided so that a new series of piece
 >   operations can be started to form a composite location when the
@@ -699,29 +736,32 @@ In section 3.12 replace the operation descriptions as follows:
 >   than add to a previous composite location on the stack).*
 >
 > 2. `DW_OP_piece`
->    - operands:
->       - size in bytes [ULEB128]
->    - stack output:
->      - composite [location]
+>       - inline parameters:
+>         - size in bytes [ULEB128]
+>       - stack output:
+>         - X [location] composite storage
 >
->   The `DW_OP_piece` operation takes a single operand, which is an
+>   The `DW_OP_piece` operation has a single parameter, which is an
 >   unsigned LEB128 number. The number describes the size *N*, in
 >   bytes, of the piece of the object to be appended to the composite
 >   `LC`.  The *EP* value of the new tuple is set to *SP + N ×
 >   byte_size.
+
+**NOTE FOR DISCUSSION** Another single letter abbreviation that needs to be fixed.
+
 >
 >   If `LP` is a register location, but the piece does not occupy the
 >   entire register, the placement of the piece within that register
 >   is defined by the ABI.
 >
 > 3. `DW_OP_bit_piece`
->    - operands:
->       - size in bits [ULEB128]
->       - offset in bits [ULEB128]
->    - stack output:
->      - composite [location]
+>       - inline parameters:
+>         - size in bits [ULEB128]
+>         - offset in bits [ULEB128]
+>      - stack output:
+>         - X [location] composite storage
 >
->   The `DW_OP_bit_piece` operation takes two operands. The first is
+>   The `DW_OP_bit_piece` operation takes two parameters. The first is
 >   an unsigned LEB128 number that gives the size *N*, in bits, of the
 >   piece to be appended.  The second is an unsigned LEB128 number
 >   that gives the offset in bits to be applied to the location `LP`.
@@ -752,10 +792,10 @@ In section 3.12 replace the operation descriptions as follows:
 In section 3.13 replace the operation descriptions as follows:
 
 > 1. `DW_OP_deref`
->    - stack operands:
->      - L location [location]
->    - stack output:
->      - value [generic type]
+>       - stack operands:
+>         - X [location]
+>       - stack output:
+>         - X [generic type]
 >
 > The `DW_OP_deref` operation pops a location `L` from the
 > top of the stack. The first `S` bits, where `S` is the
@@ -764,15 +804,15 @@ In section 3.13 replace the operation descriptions as follows:
 > as a value of the generic type.
 >
 > 2. `DW_OP_deref_size`
->    - operands:
->      - size [1-byte integral]
->    - stack operands:
->      - L location [location]
->    - stack output:
->      - value [generic type]
+>       - inline parameters:
+>         - size [1-byte integral]
+>       - stack operands:
+>         - X [location]
+>       - stack output:
+>         - X [generic type]
 >
 > The `DW_OP_deref_size` takes a single 1-byte unsigned integral
-> operand that specifies the size `S`, in bytes, of the value to be
+> parameter that specifies the size `S`, in bytes, of the value to be
 > retrieved.  The size `S` must be no larger than the size of the
 > generic type. The operation behaves like the `DW_OP_deref`
 > operation: it pops a location `L` from the stack. The first `S`
@@ -781,18 +821,18 @@ In section 3.13 replace the operation descriptions as follows:
 > generic type.
 >
 > 3. `DW_OP_deref_type`
->    - operands:
->      - size [1-byte integral]
->      - DIE offset for type [ULEB128]
->    - stack operands:
->      - L location [location]
->    - stack output:
->      - value [specified type]
+>       - inline parameters:
+>         - size [1-byte integral]
+>         - DIE offset for type [ULEB128]
+>       - stack operands:
+>         - X [location]
+>       - stack output:
+>         - X [*specified type*]
 >
-> The `DW_OP_deref_type` operation takes two operands. The first
-> operand is a 1-byte unsigned integer that specifies the byte size
-> `S` of the type given by the second operand. The second operand is
-> an unsigned LEB128 integer that represents the offset of a debugging
+> The `DW_OP_deref_type` operation takes two parameters. The first is
+> a 1-byte unsigned integer that specifies the byte size `S` of the
+> type given by the second parameter. The second parameter is an
+> unsigned LEB128 integer that represents the offset of a debugging
 > information entry in the current compilation unit, which must be a
 > `DW_TAG_base_type` entry that provides the type `T` of the value to
 > be retrieved. The size `S` must be the same as the byte size of the
@@ -801,11 +841,11 @@ In section 3.13 replace the operation descriptions as follows:
 > the location `L` and pushed onto the stack as a value of type `T`.
 >
 > 4. `DW_OP_xderef`
->    - stack operands:
->      - L location [location]
->      - address space identifier [integral]
->    - stack output:
->      - value [generic type]
+>       - stack operands:
+>         - Y [integral] address space identifier
+>         - X [location]
+>       - stack output:
+>         - X [generic type]
 >
 >   The `DW_OP_xderef` operation provides an extended dereference
 >   mechanism.  The entry at the top of the stack is treated as an
@@ -819,13 +859,13 @@ In section 3.13 replace the operation descriptions as follows:
 >   the generic type.
 >
 > 5. `DW_OP_xderef_size`
->    - operands:
->      - size [1-byte integral]
->    - stack operands:
->      - L location [location]
->      - address space identifier [integral]
->    - stack output:
->      - value [generic type]
+>       - inline parameters:
+>         - size [1-byte integral]
+>       - stack operands:
+>         - Y [integral] address space identifier
+>         - X [location]
+>       - stack output:
+>         - X [generic type]
 >
 >   The `DW_OP_xderef_size` operation behaves like the `DW_OP_xderef`
 >   operation. The entry at the top of the stack is treated as an
@@ -840,42 +880,42 @@ In section 3.13 replace the operation descriptions as follows:
 >   1-byte unsigned integral constant whose value may not be larger
 >   than the size of an address on the target machine. The data
 >   retrieved is zero extended to the size of an address on the target
->   machine before being pushed onto the expression stack together
->   with the generic type.
+>   machine before being pushed onto the expression stack as a generic
+>   type.
 >
->   6. `DW_OP_xderef_type`
->    - operands:
->      - size [1-byte integral]
->      - DIE offset for type [ULEB128]
->    - stack operands:
->      - L location [location]
->      - address space identifier [integral]
->    - stack output:
->      - value [specified type]
+> 6. `DW_OP_xderef_type`
+>       - inline parameters:
+>         - size [1-byte integral]
+>         - DIE offset for type [ULEB128]
+>       - stack operands:
+>         - Y [integral] address space identifier
+>         - X [location]
+>       - stack output:
+>         - X [*specified type*]
 >
 >   The `DW_OP_xderef_type` operation behaves like the
 >   `DW_OP_xderef_size` operation: it pops the top two stack entries,
 >   treats them as an address and an address space identifier, and
 >   pushes the value retrieved. In the `DW_OP_xderef_type` operation,
 >   the size in bytes of the data retrieved from the dereferenced
->   address is specified by the first operand. This operand is a
+>   address is specified by the first parameter. This parameter is a
 >   1-byte unsigned integral constant whose is the same as the size of
->   the base type referenced by the second operand. The second operand
->   is an unsigned LEB128 integer that represents the offset of a
->   debugging information entry in the current compilation unit, which
->   must be a DW_TAG_base_type entry that provides the type of the
->   data pushed.
+>   the base type referenced by the second parameter. The second
+>   paramters is an unsigned LEB128 integer that represents the offset
+>   of a debugging information entry in the current compilation unit,
+>   which must be a DW_TAG_base_type entry that provides the type of
+>   the data pushed.
 
 In section 3.14 replace the operation descriptions as follows:
 
 > 1. `DW_OP_offset`
->    - stack operands:
->      - displacement [signed integral]
->      - location [location]
->    - stack output:
->      - X [location]
+>       - stack operands:
+>         - Y [location]
+>         - X [signed integral] displacement
+>       - stack output:
+>         - X [location]
 >
->   `DW_OP_offset` pops two stack entries. The first (top of stack)
+>   `DW_OP_offset` pops two operands. The first (top of stack)
 >   must be an integral type value, which represents a signed byte
 >   displacement. The second must be a location. It forms an updated
 >   location by adding the given byte displacement to the offset
@@ -883,44 +923,47 @@ In section 3.14 replace the operation descriptions as follows:
 >   onto the stack.
 >
 > 2. `DW_OP_bit_offset`
->    - stack operands:
->      - displacement in bits [signed integral]
->      - location [location]
->    - stack output:
->      - X [location]
+>       - stack operands:
+>         - Y [location]
+>         - X [signed integral] displacement in bits
+>       - stack output:
+>         - X [location]
 >
->   `DW_OP_bit_offset` pops two stack entries. The first (top of
+>   `DW_OP_bit_offset` pops two operands. The first (top of
 >   stack) must be an integral type value, which represents a signed
 >   bit displacement. The second must be a location. It forms an
 >   updated location by adding the given bit displacement to the
 >   offset component of the original location and pushes the updated
 >   location onto the stack.
 >
->  *A bit offset of `N × byte_size` is equivalent to a byte offset of
-> `N`.*
+>   *A bit offset of `N × byte_size` is equivalent to a byte offset of
+>   `N`.*
 
 In section 3.15 replace the operation descriptions as follows:
 
 > 1. `DW_OP_le`, `DW_OP_ge`, `DW_OP_eq`, `DW_OP_lt`, `DW_OP_gt`, `DW_OP_ne`
->    - stack operands:
->      - X
->      - Y
->    - stack output:
->      - 0 or 1 [generic type]
+>       - stack operands:
+>         - Y [base type or generic type]
+>         - X {same base type or generic type]
+>       - stack output:
+>         - X [generic type with a value of 0 or 1]
 >
 >   The six relational operators each:
->   - pop the top two stack values, which have the same type, either the same
+>   - pop the two operands, which have the same type, either the same
 >     base type or the generic type,
 >   - compare the operands:
->     < former second entry >< relational operator >< former top entry >
+>     Y < relational operator > X
 >   - push the constant value 1 onto the stack if the result of the
 >     operation is true or the constant value 0 if the result of the
 >     operation is false. The pushed value has the generic type.  If
 >     the operands have the generic type, the comparisons are
 >     performed as signed operations.
->
+
+**NOTE FOR DISCUSSION** Does this work for only numeric types or does
+  it work for all base types?
+
 > 2. `DW_OP_skip`
->    - operands:
+>    - inline parameters:
 >      - bytes to skip [2-byte signed integer]
 >
 >   `DW_OP_skip` is an unconditional branch. Its single operand is a
@@ -929,29 +972,29 @@ In section 3.15 replace the operation descriptions as follows:
 >   the current operation, beginning after the 2-byte constant.
 >
 > 3. `DW_OP_bra`
->    - operands:
->      - bytes to skip [2-byte signed integer]
->    - stack operands:
->      - X
+>       - inline parameters:
+>         - bytes to skip [2-byte signed integer]
+>       - stack operands:
+>         - X
 >
->   `DW_OP_bra` is a conditional branch. Its single operand is a
->   2-byte signed integer constant. This operation pops the top of
->   stack. If the value popped is not 0, the constant operand is the
->   number of bytes of the DWARF expression to skip forward or
->   backward from the current operation, beginning after the 2-byte
+>   `DW_OP_bra` is a conditional branch. This operation pops the
+>   operand; if the value popped is not 0, the number of bytes
+>   specified in the inline parameter is skipped either forward or
+>   backward. The counting of the bytes begins after the 2-byte
 >   constant.
 
 > 4. `DW_OP_call2`, `DW_OP_call4`
->    - operands:
->      - DIE offset [2 or 4 byte unsigned integral]
+>       - inline parameters:
+>         - DIE offset [2 or 4 byte unsigned integral]
 >
 >   `DW_OP_call2`and `DW_OP_call4` perform DWARF procedure calls
 >   during evaluation of a DWARF expression or location
->   description. For `DW_OP_call2` and `DW_OP_call4` the operand is
+>   description. For `DW_OP_call2` and `DW_OP_call4` the parameter is
 >   the 2- or 4-byte unsigned offset, respectively, of a debugging
 >   information entry in the current compilation unit.
+
 >
->   *Operand interpretation of `DW_OP_call2` and `DW_OP_call4` is
+>   *Parameter interpretation of `DW_OP_call2` and `DW_OP_call4` is
 >   exactly like that for `DW_FORM_ref2` and `DW_FORM_ref4`
 >   respectively (see Section 7.5.4 on page 222).*
 >
@@ -967,17 +1010,24 @@ In section 3.15 replace the operation descriptions as follows:
 >   locations) left on the stack by the called expression may be used
 >   as return values by prior agreement between the calling and called
 >   expressions.
+
+**NOTE FOR DISCUSSION** While it makes sense within the context to
+  call things in the DWARF byte stream inline parameters and the
+  things on the stack "operands", there are many other cases within
+  the DWARF spec where the values within the DWARF byte stream are
+  refered to as "operands". One example is the DW_FORM_ref*
+
 >
 > 5. `DW_OP_call_ref`
->    - operands:
->      - .debug_info offset [4 or 8-byte unsigned integral]
+>       - inline parameters:
+>         - .debug_info offset [4 or 8-byte unsigned integral]
 >
->   The `DW_OP_call_ref` operator has a single operand.  In the 32-bit
->   DWARF format, the operand is a 4-byte unsigned value; in the
->   64-bit DWARF format, it is an 8-byte unsigned value (see Section
->   7.4 on page 210). The operand is used as the offset of a debugging
->   information entry in the .debug_info section of the current
->   executable or shared object file.
+>   The `DW_OP_call_ref` operator has a single parameter. In the
+>   32-bit DWARF format, the parameter is a 4-byte unsigned value; in
+>   the 64-bit DWARF format, it is an 8-byte unsigned value (see
+>   Section 7.4 on page 210). The parameter is used as the offset of a
+>   debugging information entry in the .debug_info section of the
+>   current executable or shared object file.
 >
 >   *Operand interpretation of `DW_OP_call_ref` is exactly like that
 >   for `DW_FORM_ref_addr` (see Section 7.5.4 on page 222).*
@@ -994,3 +1044,113 @@ In section 3.15 replace the operation descriptions as follows:
 >   locations) left on the stack by the called expression may be used
 >   as return values by prior agreement between the calling and called
 >   expressions.
+
+In section 3.16 replace the operation descriptions as follows:
+
+> 1. `DW_OP_convert`
+>       - inline parameters:
+>         - type DIE [ULEB128] or 0 for generic type
+>       - stack operands:
+>         - X
+>       - stack output:
+>         - X [*specified type*]
+>
+>   The `DW_OP_convert` operation pops the operand, converts it to a
+>   different type, then pushes the result. It takes one parameter,
+>   which is an unsigned LEB128 integer that represents the offset of
+>   a debugging information entry in the current compilation unit, or
+>   value 0 which represents the generic type. If the parameter is
+>   non-zero, the referenced entry must be a `DW_TAG_base_type` entry
+>   that provides the type to which the value is converted.
+>
+> 2. `DW_OP_reinterpret`
+>       - inline parameters:
+>         - type DIE [ULEB128] or 0 for generic type
+>       - stack operands:
+>         - X
+>       - stack output:
+>         - X [*specified type*]
+>
+>   The `DW_OP_reinterpret` operation pops the operand,
+>   reinterprets the bits in its value as a value of a different type,
+>   then pushes the result. It takes one parameter, which is an unsigned
+>   LEB128 integer that represents the offset of a debugging
+>   information entry in the current compilation unit, or value 0
+>   which represents the generic type. If the operand is non-zero, the
+>   referenced entry must be a `DW_TAG_base_type` entry that provides
+>   the type to which the value is reinterpreted. The type of the
+>   parameter and result type must have the same size in bits.
+
+In section 3.17 replace the operation descriptions as follows:
+
+> 1. `DW_OP_nop`
+>
+>   The `DW_OP_nop` operation is a place holder. It has no effect on
+>   the location stack or any of its values.
+>
+> 2. `DW_OP_entry_value`
+>       - inline parameters:
+>         - length [ULEB128]
+>         - [DWARF expression]
+>       - stack output:
+>         - [generic type]
+>
+>   The `DW_OP_entry_value` operation pushes the value that an
+>   expression would have had, or a register location would have held,
+>   upon entering the current subprogram. It has two parameters: an
+>   unsigned LEB128 length, followed by a block containing a DWARF
+>   expression or a register location description (see Section
+>   2.6.1.1.3 on page 44). The length parameter specifies the length in
+>   bytes of the block. If the block contains a DWARF expression, the
+>   DWARF expression is evaluated as if it had been evaluated upon
+>   entering the current subprogram. The DWARF expression assumes no
+>   values are present on the DWARF stack initially and results in
+>   exactly one value being pushed on the DWARF stack when
+>   completed. If the block contains a register location description,
+>   DW_OP_entry_value pushes the value that register held upon
+>   entering the current subprogram.
+>
+>   `DW_OP_push_object_address` is not meaningful inside of this DWARF
+>   operation.
+>
+>   *The register location description provides a more compact form
+>   for the case where the value was in a register on entry to the
+>   subprogram. The values needed to evaluate `DW_OP_entry_value`
+>   could be obtained in several ways. The consumer could suspend
+>   execution on entry to the subprogram, record values needed by
+>   `DW_OP_entry_value` expressions within the subprogram, and then
+>   continue; when evaluating `DW_OP_entry_value`, the consumer would
+>   use these recorded values rather than the current values. Or, when
+>   evaluating `DW_OP_entry_value`, the consumer could virtually
+>   unwind using the Call Frame Information (see Section 6.4 on page
+>   185) to recover register values that might have been clobbered
+>   since the subprogram entry point.*
+>
+
+**NOTE FOR DISCUSSION** What type does it push on the stack. It isn't
+  clear to me from the operation description.
+
+> 3. `DW_OP_extended`
+>       - inline parameters:
+>         - extended opcode [ULEB128]
+>
+>   The `DW_OP_extended` opcode encodes an extension operation. It has
+>   at least one parameter: a ULEB128 constant identifying the extension
+>   operation. The remaining parameters are defined by the extension
+>   opcode, which are named using a prefix of . The extension opcode 0
+>   is reserved.
+
+> 4. `DW_OP_user_extended`
+>       - inline parameters:
+>         - extended opcode [ULEB128]
+>
+>   The `DW_OP_user_extended` opcode encodes a producer extension
+>   operation.  It has at least one parameter: a ULEB128 constant
+>   identifying a producer extension operation. The remaining
+>   parameter are defined by the producer extension. The producer
+>   extension opcode 0 is reserved and cannot be used by any producer
+>   extension.
+>
+>   *The DW_OP_user_extended encoding space can be understood to
+>   supplement the space defined by DW_OP_lo_user and DW_OP_hi_user
+>   that is allocated by the standard for the same purpose.*
