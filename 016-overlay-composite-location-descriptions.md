@@ -479,7 +479,7 @@ called "Overlay Composites".
 > the base storage if necessary with undefined storage.*
 >
 > 1. `DW_OP_overlay`
->      - stack parameters:
+>      - stack operands:
 >        - T [location]: base location
 >        - Z [location]: overlay location
 >        - Y [unsigned int]: base offset
@@ -519,7 +519,7 @@ called "Overlay Composites".
 > bytes.
 >
 > 2. `DW_OP_bit_overlay`
->      - stack parameters:
+>      - stack operands:
 >        - T [location]: base location
 >        - Z [location]: overlay location
 >        - Y [unsigned int]: base offset in bits
