@@ -497,9 +497,12 @@ called "Overlay Composites".
 >   must not extend outside of the bounds of the storage of `overlay
 >   location`.
 >
+
 >   The slice of bytes replaced in the storage of `base location` is
 >   referred to as the `overlay base`.  It begins at `base location`
->   offset by `base offset` and has a size of `overlay width`.
+>   offset by `base offset` and has a size of `overlay width`. The
+>   `overlay width` cannot extend beyond the end of the overlay's
+>   storage or else the expression is invalid.
 >
 >   *If the `overlay width` is zero and offset is within the bounds of
 >   the base location's storage, then the consumer may leave the `base
@@ -539,7 +542,9 @@ called "Overlay Composites".
 >
 >   The slice of bits replaced in the storage of `base location` is
 >   referred to as the `overlay base`.  It begins at `base location`
->   offset by `base offset` and has a size of `overlay width` in bits.
+>   offset by `base offset` and has a size of `overlay width` in
+>   bits. The `overlay width` cannot extend beyond the end of the
+>   overlay's storage or else the expression is invalid.
 >
 >   *If the `overlay width` is zero and offset is within the bounds of
 >   the base location's storage, then the consumer may leave the `base
