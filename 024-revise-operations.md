@@ -43,23 +43,43 @@ With:
 >
 > *The structure description of the inputs and each of each operation
 > will be as follows:*
-> 1. `DW_OP_name`
+> `DW_OP_name` ([*type*] first inline operand>, [*type*] second inline operand, ...)
 >
->       <[*type*] first stack argument> <[*type*>] second stack argument> ...
->        `DW_OP_name ([*type*] first inline operand>, [*type*] second inline operand, ...)
->        --> <[*type*] first stack result> <[*type*] second stack result> ...
+>     <[*type*] first stack argument> <[*type*>] second stack argument> ...
+>         → <[*type*] first stack result> <[*type*] second stack result> ...
 >
+
+> *The first line mentions the inline operands and their expected
+> types or binary encodings. These encodings can be found in Section X.Y*
+
+> *The second line explains the ways that the operator affects the
+> DWARF stack. The arguments consumed from the stack are listed
+> first. Then after the "→" the results that are left on the
+> stack. Each entry on the DWARF stack has a type. In most cases, it
+> is broadly a value or location. However, there are often limits
+> placed on the each operator's input stack arguments limiting the
+> sub-types over which the operator is defined. Since one operator's
+> output becomes the input for subsequent operators in a DWARF
+> expression, the type of the operation's output is also often listed
+> when it cannot be immediately inferred.*
+
+> *Symbolic names are often given to the stack arguments and the stack
+> result when it is considered to be helpful or meaningful. In the
+> cases where no sybolic name would be meaningful, the generic names A
+> B C and D are used. When, an operator modifies a stack argument in
+> meaningful way before returning it to the stack, the name is given
+> an apostrophe suffix, for example turning A into A' ("A prime").*
 
 In Section 3.2
 
 > `DW_OP_dup`
 >
->       <[*any*] X> <[*any*] Y> → < X> < X>
+>       <[*any*] A> <[*any*] B> → < A> < A>
 >
 
 > `DW_OP_drop`
 >
->       <[*any*] X> <[*any*] Y>  → < Y>
+>       <[*any*] A> <[*any*] B>  → < B>
 >
 
 > `DW_OP_pick` ([1-byte integral] N)
@@ -74,17 +94,17 @@ requested may suggest that it is not needed.
 
 > `DW_OP_over`
 >
->     <[*any*] Y> <[*any*] X> → < Y> < X> < Y>
+>     <[*any*] B> <[*any*] A> → < B> < A> < B>
 >
 
 > `DW_OP_swap`
 >
->    <[*any*] Y> <[*any*] X> 2→ < X> < Y>
+>    <[*any*] B> <[*any*] A> 2→ < A> < B>
 >
 
 > `DW_OP_rot`
 >
->    <[*any*] Z> <[*any*] Y> <[*any*] X> → < X> < Z> < Y>
+>    <[*any*] C> <[*any*] B> <[*any*] A> → < A> < C> < B>
 >
 
 In section 3.3 add the following heading between operator and its
@@ -95,42 +115,46 @@ description as follows:
 >    → <[generic] n>
 >
 
-> `DW_OP_const<n>u` ([n-byte unsigned] X) 
+> `DW_OP_const<n>u` ([n-byte unsigned] A)
 >
->    → <[unsigned] X'>
->
-
-> `DW_OP_const<n>s` ([n-byte integer] X) 
->
->    → <[integer] X'>
+>    → <[unsigned] A>
 >
 
-> `DW_OP_constu` (ULEB128 X) 
+> `DW_OP_const<n>s` ([n-byte integer] A)
 >
->    → <[unsigned] X'>
->
-
-> `DW_OP_consts`(LEB128 X) 
->
->    → <[integer] X'>
+>    → <[integer] A>
 >
 
-> `DW_OP_constx` ([ULEB128] .debug_addr offset>) 
+> `DW_OP_constu` (ULEB A)
 >
->    → <[unsigned] X>
+>    → <[unsigned] A>
 >
 
-> `DW_OP_const_type`([LEB128] type DIE offset, [1-byte unsigned] size, constant) 
+> `DW_OP_consts`(SLEB A)
 >
->    → <[*specified type*] X>
+>    → <[integer] A>
 >
+
+> `DW_OP_constx` ([ULEB] .debug_addr offset>)
+>
+>    → <[unsigned] A>
+>
+
+> `DW_OP_const_type`([SLEB] type DIE offset, [1-byte unsigned] size, constant)
+>
+>    → <[*specified type*] A>
+>
+
+*NOTE FOR DISCUSSION*: Why do some operators take SLEBs or ULEBs while
+others take 2- or 4- byte unsigned integrals or 4- or 8- byte unsigned
+integrals. Historic?
 
 In section 3.4 add the following heading between operator and its
 description as follows:
 
-> `DW_OP_regval_type` ([LEB128] register number, [LEB128] offset of type DIE ) 
+> `DW_OP_regval_type` ([SLEB] register number, [SLEB] offset of type DIE )
 >
->       → <[*specified type*] X>
+>       → <[*specified type*] A>
 >
 
 In section 3.5 add the following heading between operator and its
@@ -138,55 +162,61 @@ description as follows:
 
 > `DW_OP_abs`
 >
->    <[numeric] X> → <[numeric] X'>
+>    <[numeric] A> → <[numeric] A'>
 >
 
 > `DW_OP_and`
 >
->    <[integral base type or generic type] Y> <[integral base type or generic type] X> → <[integral base type or generic type] X'>
+>    <[integral base type or generic type] B> <[integral base type or generic type] A> → <[integral base type or generic type] A'>
 >
+
+**NOTE FOR DISCUSSION**: Do we want to expand logical operators like
+and to include vector types? The concern that I have is predicate
+registers may be bigger than a generic type. I'm also not entirely
+sure that they are base types in all GPU architectures. In other
+words, can we expand the domain of these operators.
 
 > `DW_OP_div`
 >
->    <[numeric] Y>  <[numeric] X> → <[numeric] Y/X>
+>    <[numeric] B>  <[numeric] A> → <[numeric] B/A>
 >
 
 > `DW_OP_minus`
 >
->    <[numeric] Y> <[numeric] X> → <[numeric] Y-X>
+>    <[numeric] B> <[numeric] A> → <[numeric] B-A>
 >
 
 > `DW_OP_mod`
 >
->    <[integral base type or generic type] Y> <[integral base type or generic type] X> → <[integral base type or generic type] Y mod X>
+>    <[integral base type or generic type] B> <[integral base type or generic type] A> → <[integral base type or generic type] B mod A>
 
 > `DW_OP_mul`
 >
->    <[numeric] Y> <[numeric] X> → <[numeric] Y*X>
+>    <[numeric] B> <[numeric] A> → <[numeric] B*A>
 >
 
 > `DW_OP_neg`
 >
->    <[numeric] X> → <[numeric] X'>
+>    <[numeric] A> → <[numeric] A'>
 >
 
 > `DW_OP_not`
 >
->    <[integral base type or generic type] X> → <[integral base type or generic type] X'>
+>    <[integral base type or generic type] A> → <[integral base type or generic type] A'>
 >
 
 > `DW_OP_or`
 >
->    <[integral base type or generic type] Y> <[integral base type or generic type] X> → <[integral base type or generic type] X'>
+>    <[integral base type or generic type] B> <[integral base type or generic type] A> → <[integral base type or generic type] A'>
 
 > `DW_OP_plus`
 >
->    <[numeric] Y> <[numeric] X> → <[numeric] Y+X>
+>    <[numeric] B> <[numeric] A> → <[numeric] B+A>
 >
 
-> `DW_OP_plus_uconst` (ULEB128 Y)
+> `DW_OP_plus_uconst` (ULEB B)
 >
->       <[numeric] X> → <[numeric] Y+X>
+>       <[numeric] A> → <[numeric] B+A>
 >
 
 **NOTE FOR DISCUSSION:** The justification for `DW_OP_plus_uconst`
@@ -196,7 +226,7 @@ description as follows:
 
 > `DW_OP_shl`
 >
->    <[integral base type or generic type] Y> <[integral base type or generic type] X> → <[integral base type or generic type] Y<<X >
+>    <[integral base type or generic type] B> <[integral base type or generic type] A> → <[integral base type or generic type] B<<A >
 >
 
 **NOTE FOR DISCUSSION:** What happens if you shift left a negative
@@ -206,16 +236,16 @@ to a positive value.
 >
 > `DW_OP_shr`
 >
->    <[integral base type or generic type] Y> <[integral base type or generic type] X> → <[integral base type or generic type] Y>>X >
+>    <[integral base type or generic type] B> <[integral base type or generic type] A> → <[integral base type or generic type] B>>A >
 
 > `DW_OP_shra`
 >
->    <[integral base type or generic type] Y> <[integral base type or generic type] X> → <[integral base type or generic type] Y shra X >
+>    <[integral base type or generic type] B> <[integral base type or generic type] A> → <[integral base type or generic type] B shra A >
 >
 
 > `DW_OP_xor`
 >
->    <[integral base type or generic type] Y> <[integral base type or generic type] X> → <[integral base type or generic type] Y xor X >
+>    <[integral base type or generic type] B> <[integral base type or generic type] A> → <[integral base type or generic type] B xor A >
 >
 
 In section 3.6 add the following heading between operator and its
@@ -223,7 +253,7 @@ description as follows:
 
 > `DW_OP_push_object_location`
 >
->    → <[location] X >
+>    → <[location] A >
 >
 
 > `DW_OP_form_tls_location`
@@ -246,29 +276,29 @@ description as follows:
 In section 3.7 add the following heading between operator and its
 description as follows:
 
-> `DW_OP_addr` ([unsigned integer] address) 
+> `DW_OP_addr` ([unsigned integer] address)
 >
 >    → <[location] memory storage >
 >
 
-> `DW_OP_addrx` ([ULEB128] offset into .debug_addr ) 
+> `DW_OP_addrx` ([ULEB] offset into .debug_addr )
 >
 >    → <[location] memory storage >
 >
 
-> `DW_OP_fbreg` ([ULEB128] offset from frame base ) 
+> `DW_OP_fbreg` ([ULEB] offset from frame base )
 >
 >    → <[location] memory_storage >
 >
 
-> `DW_OP_breg<n>` ([LEB128] offset)
+> `DW_OP_breg<n>` ([SLEB] offset)
 >
 >    → <[location] memory storage >
 >
 
-> `DW_OP_bregx` ([ULEB128 register number, [LEB128] offset) 
+> `DW_OP_bregx` ([ULEB register number, [SLEB] offset)
 >
->    → <[location] X >
+>    → <[location] A >
 >
 
 In section 3.8 add the following heading between operator and its
@@ -279,7 +309,7 @@ description as follows:
 >    → <[location] register storage >
 >
 
-> `DW_OP_regx` ([ULEB128] register number) 
+> `DW_OP_regx` ([ULEB] register number)
 >
 >    → <[location] register storage >
 >
@@ -295,7 +325,7 @@ description as follows:
 In section 3.10 add the following heading between operator and its
 description as follows:
 
-> `DW_OP_implicit_value` ([ULEB128] length, implicit storage bytes) 
+> `DW_OP_implicit_value` ([ULEB] length, implicit storage bytes)
 >
 >    → <[location] implicit value storage >
 >
@@ -308,7 +338,7 @@ description as follows:
 In section 3.11 add the following heading between operator and its
 description as follows:
 
-> `DW_OP_implicit_pointer` ([unsigned 4 or 8 byte integral] .debug_info offset, [LEB128] byte offset) 
+> `DW_OP_implicit_pointer` ([DIE reference] .debug_info offset, [SLEB] byte offset)
 >
 >    → <[location] implicit pointer storage>
 >
@@ -320,7 +350,7 @@ description as follows:
 >    → <[location] composite storage >
 >
 
-> `DW_OP_piece` ([ULEB128] size in bytes) 
+> `DW_OP_piece` ([ULEB] size in bytes)
 >
 >    → <[location] composite storage>
 >
@@ -332,7 +362,7 @@ top of the stack and if the type is a composite location then it pops
 off of the stack, modifies it and then pushes it again. Maybe we
 should rewrite the description of piece this way?
 
-<[location] composite storage > `DW_OP_piece` ([ULEB128] size in
+<[location] composite storage > `DW_OP_piece` ([ULEB] size in
 bytes) → <[location] composite storage>
 
 If the top of the stack is not a composite, then it creates an empty
@@ -343,7 +373,7 @@ The problem with this is in stack based machines maintaining stack
 alignment is very important. Not knowing and not being able to know if
 a stack element is going to be popped can lead to stack misalignment.
 
-> `DW_OP_bit_piece` ([ULEB128] size in bits) 
+> `DW_OP_bit_piece` ([ULEB] size in bits)
 >
 >    → <[location] composite storage>
 >
@@ -353,31 +383,31 @@ description as follows:
 
 > `DW_OP_deref`
 >
->    <[location] L> → <[generic] X>
+>    <[location] L> → <[generic] A>
 >
 
-> `DW_OP_deref_size` ([1-byte integral] size) 
+> `DW_OP_deref_size` ([1-byte integral] size)
 >
->    <[location] L> → <[generic] X>
+>    <[location] L> → <[generic] A>
 >
 
-> `DW_OP_deref_type` ([1-byte integral] size, [ULEB128] DIE offset for type ) 
+> `DW_OP_deref_type` ([1-byte integral] size, [ULEB] DIE offset for type )
 >
->    <[location] L> → <[*specified type*] X>
+>    <[location] L> → <[*specified type*] A>
 >
 
 > `DW_OP_xderef`
 >
->    <[integral] address space identifier> <[location] L> → <[generic] X>
+>    <[integral] address space identifier> <[location] L> → <[generic] A>
 
-> `DW_OP_xderef_size` ([1-byte integral] size) 
+> `DW_OP_xderef_size` ([1-byte integral] size)
 >
->    <[integral] address space identifier> <[location] L> → <[generic] X>
+>    <[integral] address space identifier> <[location] L> → <[generic] A>
 >
 
-> `DW_OP_xderef_type` ([1-byte integral] size, [ULEB128] DIE offset for type) 
+> `DW_OP_xderef_type` ([1-byte integral] size, [ULEB] DIE offset for type)
 >
->    <[integral] address space identifier> <[location] L> → <[*specified type*] X>
+>    <[integral] address space identifier> <[location] L> → <[*specified type*] A>
 >
 
 In section 3.14 add the following heading between operator and its
@@ -398,7 +428,7 @@ description as follows:
 
 > `DW_OP_le`, `DW_OP_ge`, `DW_OP_eq`, `DW_OP_lt`, `DW_OP_gt`, `DW_OP_ne`
 >
->    <[base type or generic] Y> <[base type or generic] X> → <[[generic] 0 or 1>
+>    <[base type or generic] B> <[base type or generic] A> → <[[generic] 0 or 1>
 >
 
 **NOTE FOR DISCUSSION** Does this work for only integral base types or
@@ -416,32 +446,38 @@ description as follows:
 >    <[numeric] condition> → *no stack result*
 >
 
-> `DW_OP_call[24]` ([2 or 4 byte unsigned integral] DIE offset)
+> `DW_OP_call[24]` ([2- or 4- byte unsigned integral] DIE offset)
 >
 >    *stack effects by agreement*
 >
 
-> `DW_OP_call_ref` ([4 or 8 byte unsigned integral] debug_info offset)
+**NOTE FOR DISCUSSION**: Should I just call the type "DIE offset" and
+"DiE reference" in all places. Should we change the operator's
+description?
+
+> `DW_OP_call_ref` ([4- or 8- byte unsigned integral] .debug_info offset)
 >
 >    *stack effects by agreement*
 >
 
-**NOTE FOR DISCUSSION**: These operators are interesting moving the inline operands up to the operatation's declaration makes the line below a "stack effects" line
+**NOTE FOR DISCUSSION**: These operators are interesting moving the
+inline operands up to the operatation's declaration makes the line
+below a "stack effects" line. How to express that?
 
 In section 3.16 add the following heading between operator and its
 description as follows:
 
-> `DW_OP_convert` ([ULEB128] or 0 for generic type) 
+> `DW_OP_convert` ([ULEB] or 0 for generic type)
 >
->       <[*any*] X> → <[*specified type*] X'>
+>       <[*any*] A> → <[*specified type*] A'>
 >
 
 **NOTE FOR DISCUSSION** Should the types that can be converted be
 specified? Some of the conversions can be kind of weird.
 
-> `DW_OP_reinterpret` ([ULEB128] or 0 for generic type) 
+> `DW_OP_reinterpret` ([ULEB] or 0 for generic type)
 >
->       <[*any*] X> → <[*specified type*] X'>
+>       <[*any*] A> → <[*specified type*] A'>
 >
 
 In section 3.17 add the following heading between operator and its
@@ -452,7 +488,7 @@ description as follows:
 >    *no stack effects*
 >
 
-> `DW_OP_entry_value` ([ULEB128] length, [DWARF expression] expression) 
+> `DW_OP_entry_value` ([ULEB] length, [DWARF expression] expression)
 >
 >    → <[generic] value>
 >
@@ -463,12 +499,12 @@ description as follows:
   doesn't make sense to me for different reasons than the problems
   that Tony has with it.
 
-> `DW_OP_extended` ([ULEB128] extended opcode)
+> `DW_OP_extended` ([ULEB] extended opcode)
 >
 >    *stack effects defined by extended operation*
 >
 
-> `DW_OP_user_extended` ([ULEB128] extended opcode)
+> `DW_OP_user_extended` ([ULEB] extended opcode)
 >
 >    *stack effects defined by extended operation*
 >
