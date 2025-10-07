@@ -54,14 +54,20 @@ With:
 
 > *The second line explains the ways that the operator affects the
 > DWARF stack. The arguments consumed from the stack are listed
-> first. Then after the "→" the results that are left on the
-> stack. Each entry on the DWARF stack has a type. In most cases, it
-> is broadly a value or location. However, there are often limits
-> placed on the each operator's input stack arguments limiting the
-> sub-types over which the operator is defined. Since one operator's
-> output becomes the input for subsequent operators in a DWARF
-> expression, the type of the operation's output is also often listed
-> when it cannot be immediately inferred.*
+> first. The stack is built with new entries added to the right. The
+> top of the stack is on the right while the deepest entry is on the
+> stack is on the left. Thus: "push A" followed by "push B" would yield:*
+
+>    < A> < B> 
+
+> *Then after the "→" the results that are pushed on the stack. Each
+> entry on the DWARF stack has a type. In most cases, it is broadly a
+> value or location. However, there are often limits placed on the
+> each operator's input stack arguments limiting the sub-types over
+> which the operator is defined. Since one operator's output becomes
+> the input for subsequent operators in a DWARF expression, the type
+> of the operation's output is also often listed when it cannot be
+> immediately inferred.*
 
 > *Symbolic names are often given to the stack arguments and the stack
 > result when it is considered to be helpful or meaningful. In the
@@ -74,7 +80,7 @@ In Section 3.2
 
 > `DW_OP_dup`
 >
->       <[*any*] A> <[*any*] B> → < A> < A>
+>       <[*any*] A> → < A> < A>
 >
 
 > `DW_OP_drop`
@@ -84,7 +90,7 @@ In Section 3.2
 
 > `DW_OP_pick` ([1-byte integral] N)
 >
->       <[*any*] Nth> ... < first> → < Nth> ... < first> < Nth>
+>      <[*any*] Nth>  ... < top> → < Nth> ... < top> < Nth>
 >
 
 **NOTE FOR DISCUSSION**: It should be noted that there is no pick
@@ -94,17 +100,17 @@ requested may suggest that it is not needed.
 
 > `DW_OP_over`
 >
->     <[*any*] B> <[*any*] A> → < B> < A> < B>
+>     <[*any*] A> <[*any*] B> → < B> < A> < B>
 >
 
 > `DW_OP_swap`
 >
->    <[*any*] B> <[*any*] A> 2→ < A> < B>
+>    <[*any*] A> <[*any*] B> → < B> < A>
 >
 
 > `DW_OP_rot`
 >
->    <[*any*] C> <[*any*] B> <[*any*] A> → < A> < C> < B>
+>    <[*any*] A> <[*any*] B> <[*any*] C> → < C> < A> < B>
 >
 
 In section 3.3 add the following heading between operator and its
@@ -145,7 +151,7 @@ description as follows:
 >    → <[*specified type*] A>
 >
 
-*NOTE FOR DISCUSSION*: Why do some operators take SLEBs or ULEBs while
+**NOTE FOR DISCUSSION**: Why do some operators take SLEBs or ULEBs while
 others take 2- or 4- byte unsigned integrals or 4- or 8- byte unsigned
 integrals. Historic?
 
@@ -167,7 +173,7 @@ description as follows:
 
 > `DW_OP_and`
 >
->    <[integral base type or generic type] B> <[integral base type or generic type] A> → <[integral base type or generic type] A'>
+>    <[integral base type or generic type] A> <[integral base type or generic type] B> → <[integral base type or generic type] A'>
 >
 
 **NOTE FOR DISCUSSION**: Do we want to expand logical operators like
@@ -178,21 +184,21 @@ words, can we expand the domain of these operators.
 
 > `DW_OP_div`
 >
->    <[numeric] B>  <[numeric] A> → <[numeric] B/A>
+>    <[numeric] A>  <[numeric] B> → <[numeric] A/B>
 >
 
 > `DW_OP_minus`
 >
->    <[numeric] B> <[numeric] A> → <[numeric] B-A>
+>    <[numeric] A> <[numeric] B> → <[numeric] A-B>
 >
 
 > `DW_OP_mod`
 >
->    <[integral base type or generic type] B> <[integral base type or generic type] A> → <[integral base type or generic type] B mod A>
+>    <[integral base type or generic type] A> <[integral base type or generic type] B> → <[integral base type or generic type] A mod B>
 
 > `DW_OP_mul`
 >
->    <[numeric] B> <[numeric] A> → <[numeric] B*A>
+>    <[numeric] A> <[numeric] B> → <[numeric] A*B>
 >
 
 > `DW_OP_neg`
@@ -211,12 +217,12 @@ words, can we expand the domain of these operators.
 
 > `DW_OP_plus`
 >
->    <[numeric] B> <[numeric] A> → <[numeric] B+A>
+>    <[numeric] A> <[numeric] B> → <[numeric] A+B>
 >
 
-> `DW_OP_plus_uconst` (ULEB B)
+> `DW_OP_plus_uconst` (ULEB b)
 >
->       <[numeric] A> → <[numeric] B+A>
+>       <[numeric] A> → <[numeric] A+b>
 >
 
 **NOTE FOR DISCUSSION:** The justification for `DW_OP_plus_uconst`
@@ -226,7 +232,7 @@ words, can we expand the domain of these operators.
 
 > `DW_OP_shl`
 >
->    <[integral base type or generic type] B> <[integral base type or generic type] A> → <[integral base type or generic type] B<<A >
+>    <[integral base type or generic type] A> <[integral base type or generic type] B> → <[integral base type or generic type] A<<B >
 >
 
 **NOTE FOR DISCUSSION:** What happens if you shift left a negative
@@ -236,16 +242,16 @@ to a positive value.
 >
 > `DW_OP_shr`
 >
->    <[integral base type or generic type] B> <[integral base type or generic type] A> → <[integral base type or generic type] B>>A >
+>    <[integral base type or generic type] A> <[integral base type or generic type] B> → <[integral base type or generic type] A>>B >
 
 > `DW_OP_shra`
 >
->    <[integral base type or generic type] B> <[integral base type or generic type] A> → <[integral base type or generic type] B shra A >
+>    <[integral base type or generic type] A> <[integral base type or generic type] B> → <[integral base type or generic type] A shra B >
 >
 
 > `DW_OP_xor`
 >
->    <[integral base type or generic type] B> <[integral base type or generic type] A> → <[integral base type or generic type] B xor A >
+>    <[integral base type or generic type] A> <[integral base type or generic type] B> → <[integral base type or generic type] A xor B >
 >
 
 In section 3.6 add the following heading between operator and its
