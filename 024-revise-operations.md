@@ -60,6 +60,10 @@ With:
 
 >    < A> < B> 
 
+> *In other words, the 'A` is a name that represents the stack data
+> and its type. It is not the name for a particular postion on the
+> stack.*
+
 > *Then after the "→" the results that are pushed on the stack. Each
 > entry on the DWARF stack has a type. In most cases, it is broadly a
 > value or location. However, there are often limits placed on the
@@ -76,7 +80,8 @@ With:
 > meaningful way before returning it to the stack, the name is given
 > an apostrophe suffix, for example turning A into A' ("A prime").*
 
-In Section 3.2
+In Section 3.2 add the following heading between operator and its
+description as follows:
 
 > `DW_OP_dup`
 >
@@ -85,7 +90,7 @@ In Section 3.2
 
 > `DW_OP_drop`
 >
->       <[*any*] A> <[*any*] B>  → < B>
+>       <[*any*] A> <[*any*] B>  → < A>
 >
 
 > `DW_OP_pick` ([1-byte integral] N)
@@ -100,7 +105,7 @@ requested may suggest that it is not needed.
 
 > `DW_OP_over`
 >
->     <[*any*] A> <[*any*] B> → < B> < A> < B>
+>     <[*any*] A> <[*any*] B> →  < A> < B> < A>
 >
 
 > `DW_OP_swap`
@@ -228,7 +233,7 @@ words, can we expand the domain of these operators.
 **NOTE FOR DISCUSSION:** The justification for `DW_OP_plus_uconst`
   seems questionable to me. I do not see why you could not just use:
   `DW_OP_uconst <some number> DW_OP_plus`. Is this a historic
-  limitation? Should this text be reconsidered?
+  limitation? Should this text be reconsidered? Should this be offset_uconst?
 
 > `DW_OP_shl`
 >
