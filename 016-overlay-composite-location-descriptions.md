@@ -478,14 +478,9 @@ called "Overlay Composites".
 > storage with a piece of the overlay storage spliced in, extending
 > the base storage if necessary with undefined storage.*
 >
-> 1. `DW_OP_overlay`
->      - stack operands:
->        - T [location]: base location
->        - Z [location]: overlay location
->        - Y [unsigned int]: base offset
->        - X [unsigned int]: overlay width
->       - stack output:
->         - X [location]: composite_location
+> `DW_OP_overlay`
+>
+>    <[location] base location> <[location] overlay location> <[integral] base offset> <[unsigned] overlay width> → <[location] composite location>
 >
 >   `DW_OP_overlay` pushes a new composite location whose storage is the
 >   result of replacing a slice in the storage of `base location` with
@@ -522,13 +517,8 @@ called "Overlay Composites".
 > bytes.
 >
 > 2. `DW_OP_bit_overlay`
->      - stack operands:
->        - T [location]: base location
->        - Z [location]: overlay location
->        - Y [unsigned int]: base offset in bits
->        - X [unsigned int]: overlay width in bits
->       - stack output:
->         - X [location]: composite_location
+>
+>    <[location] base location> <[location] overlay location> <[integral] base offset in bits> <[unsigned] overlay width in bits> → <[location] composite location>
 >
 >   `DW_OP_bit_overlay` pushes a new composite location whose storage
 >   is the result of replacing a slice in the storage of `base
