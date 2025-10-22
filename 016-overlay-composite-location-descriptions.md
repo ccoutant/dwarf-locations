@@ -15,6 +15,9 @@ the unified location storage abstraction that locations-on-the-stack
 provides.  Note this is a problem with the operator itself, not the
 composites or pieces concepts.
 
+**Fixme: Demonstrate the problems Add The offset is not computable,
+can't handle an unbounded array**
+
 This proposal defines a new overlay operator (DW_OP_overlay) that also
 produces a composite location.  It is designed such that it can
 replace usages of the aforementioned piece operators, while allowing
@@ -32,10 +35,10 @@ As a simple example, consider the location of a variable of a struct
 type with three 32-bit fields, whose default location is on the stack
 at offset 0x40 relative to the frame base FB:
 
-          +-----------------------------------------+
-memory:   |        |   a   |   b    |    c   |      |
-          +-----------------------------------------+
-           0       |FB + 0x40                       |end-of-memory
+              +-----------------------------------------+
+    memory:   |        |   a   |   b    |    c   |      |
+              +-----------------------------------------+
+               0       |FB + 0x40                       |end-of-memory
 
     DW_AT_location: [ DW_OP_fbreg(0x40) ]
 
@@ -44,28 +47,28 @@ section of code, we would describe this as an overlay on top of the
 memory location, of 4 bytes starting at offset 4 and a new location of
 reg1:
 
-                           +--------+
-reg1:                      |   b    |
-          +-----------------------------------------+
-memory:   |        |   a   |////////|    c   |      |
-          +-----------------------------------------+
-           +0      |+FB + 0x40                       |end-of-memory
+                               +--------+
+    reg1:                      |   b    |
+              +-----------------------------------------+
+    memory:   |        |   a   |////////|    c   |      |
+              +-----------------------------------------+
+               +0      |+FB + 0x40                       |end-of-memory
 
 Resulting in the following composite with three pieces:
 
-          +-----------------------------------------+
-          | memory ...     | reg1   | memory ...    |
-          +-----------------------------------------+
-           +0      |O                               |end-of-composite
+      +-----------------------------------------+
+      | memory ...     | reg1   | memory ...    |
+      +-----------------------------------------+
+       +0      |O                               |end-of-composite
 
 Where O is the resulting composite's offset, which is the same offset
 as in the base memory location, i.e., +FB + 0x40, and points at the
 beginning of the object.
 
-In addition to simple overlaying as above, the overlay operator can
+In addition to simple overlaying as above, the overlay operators can
 also be used for concatenation, by allowing overlaying a piece on the
 right of the base location, beyond base's end.  This gives it the
-power to replace DW_OP_piece.
+power to replace the flawed DW_OP_piece and DW_OP_bit_piece.
 
 For example, consider the location of a variable of a 64-bit integer
 type, that has been split into a 32-bit register pair.  We would
@@ -87,13 +90,13 @@ This results in the following composite:
      +0       +4       +8
 
 As a further extension to concatenation, the operator allows
-overlaying further beyond the end of the base.  In that case, the gap
-is "filled" with undefined storage, much like DW_OP_piece does when
-the piece is empty.  For example, consider the location of a variable
-of the same struct type with three 32-bit fields, mentioned earlier.
-If the compiler chooses to promote fields a and c to registers, and
-optimize out field b, we may describe this with concatenation with a
-gap, like so:
+overlaying beyond the extent of the base storage.  When an overlay is
+is placed beyond the extent of the base storage, the gap is "filled" with
+undefined storage, much like DW_OP_piece does when the piece is empty.
+For example, consider the location of a variable of the same struct
+type with three 32-bit fields, mentioned earlier.  If the compiler
+chooses to promote fields a and c to registers, and optimize out field
+b, we may describe this with concatenation with a gap, like so:
 
                       +--------+
                       |   c    |     (reg2)
@@ -121,10 +124,10 @@ if the hardware has vector registers with 8 elements, and 8-wide SIMD
 instructions, the compiler may vectorize a loop so that it executes 8
 iterations concurrently for each vectorized loop iteration.
 
-On the first iteration of the generated vectorized loop, iterations 0 to 7 of
-the source language loop will be executed using SIMD instructions. Then on the
-next iteration of the generated vectorized loop, iterations 8 to 15 will be
-executed, and so on.
+On the first iteration of the generated vectorized loop, iterations 0
+to 7 of the source language loop will be executed using SIMD
+instructions. Then on the next iteration of the generated vectorized
+loop, iterations 8 to 15 will be executed, and so on.
 
 If the source language loop accesses an array element based on the
 loop iteration index, the compiler may read the element into a
@@ -135,20 +138,22 @@ elements 0 to 7 into a vector register on the first vectorized loop
 iteration, then array elements 8 to 15 on the next iteration, and so
 on.
 
-The DWARF location description for the array needs to express that all elements
-are in memory, except the slice that has been promoted to the vector register.
-The starting position of the slice is a runtime value based on the iteration
-index modulo the vectorization size. This cannot be expressed by `DW_OP_piece`
-and `DW_OP_bit_piece` which only allow constant offsets to be expressed.
+The DWARF location description for the array needs to express that all
+elements are in memory, except the slice that has been promoted to the
+vector register.  The starting position of the slice is a runtime
+value based on the iteration index modulo the vectorization size. This
+cannot be expressed by `DW_OP_piece` and `DW_OP_bit_piece` which only
+allow constant offsets to be expressed.
 
 Therefore, a new operator is defined that takes two location
 descriptions plus an offset and a size, and creates a composite that uses
 the second location description as an overlay of the first, positioned
 according to the offset and size.
 
-Consider an array that has been partially registerized such that the currently
-processed elements are held in registers, whereas the remainder of the array
-remains in memory. Consider the loop in this C function, for example:
+Consider an array that has been partially registerized such that the
+currently processed elements are held in registers, whereas the
+remainder of the array remains in memory. Consider the loop in this C
+function, for example:
 
     extern void foo(uint32_t dst[], uint32_t src[], int len) {
         for (int i = 0; i < len; ++i)
@@ -580,10 +585,43 @@ that `DW_OP_piece` composites are not.
 ## Proposal
 
 ### Section 3.12
-Rename Section 3.12 to "Composite Piece Description Operations"
+In Section 3.12 Composite Locations, keep the following introductory paragraphs:
 
-### Add Section 3.13
-Add a new Section 3.13 after "Composite Piece Description Operations",
+> A composite location represents the location of an object or value
+> that does not exist in a single block of contiguous storage (e.g.,
+> as the result of compiler optimization where part of the object is
+> promoted to a register). It consists of a (possibly empty) sequence
+> of pieces, where each piece maps a fixed range of bits from the
+> object onto a corresponding range of bits at a new (sub-)location.
+>
+> The pieces of a composite location are contiguous, so that the size
+> of the composite storage is the sum of the sizes of the individual
+> pieces, and each piece covers a range of bits immediately following
+> the previous piece. The maximum size of a block of composite storage
+> is the size of the largest address space or register.
+
+> Typically, the size of a composite storage is the same as that of
+> the object it describes. If the composite storage is smaller than the
+> object, the remaining bits of the object are treated as undefined.
+>
+> In the process of fetching a value from a composite location, the consumer
+> may need to fetch and assemble bits from more than one piece.
+
+Add the following new paragraph:
+
+> Composite locations can be formed by two methods: piece operations, which
+> operate as in previous versions of DWARF, and overlay operations.
+
+Move the rest of the existing section into subsection 3.12.1 Piece Operations:
+
+> 3.12.1 Piece Operations
+> The following operation is used to form a new, empty, composite location:
+>
+>  ...
+
+
+### Add Section 3.12.2
+Add a new Section 3.12.2 after "Composite Piece Description Operations",
 called "Overlay Composites".
 
 > *Conceptually, these new composite operators create a new composite
