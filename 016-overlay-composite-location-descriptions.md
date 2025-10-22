@@ -225,7 +225,7 @@ would reference the unsigned int located R0+2.
 
 An overlay can also be used to create a composite location without
 using `DW_OP_piece`. For example GPUs often store doubles in two
-32b parts. An overlay can be used to concatenate the locations.
+32b parts. An overlay can be used to combine the locations.
 
     DW_OP_addr 0x100
     DW_OP_addr 0x200
