@@ -10,7 +10,7 @@ more manageable proposals, in a form acceptable to the DWARF committee.
 Issues approved by the DWARF committee:
 
 * [Expression Evaluation Context](001a-context.md) (Issue [241011.1][241011.1])
-* [Locations on the Stack](005-locations-on-stack.md) (Issue [230524.1][230524.1]) ([Rendered diffs][diffs])
+* [Locations on the Stack](005-locations-on-stack.md) (Issue [230524.1][230524.1])
 
 Issues submitted to the DWARF committee:
 
@@ -53,4 +53,3 @@ Independent issues not part of this series:
 [230120.2]: https://dwarfstd.org/issues/230120.2.html
 [230120.3]: https://dwarfstd.org/issues/230120.3.html
 [241011.1]: https://dwarfstd.org/issues/241011.1.html
-[diffs]: https://ccoutant.github.io/dwarf-locations/chapter2-diffs.html
