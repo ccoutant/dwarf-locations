@@ -252,12 +252,12 @@ stack, a composite piece location can be offset but offsetting into
 that location is only meaningful for those 8 bytes. Offsetting beyond
 those 8 bytes is an error.
 
-On the other hand, an overlay creates a location with an intial offset
-of zero which extends out to the full extent of the underlying base
-storage. Thus in this example, if the base address space is 64b long,
-any offset that does not overlow the generic type would be valid. In
-this way, composite overlay locations are more similar to an address
-where the consumer determines how many bytes to read from the
+On the other hand, an overlay creates a location that extends out to
+the full extent of the underlying base storage, both to the left and
+to the right. Thus in this example, if the base address space is 64b
+long, any offset that does not overlow the generic type would be
+valid. In this way, composite overlay locations are more similar to an
+address where the consumer determines how many bytes to read from the
 location.
 
 If producer wants to make a location a bit more like what is created
