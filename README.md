@@ -7,18 +7,25 @@ makes some sweeping changes to the [DWARF-5 specification][dwarf5].
 The documents here are an attempt to split this into several
 more manageable proposals, in a form acceptable to the DWARF committee.
 
-Issues ready to submit to DWARF committee:
+Issues approved by the DWARF committee:
 
+* [Expression Evaluation Context](001a-context.md) (Issue [241011.1][241011.1])
 * [Locations on the Stack](005-locations-on-stack.md) (Issue [230524.1][230524.1]) ([Rendered diffs][diffs])
+
+Issues submitted to the DWARF committee:
+
 * [Clarifications for Memory Location Descriptions](004-clarifications-mem.txt) (Issue [230120.3][230120.3])
 * [Clarifications for Location Descriptions](002-clarifications-loc.txt) (Issue [230120.2][230120.2])
+
+Issues ready to submit to the DWARF committee:
+
 * [General Support for Address Spaces](013-generalize-address-spaces.md) ([Original text](013-generalize-address-spaces.orig.txt))
+* [DWARF Operation to Create Runtime Overlay Composite Location Description](016-overlay-composite-location-descriptions.md)
 
 Issues in progress:
 
 * [Deferred Issues from Tony’s Review of Locations on Stack](005a-misc.md)
 * [DWARF Operations to Create Vector Composite Location Descriptions](015-vector-composite-location-descriptions.txt)
-* [DWARF Operation to Create Runtime Overlay Composite Location Description](016-overlay-composite-location-descriptions.md)
 * [DWARF Operation to Access Call Frame Entry Registers](017-call-frame-entry-registers.txt)
 * [Support for Source Language Optimizations that Result in Concurrent Iteration Execution](020-simd-hardware.txt)
 * [Support for Divergent Control Flow of SIMT Hardware](021-divergent-control-flow.txt)
@@ -35,10 +42,6 @@ Issues superseded by others:
 * [Generalize Offsetting of Location Descriptions](010-generalize-offsetting.txt) (Included in Locations on the Stack)
 * [Generalize Creation of Undefined Location Descriptions](011-generalize-undefined.txt) (Included in Locations on the Stack)
 * [Generalize Creation of Composite Location Descriptions](012-generalize-composite.txt) (Replaced by DW_OP_composite in Locations on the Stack)
-
-Issues already passed by the committee:
-
-* [Expression Evaluation Context](001a-context.md) (Issue [241011.1][241011.1])
 
 Independent issues not part of this series:
 
