@@ -50,19 +50,33 @@ With:
 >
 
 > *The first line mentions the inline operands and their expected
-> types or binary encodings. These encodings can be found in Section X.Y*
+> types or binary encodings. These encodings can be found in Section
+> X.Y*
 
 > *The second line explains the ways that the operator affects the
 > DWARF stack. The arguments consumed from the stack are listed
 > first. The stack is built with new entries added to the right. The
-> top of the stack is on the right while the deepest entry is on the
-> stack is on the left. Thus: "push A" followed by "push B" would yield:*
+> top of the stack is on the right while the deepest entry on the
+> stack is on the left. Thus: "push A" followed by "push B" would
+> yield:*
 
->    < A> < B> 
+>    < A> < B>
 
 > *In other words, the 'A` is a name that represents the stack data
 > and its type. It is not the name for a particular postion on the
 > stack.*
+
+> *Symbolic names are often given to the stack arguments and the stack
+> result when it is considered to be helpful or meaningful. In the
+> cases where no sybolic name would be meaningful, the generic names A
+> B C and D are used. When, an operator modifies a stack argument in
+> meaningful way before returning it to the stack, the name is given
+> an apostrophe suffix, for example turning A into A' ("A prime").*
+
+> *The types given for stack arguments are different than inline
+> operands. They are not binary encodings. They represent the domain
+> over which the operator is defined. Types or values beyond the
+> specified ranges can lead to undefined results.*
 
 > *Then after the "→" the results that are pushed on the stack. Each
 > entry on the DWARF stack has a type. In most cases, it is broadly a
@@ -73,12 +87,7 @@ With:
 > of the operation's output is also often listed when it cannot be
 > immediately inferred.*
 
-> *Symbolic names are often given to the stack arguments and the stack
-> result when it is considered to be helpful or meaningful. In the
-> cases where no sybolic name would be meaningful, the generic names A
-> B C and D are used. When, an operator modifies a stack argument in
-> meaningful way before returning it to the stack, the name is given
-> an apostrophe suffix, for example turning A into A' ("A prime").*
+>
 
 In Section 3.2 add the following heading between operator and its
 description as follows:
@@ -93,15 +102,10 @@ description as follows:
 >       <[*any*] A> <[*any*] B>  → < A>
 >
 
-> `DW_OP_pick` ([1-byte integral] N)
+> `DW_OP_pick` ([1-byte unsigned] N)
 >
->      <[*any*] Nth>  ... < top> → < Nth> ... < top> < Nth>
+>      <[*any*] Nth>  ... < 0th > → < Nth> ... < 0th> < Nth>
 >
-
-**NOTE FOR DISCUSSION**: It should be noted that there is no pick
-operation which can pick based upon an index which is passed on the
-stack instead of as a literal operand. The fact that it hasn't been
-requested may suggest that it is not needed.
 
 > `DW_OP_over`
 >
@@ -155,10 +159,6 @@ description as follows:
 >
 >    → <[*specified type*] A>
 >
-
-**NOTE FOR DISCUSSION**: Why do some operators take SLEBs or ULEBs while
-others take 2- or 4- byte unsigned integrals or 4- or 8- byte unsigned
-integrals. Historic?
 
 In section 3.4 add the following heading between operator and its
 description as follows:
@@ -363,7 +363,8 @@ description as follows:
 
 > `DW_OP_piece` ([ULEB] size in bytes)
 >
->    → <[location] composite storage>
+>    → <[location] new composite storage>  **or**
+>    <[location] composite storage> → <[location] composite storage'>
 >
 
 **NOTE FOR DISCUSSION** The original conception of piece had the
@@ -486,7 +487,7 @@ description as follows:
 **NOTE FOR DISCUSSION** Should the types that can be converted be
 specified? Some of the conversions can be kind of weird.
 
-> `DW_OP_reinterpret` ([ULEB] or 0 for generic type)
+> `DW_OP_reinterpret` ([ULEB] DIE offset with 0 for generic type)
 >
 >       <[*any*] A> → <[*specified type*] A'>
 >
@@ -501,7 +502,7 @@ description as follows:
 
 > `DW_OP_entry_value` ([ULEB] length, [DWARF expression] expression)
 >
->    → <[generic] value>
+>    →  *stack result by agreement*
 >
 
 **NOTE FOR DISCUSSION** What type does it push on the stack. It isn't
