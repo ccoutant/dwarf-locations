@@ -1,5 +1,118 @@
 # DWARF Operation to Create Runtime Overlay Composite Location Description
 
+## Introduction
+
+Composites are a powerful abstraction in DWARF, that allows describing
+an object that may have parts stored in different locations.
+
+Despite sharing the names, it is important to realize the distinction
+between the concepts of composites and pieces, and the operators that
+currently can be used to create them.  Currently, you can create
+composites with the DW_OP_composite, DW_OP_piece, and DW_OP_bit_piece
+operators.  DW_OP_bit_piece in particular has the problem that its
+offset operand depends on the type of location, which conflicts with
+the unified location storage abstraction that locations-on-the-stack
+provides.  Note this is a problem with the operator itself, not the
+composites or pieces concepts.
+
+This proposal defines a new overlay operator (DW_OP_overlay) that also
+produces a composite location.  It is designed such that it can
+replace usages of the aforementioned piece operators, while allowing
+describing objects in a more natural, and more composable way in many
+cases.  The resulting composites, are, however, just normal
+composites, completely indistinguishable from ones created by the
+preexisting operators.
+
+In its basic form, the overlay operator produces a composite location
+by conceptually taking a base location and overlaying a new location
+on top of a range of bits from that base location, overriding the
+original location with the new one for that range of bits.
+
+As a simple example, consider the location of a variable of a struct
+type with three 32-bit fields, whose default location is on the stack
+at offset 0x40 relative to the frame base FB:
+
+          +-----------------------------------------+
+memory:   |        |   a   |   b    |    c   |      |
+          +-----------------------------------------+
+           0       |FB + 0x40                       |end-of-memory
+
+    DW_AT_location: [ DW_OP_fbreg(0x40) ]
+
+If the compiler chooses to promote the field b to reg1 for some
+section of code, we would describe this as an overlay on top of the
+memory location, of 4 bytes starting at offset 4 and a new location of
+reg1:
+
+                           +--------+
+reg1:                      |   b    |
+          +-----------------------------------------+
+memory:   |        |   a   |////////|    c   |      |
+          +-----------------------------------------+
+           +0      |+FB + 0x40                       |end-of-memory
+
+Resulting in the following composite with three pieces:
+
+          +-----------------------------------------+
+          | memory ...     | reg1   | memory ...    |
+          +-----------------------------------------+
+           +0      |O                               |end-of-composite
+
+Where O is the resulting composite's offset, which is the same offset
+as in the base memory location, i.e., +FB + 0x40, and points at the
+beginning of the object.
+
+In addition to simple overlaying as above, the overlay operator can
+also be used for concatenation, by allowing overlaying a piece on the
+right of the base location, beyond base's end.  This gives it the
+power to replace DW_OP_piece.
+
+For example, consider the location of a variable of a 64-bit integer
+type, that has been split into a 32-bit register pair.  We would
+describe this as the second 32-bit register overlaying on the right of
+the first register:
+
+             +--------+
+             |   h2   |     (reg2)
+    +-----------------+
+    |   h1   |              (reg1)
+    +--------+
+     +0       +4       +8
+
+This results in the following composite:
+
+    +--------+--------+
+    |  reg1  |  reg2  |
+    +--------+--------+
+     +0       +4       +8
+
+As a further extension to concatenation, the operator allows
+overlaying further beyond the end of the base.  In that case, the gap
+is "filled" with undefined storage, much like DW_OP_piece does when
+the piece is empty.  For example, consider the location of a variable
+of the same struct type with three 32-bit fields, mentioned earlier.
+If the compiler chooses to promote fields a and c to registers, and
+optimize out field b, we may describe this with concatenation with a
+gap, like so:
+
+                      +--------+
+                      |   c    |     (reg2)
+    +--------+        +--------+
+    |   a    |                       (reg1)
+    +--------+
+     +0       +4       +8
+
+This results in the following composite:
+
+    +--------+--------+--------+
+    |  reg1  | undef  |  reg2  |
+    +--------+--------+--------+
+     +0       +4       +8
+
+The following section goes into detail.  It describes many use cases
+where overlay is useful, including those that originally motivated
+overlay.
+
 ## Problem Description
 
 It is common in SIMD vectorization for the compiler to generate code
