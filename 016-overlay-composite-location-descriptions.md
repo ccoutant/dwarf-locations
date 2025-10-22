@@ -409,7 +409,7 @@ This also works if those vector registers were spilled to memory:
                                     [XX XX XX XX YY YY YY YY]
 
 This can also be generalized into a DWARF function which ignores the
-location. This would allow the compiler to use the same function DWARF
+location. This would allow the compiler to use the same DWARF
 function whether the variable is stored in a register or in some kind
 of memory. It should be noted that on some architectures when a
 shorter value is placed in a larger register its placement within the
@@ -793,7 +793,7 @@ After the example below:
 
 Add: 
 
-> The equivilent expression using overlays would be:
+> The equivalent expression using overlays would be:
 
     DW_OP_lit1
     DW_OP_stack_value # while 1 can fit into a single byte stack_value
