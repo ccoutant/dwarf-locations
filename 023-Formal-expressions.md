@@ -46,11 +46,11 @@ At the time that the standard was published. The this code was tagged
 "dwarf-6.0". However, as behavioral semantic questions must be
 resolved, this code base will be kept up to date and hosted at: TBD.
 
-To run this program simply run:
+To experiment with the semantics of these new DWARF operations and see
+how the authors intended them to work you can go to:
 
-**FIXME**: add something better here:
+https://slinder1.github.io/dwarf-locstack/
 
-    $ utop
-    <snip>
-    utop # #use "dwarf-locstack.ml";;
-
+This is a JavaScript web page uses a translation of the OCaml formal
+specification of the operators to demonstrate how the operators should
+function.
