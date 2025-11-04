@@ -93,7 +93,8 @@ architecture, bits are numbered left-to-right.</em></ins></p>
 of that storage. It gives the location of the program
 object, which occupies a sequence of contiguous bits
 starting at that location. The bit offset of a location must
-be less than the size of the named block of storage.</ins></p>
+be less than the size of the named block of storage (for a
+zero-length block of storage, the offset must be 0).</ins></p>
 <p><ins>DWARF can describe locations in six kinds of storage:</ins></p>
 <ul>
 <li>
@@ -102,20 +103,25 @@ Corresponds to the target architecture memory address
 spaces. There is always a default address space, and the
 target architecture may define additional address
 spaces.
+Each memory storage block is the size of the corresponding
+address space.
 <em>(The offset can be thought of as a byte or word address
 combined with a bit offset within the byte or word.)</em></ins></p>
 </li>
 <li>
 <p><ins>Registers.
-Corresponds to the target architecture registers.</ins></p>
+Corresponds to the target architecture registers.
+Each register storage block is the size of the corresponding
+register.</ins></p>
 </li>
 <li>
 <p><ins>Undefined storage.
 Indicates no value is available, as when a variable has
 been optimized out. The location names a block of
-imaginary storage, whose size is that of the largest
-memory address space, that cannot be read from or
-written to.</ins></p>
+imaginary storage that cannot be read.
+Writing to undefined storage has no effect.
+The size of an undefined storage block is the same as
+that of the largest memory address space.</ins></p>
 </li>
 <li>
 <p><ins>Implicit storage.
@@ -130,8 +136,8 @@ the same as the fixed value that it holds.</ins></p>
 A special form of implicit storage, created by the
 <code>DW_OP_implicit_pointer</code> operator (see Section 3.11).
 The location names a block of imaginary storage that
-holds a secondary location. Its size is the size of a
-pointer in the default memory address space, but no
+holds a secondary location. Its size is the size of the
+pointer that was optimized away, but no
 physical pointer is available.</ins></p>
 </li>
 <li>
@@ -139,7 +145,10 @@ physical pointer is available.</ins></p>
 A hybrid form of storage where different pieces of a
 program object map to different locations, as when a
 field of a structure or a slice of an array is promoted
-to a register while the rest remains in memory.</ins></p>
+to a register while the rest remains in memory.
+Composite storage consists of a (possibly empty) series
+of contiguous pieces, and its size is the sum of the
+sizes of the pieces.</ins></p>
 </li>
 </ul>
 <p>…</p>
@@ -166,16 +175,17 @@ that has the size of an address in the default address space
 on the target machine, and unspecified signedness.</ins></p>
 <p><del><em>The generic type is the same as the unspecified type used for stack
 operations defined in DWARF Version 4 and before.</em></del></p>
-<p><ins>An implicit conversion between a memory location and a value
+<p><ins>An implicit conversion between a location and a value
 may happen during the execution of any operation or when
 evaluation of the expression is completed. If a location is
-expected, but the result is a value, the value is implicitly
-treated as a memory address in the default address space,
-and converted to a memory location. If a value is expected,
-and the result is an addressable memory location (i.e., if
-the offset is a multiple of the byte or word size) in the
-default address space, the address is implicitly converted
-to a value of the generic type.</ins></p>
+expected, but the result is a value of integral type, the
+value is implicitly treated as a memory address in the
+default address space, and converted to a memory location.
+If a value is expected, and the result is an addressable
+memory location (i.e., if the offset is a multiple of the
+byte or word size) in the default address space, the address
+is implicitly converted to a value of the generic
+type.</ins></p>
 <p><del><em>Debugging information must provide consumers a way to
 find the location of program variables, determine the bounds of dynamic
 arrays and strings, and possibly to find the base address of a
@@ -200,10 +210,12 @@ a location <del>description</del> (see Section {classesandforms}).</em></p>
 </li>
 <li>
 <p>Initial stack</p>
-<p>In most cases, the DWARF expression stack is empty at the start
-of expression evaluation. In certain circumstances, however, one
-or more values are pushed implicitly onto the stack before evaluation
-of the expression starts (e.g., <code>DW_AT_data_member_location</code>).</p>
+<p>In most cases, the DWARF expression stack is empty at
+the start of expression evaluation. In certain
+circumstances, however, one or more
+<del>values</del> <ins>entries</ins> are pushed
+implicitly onto the stack before evaluation of the
+expression starts (e.g., <code>DW_AT_data_member_location</code>).</p>
 </li>
 <li>
 <p>Current compilation unit</p>
@@ -378,7 +390,7 @@ type identifier)</del>
 <li>
 <p><code>DW_OP_drop</code><br />
 The <code>DW_OP_drop</code> operation pops the <del>value (including its type
-identifier)</del></span><ins>entry</ins> at the top of the stack.</p>
+identifier)</del> <ins>entry</ins> at the top of the stack.</p>
 </li>
 <li>
 <p><code>DW_OP_pick</code><br />
@@ -479,7 +491,7 @@ section.</em></p>
 </li>
 </ol>
 <h2><del>2.5.2.2</del> 3.4 Register Value Operations</h2>
-<p>The following operation pushes
+<p>The following operations push
 <del>a value onto the stack that is either part or all of</del>
 the contents of a register <del>or the result of adding the contents of a
 register to a given signed offset</del> <ins>onto the stack</ins>.
@@ -505,15 +517,15 @@ compilation unit, which must be a <code>DW_TAG_base_type</code> entry that provi
 type of the value contained in the specified register.</p>
 </li>
 <li>
-<p><del><code>DW_OP_regval_bits</code></del><br />
-<del>The <code>DW_OP_regval_bits</code> operation takes a single unsigned LEB128
+<p><code>DW_OP_regval_bits</code><br />
+The <code>DW_OP_regval_bits</code> operation takes a single unsigned LEB128
 integer operand, which gives the number of bits to read. This number must
 be smaller or equal to the bit size of the generic type.  It pops
 the top two stack elements and interprets the top element as an
 unsigned bit offset from the least significant bit end and the
 other as a register number identifying the register from which to
 extract the value.  If the extracted value is smaller than the size
-of the generic type, it is zero extended.</del></p>
+of the generic type, it is zero extended.</p>
 </li>
 </ol>
 <h2><del>2.5.2.4</del> 3.5 Arithmetic and Logical Operations</h2>
@@ -727,8 +739,8 @@ Section {lowlevelinformation}).</p>
 <h2><del>2.6.1.1.2</del> 3.7 Memory Locations</h2>
 <p><ins>A memory location represents the location of a piece or all of an
 object or other entity in memory. On architectures that support
-multiple address spaces, a memory location contains a component that
-identifies the address space.</ins></p>
+multiple address spaces, a memory location identifies
+storage associated with the address space.</ins></p>
 <p><ins>In contexts that expect a location, a value of the generic type
 will be implicitly converted to a memory location in the default
 address space.</ins></p>
@@ -813,7 +825,7 @@ by the ABI authoring committee for each architecture.</em></p>
 The <code>DW_OP_reg&lt;n&gt;</code> operations encode the names of up to 32
 registers, numbered from 0 through 31, inclusive. <del>The object
 addressed is in register <em>n</em>.</del>
-<ins>A location that names the designated register,
+<ins>A location that names the storage associated with the designated register,
 with an offset of 0, is formed and pushed on the stack.</ins></p>
 </li>
 <li>
@@ -821,7 +833,7 @@ with an offset of 0, is formed and pushed on the stack.</ins></p>
 The <code>DW_OP_regx</code> operation has a single
 unsigned LEB128 literal
 operand that encodes the name of a register.
-<ins>A location that names the designated register,
+<ins>A location that names the storage associated with the designated register,
 with an offset of 0, is formed and pushed on the stack.</ins></p>
 </li>
 </ol>
@@ -900,51 +912,83 @@ The offset of <code>L</code> is set to 0 and <code>L</code> is pushed onto the s
 </li>
 </ol>
 <h2><ins>3.11 Implicit Pointer Locations [NEW]</ins></h2>
-<p><em>An optimizing compiler may eliminate a pointer, while
-still retaining the value that the pointer addressed.
-<code>DW_OP_implicit_pointer</code> allows a producer to describe
-<del>this</del> <ins>the latter</ins> value.</em></p>
+<p><em>An optimizing compiler may eliminate a pointer, while still
+retaining the <del>value</del> <ins>object</ins> that the
+pointer addressed. <code>DW_OP_implicit_pointer</code> allows a
+producer to describe <del>this value</del> <ins>the location
+(or value) of the latter object</ins>.</em></p>
 <p><ins>An implicit pointer location is used to describe</ins>
-a pointer <ins>object</ins> that cannot be represented as a
-real pointer, even though the value it would point to can be
+a pointer <ins>object <code>P</code></ins> that cannot be represented as a
+real pointer, even though the <ins>location
+or</ins> value <ins>of the object</ins> it would point to can be
 described. <del>In this form of location description, the
 DWARF expression</del> <ins>It</ins> refers to a debugging
-information entry that represents the actual value of the
-object to which the pointer would point. Thus, a consumer of
-the debug information would be able to show the value of the
-dereferenced pointer, even when it cannot show the value of
-the pointer itself.</p>
+information entry that represents the <del>actual value of the</del>
+object <ins><code>V</code></ins> to which the pointer would
+point. Thus, a consumer of the debug information would be
+able to show the value of the dereferenced pointer, even
+when it cannot show the value of the pointer itself.</p>
 <p>The following DWARF operation is used to create an implicit
 pointer location:</p>
 <ol>
 <li>
 <p><code>DW_OP_implicit_pointer</code></p>
-<p>The <code>DW_OP_implicit_pointer</code> operation has two operands: a
-reference to a debugging information entry that describes
-the dereferenced object’s value, and a signed number that
-is treated as a byte offset from the start of that value.
-The first operand is a 4-byte unsigned value in the 32-bit
-DWARF format, or an 8-byte unsigned value in the 64-bit
-DWARF format (see Section {32bitand64bitdwarfformats})
-that is used as the offset of a debugging information entry
-in the <code>.debug_info</code> section of the current executable
-or shared object file.
-The second operand, <ins>the byte offset,</ins> is a
-signed LEB128 number.</p>
-<p><ins>An implicit pointer storage location is created for the
-location of the pointer object, and is pushed onto the
-stack.</ins></p>
-<p><em>The debugging information entry referenced by a
+<p><del>The <code>DW_OP_implicit_pointer</code> operation has two
+operands: a reference to a debugging information entry
+that describes the dereferenced object’s value, and a
+signed number that is treated as a byte offset from the
+start of that value. The first operand is a 4-byte
+unsigned value in the 32-bit DWARF format, or an 8-byte
+unsigned value in the 64-bit DWARF format (see Section
+{32bitand64bitdwarfformats}) that is used as the offset
+of a debugging information entry in the <code>.debug_info</code>
+section of the current executable or shared object file.
+The second operand is a signed LEB128 number.</del></p>
+<p><em><del>The debugging information entry referenced by a
 <code>DW_OP_implicit_pointer</code> operation is typically a
 <code>DW_TAG_variable</code> or <code>DW_TAG_formal_parameter</code> entry whose
 <code>DW_AT_location</code> attribute gives a second DWARF expression or a
-location list that describes the value of the object, but the
+location list that describes the value
+of the object, but the
 referenced entry may be any entry that contains a <code>DW_AT_location</code>
 or <code>DW_AT_const_value</code> attribute (for example, <code>DW_TAG_dwarf_procedure</code>).
 By using the second DWARF expression, a consumer can
 reconstruct the value of the object when asked to dereference
 the pointer described by the original DWARF expression
-containing the <code>DW_OP_implicit_pointer</code> operation.</em></p>
+containing the <code>DW_OP_implicit_pointer</code> operation.</del></em></p>
+<p><ins>The <code>DW_OP_implicit_pointer</code> operation has two operands.
+The first operand is a reference to a debugging
+information entry <code>D</code>. It is a 4-byte unsigned value in
+the 32-bit DWARF format, or an 8-byte unsigned value in
+the 64-bit DWARF format (see Section
+{32bitand64bitdwarfformats}) that is used as the offset
+of the debugging information entry <code>D</code> in the
+<code>.debug_info</code> section of the current executable or
+shared object file. The second operand is a signed
+LEB128 number that is treated as a byte offset <code>B</code>.</ins></p>
+<p><ins>The debugging information entry <code>D</code> must contain a
+<code>DW_AT_location</code> attribute or a <code>DW_AT_const_value</code>
+attribute. In the first case, the <code>DW_AT_location</code>
+attribute is evaluated to obtain a location; in the
+second case, an implicit location is formed to hold the
+constant value. The byte offset <code>B</code> is added to that
+location and the resulting location is used as the
+location of the object <code>V</code>.</ins></p>
+<p><ins>A location <code>L</code> is formed for a block of implicit
+pointer storage, which describes the location of the
+pointer object <code>P</code>. The implicit pointer storage
+represents the location of the object <code>V</code>. The offset of
+<code>L</code> is set to 0, and <code>L</code> is pushed onto the stack.</ins></p>
+<p><em><ins>The debugging information entry <code>D</code> is typically a
+<code>DW_TAG_variable</code> or <code>DW_TAG_formal_parameter</code> entry
+whose <code>DW_AT_location</code> attribute evaluates to the
+location of the object <code>V</code>, but it may be any entry that
+contains a <code>DW_AT_location</code> or <code>DW_AT_const_value</code>
+attribute (for example, <code>DW_TAG_dwarf_procedure</code>). The
+location of <code>V</code> would typically be an implicit value, a
+register, or a composite location (an optimized-out
+pointer to a memory location could be described more
+simply as an implicit value).</ins></em></p>
 </li>
 </ol>
 <h2><del>2.6.1.2</del> 3.12 Composite Locations</h2>
@@ -959,38 +1003,27 @@ in memory address order.</del></p>
 <p><del>Each composition operation is immediately preceded by a simple
 location description which describes the location where part
 of the resultant value is contained.</del></p>
-<p><ins>A composite location represents the
-location of an object or value that does not exist in a
-single block of contiguous storage
-<em>(e.g., as the result of compiler optimization where part of the
-object is promoted to a register)</em>.
-It consists of
-a set of tuples of the form <em>(S, E, L)</em>, where each tuple
-represents a mapping from bits in the half-open range <em>[S,
-E)</em> of the program object onto a location <em>L</em>.
-The offset <em>D</em> in a composite location refers
-to a bit position within the program object, selects the
-mapping where <em>S ≤ D &lt; E</em>, and translates to the location
-<em>L</em> with an additional offset of <em>D - S</em> applied. In a
-composite location, each component tuple
-represents a disjoint range of bits (i.e., the ranges may
-not overlap).
-The offset must be less than the largest value of <em>E</em>
-among the tuples.
-<em>In the process of fetching the value from a composite
-location, the consumer may need to reassemble bits from
-more than one of the mappings.</em></ins></p>
-<p><ins>The piece operations (<code>DW_OP_piece</code> and <code>DW_OP_bit_piece</code>) in this
-section are used to build a composite location
-in storage order, one piece at a time.
-Each piece operation expects a location <code>LP</code> at the top of the stack,
-and a composite location <code>LC</code> in the preceding element
-on the stack. It pops those two locations and
-extends <code>LC</code> by adding a new mapping tuple <em>(SP, EP, LP)</em>, where <em>SP</em> is equal
-to the largest value of <em>E</em> from among the existing mapping tuples of <code>LC</code>,
-and <em>EP</em> is determined by the size operand of the piece operation.
-The extended location <code>LC</code> is pushed onto the stack.
-When adding a piece to an empty composite, <em>SP</em> is 0.</ins></p>
+<p><ins>A composite location represents the location of an object or
+value that does not exist in a single block of contiguous
+storage <em>(e.g., as the result of compiler optimization where
+part of the object is promoted to a register)</em>. It consists
+of a (possibly empty) sequence of pieces, where each piece
+maps a fixed range of bits from the object onto a
+corresponding range of bits at a new (sub-)location.</ins></p>
+<p><ins>The pieces of a composite location are contiguous, so that
+the size of the composite storage is the sum of the sizes
+of the individual pieces, and each piece covers a range of
+bits immediately following the previous piece.
+The maximum size of a block of composite storage is
+the size of the largest address space or register.</ins></p>
+<p><em><ins>Typically, the size of a composite storage is the same as
+that of the object it describes. If the composite storage
+is smaller than the object, the remaining bits of the object
+are treated as undefined.</ins></em></p>
+<p><em><ins>In the process of fetching a value from a composite
+location, the consumer may need to fetch and assemble bits from
+more than one piece.</ins></em></p>
+<p><ins>The following operation is used to form a new, empty, composite location:</ins></p>
 <ol>
 <li>
 <p><ins><code>DW_OP_composite</code></ins><br />
@@ -1002,18 +1035,28 @@ the state of the stack is unknown (e.g., following a <code>DW_OP_call*</code>
 operation), or when a new composite is to be started (e.g., rather
 than add to a previous composite location on the stack).</em></ins></p>
 </li>
+</ol>
+<p><ins>The following operations are used to build a composite
+location in storage order, one piece at a time. Each piece
+operation expects a sub-location, <code>L</code>, at the top of the
+stack, and the composite location under construction, <code>C</code>,
+in the preceding element on the stack. It pops those two
+locations and extends <code>C</code> by adding a new piece that maps
+the given number of bytes or bits to the sub-location <code>L</code>.
+The offset of the new location is the same as that of <code>C</code>.
+The new composite location is pushed onto the stack.</ins></p>
+<ol>
 <li>
 <p><code>DW_OP_piece</code><br />
 The <code>DW_OP_piece</code> operation takes a
 single operand, which is an
 unsigned LEB128 number.
-The number describes the size <ins><em>N</em></ins>, in bytes,
+The number describes the size, in bytes,
 of the piece of the object
 <del>referenced by the preceding simple location description</del>
-<ins>to be appended to the composite <code>LC</code>.
-The <em>EP</em> value of the new tuple is set to <em>SP + N × byte_size</em>.</ins>.</p>
+<ins>to be appended to the composite <code>C</code></ins>.</p>
 <p>If <del>the piece is located in a register,</del>
-<ins><code>LP</code> is a register location,</ins>
+<ins>the sub-location <code>L</code> is a register location,</ins>
 but <ins>the piece</ins> does not occupy the entire register,
 the placement of the piece within that register is defined by the ABI.</p>
 <p><del><em>Many compilers store a single variable in sets of registers,
@@ -1025,14 +1068,12 @@ refers to.</em></del></p>
 <li>
 <p><code>DW_OP_bit_piece</code><br />
 The <code>DW_OP_bit_piece</code> operation takes two operands.
-The first is an unsigned LEB128 number that gives the size
-<ins><em>N</em></ins>, in bits,
+The first is an unsigned LEB128 number that gives the size, in bits,
 of the piece <ins>to be appended</ins>.
 The second is an unsigned LEB128 number that
 gives the offset in bits
 <del>from the location defined by the preceding DWARF location description</del>
-<ins>to be applied to the location <code>LP</code>.
-The <em>EP</em> value of the new tuple is set to <em>SP + L</em></ins>.</p>
+<ins>to be applied to the sub-location <code>L</code></ins>.</p>
 <p>Interpretation of the offset depends on the location <del>description</del>.
 If the location <del>description</del> is
 <del>empty</del> <ins>an undefined location</ins> (see Section {undefinedlocations}),
@@ -1063,12 +1104,12 @@ unit of memory.</em></p>
 <p><del>A composition operation that follows an empty location description indicates
 that the piece is undefined, for example because it has been optimized away.</del></p>
 <p><ins>For compatibility with DWARF Version 5 and earlier, the following
-additional rules apply to piece operations:</ins></p>
+exceptions apply to the piece operations:</ins></p>
 <ul>
 <li>
-<p><ins>If <code>LP</code> is a non-composite location (or convertible to
+<p><ins>If <code>L</code> is a non-composite location (or convertible to
 one) and is the only element on the stack, the result
-is a new composite location with the single piece <code>LP</code> (as
+is a new composite location with the single piece <code>L</code> (as
 if <code>DW_OP_composite DW_OP_swap</code> had been processed
 immediately prior to the piece operation).
 <em>This rule supports the first piece operation in a DWARF 5 expression.</em></ins></p>
@@ -1088,14 +1129,11 @@ the only element on the stack, an undefined location is
 pushed implicitly (as if <code>DW_OP_undefined</code> had been
 processed immediately prior to the piece operation),
 whereupon the composite on top of the stack is taken as
-<code>LC</code> and the undefined location is <code>LP</code>. The result is the
+<code>C</code> and the undefined location is <code>L</code>. The result is the
 addition of an undefined piece to the existing composite
 location.
 <em>This rule supports the empty piece operation in DWARF 5 when it is not the
 first piece of a composite.</em></ins></p>
-</li>
-<li>
-<p><ins>Otherwise, the DWARF expression is not valid.</ins></p>
 </li>
 </ul>
 <h2><ins>3.13 Dereferencing Operations [NEW]</ins></h2>
