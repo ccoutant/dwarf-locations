@@ -82,10 +82,10 @@ reg1:
 
 Resulting in the following composite with three pieces:
 
-      +-----------------------------------------+
-      | memory ...     | reg1   | memory ...    |
-      +-----------------------------------------+
-       +0      |O                               |end-of-composite
+              +-----------------------------------------+
+              | memory ...     | reg1   | memory ...    |
+              +-----------------------------------------+
+               +0      |O                               |end-of-composite
 
 Where O is the resulting composite's offset, which is the same offset
 as in the base memory location, i.e., +FB + 0x40, and points at the
