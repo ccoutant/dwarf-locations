@@ -37,20 +37,30 @@ The exact behavior of some DWARF expression operators is not precisely
 defined in the text of standard. Instead, an informal description of
 the behavior is given. This could lead to differing interpretations by
 different tool developers. As an aid to tool authors, a simple DWARF
-expression evaluator has been implemented in OCaml a functional
+expression evaluator has been implemented in OCaml, a functional
 programming language, so that producers and consumers can compare
 their implementation to an objective standard of how the authors
 thought that expressions would be processed.
 
-At the time that the standard was published. The this code was tagged
-"dwarf-6.0". However, as behavioral semantic questions must be
-resolved, this code base will be kept up to date and hosted at: TBD.
+At the time of writing this proposal, the code is available at
+https://github.com/barisaktemur/dwarf-locstack/blob/main/dwarf_locstack.ml
+We intent to move the repository to git.dwarfstd.org or
+sourceware.org, if the proposal is accepted and replace this text
+with:
 
-To experiment with the semantics of these new DWARF operations and see
+At the time that the standard was published, this code was tagged
+"dwarf-6.0". However, as behavioral semantic questions must be
+resolved, this code base will be kept up to date and hosted at: TBD
+https://<a dwarfstd.org or sourceware.org or a similar URL>
+
+To experiment with the semantics of these DWARF operations and see
 how the authors intended them to work you can go to:
 
+https://<a dwarfstd.org or sourceware.org web URL>
+
+(Until proposal acceptance: https://github.com/barisaktemur/dwarf-locstack)
 https://slinder1.github.io/dwarf-locstack/
 
-This is a JavaScript web page uses a translation of the OCaml formal
-specification of the operators to demonstrate how the operators should
-function.
+This is a JavaScript web page that uses a translation of the OCaml
+formal specification of the operators to demonstrate how the operators
+should function.
