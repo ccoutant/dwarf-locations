@@ -2,21 +2,22 @@
 
 ## Introduction
 
-Composites and pieces are powerful DWARF abstractions that describe
-objects whose parts may reside in different locations.
+Composite storage and pieces are powerful DWARF abstractions that
+describe objects whose parts may reside in different locations.
 
 While the terms "composite" and "piece" are often associated with the
 piece operators, it is important to distinguish between the concepts
 themselves and the operators used to construct them.
 
-Currently, you can create composites with the `DW_OP_composite`,
-`DW_OP_piece`, and `DW_OP_bit_piece` operators.  The `DW_OP_bit_piece`
-operator in particular has the problem that its offset operand depends
-on the type of location.  This behavior conflicts with the unified
-location storage abstraction provided by the [locations on the
-stack](https://dwarfstd.org/issues/230524.1.html) proposal.  Note that
-this is a problem with the operator itself, not with the composite or
-piece concepts.
+Currently, you can create composite storage with the
+`DW_OP_composite`, `DW_OP_piece`, and `DW_OP_bit_piece` operators.
+The `DW_OP_bit_piece` operator in particular has the problem that its
+offset operand depends on the type of location.  This behavior
+conflicts with the unified location storage abstraction provided by
+the [locations on the
+stack](https://dwarfstd.org/issues/230524.1.html) proposal. It should
+be noted that this is a problem with the operator itself, not with
+composite storage or the concept of pieces.
 
 Another limitation of the piece operators is that their operands are
 inline operands, and thus cannot be computed at runtime.  This was
@@ -32,30 +33,30 @@ operators that simply pop arguments from the current, shared stack.
 
 Yet another limitation is one of natural composition.  With the piece
 operators, it is not possible to start from a pre-computed, shared
-composite, and replace some part of it, as for example when a field of
-a structure, or an array element, is promoted to a register for a
+composite and replace some part of it. For example when a field of
+a structure or an array element is promoted to a register for a
 specific PC range.  The producer must instead rebuild a new composite
 piece by piece, which results in DWARF expressions that are not as
 compact as they could be.
 
 It is important to emphasize that these are not limitations of the
-composite model itself but of the existing operators used to construct
-composites.
+model of composite storage itself but of the existing operators used
+to construct composites.
 
 To address these limitations, this proposal defines a new operator,
 overlay (with variants `DW_OP_overlay` and `DW_OP_bit_overlay`).  It
 produces composite locations and is designed to replace usages of the
-aforementioned piece operators, without the limitations, while
-allowing objects to be described in a more natural and composable way
-in many cases.  The new operator semantics align naturally with the
-post-"locations on the stack" model.  The resulting composites are,
-however, just normal composites, completely indistinguishable from
-ones created by the preexisting operators.
+aforementioned piece operators without the limitations while allowing
+objects to be described in a more natural and composable way.  The new
+operator semantics align naturally with the post-"locations on the
+stack" model.  However, the resulting composites are just normal
+composites, completely indistinguishable from ones created by the
+preexisting operators.
 
 In its basic form, the overlay operator produces a composite location
 by conceptually taking a base location and overlaying a new location
-on top of a range of bits from that base location, overriding the
-original location with the new one for that range of bits.
+on top of a range of storage from that base location, overriding the
+original location with the new one for that range of storage.
 
 As a simple example, consider the location of a variable of a struct
 type with three 32-bit fields, whose default location is on the stack
