@@ -12,7 +12,7 @@ themselves and the operators used to construct them.
 Currently, you can create composite storage with the
 `DW_OP_composite`, `DW_OP_piece`, and `DW_OP_bit_piece` operators.
 The `DW_OP_bit_piece` operator in particular has the problem that its
-offset operand depends on the type of location.  This behavior
+offset operand depends on the type of location. This behavior
 conflicts with the unified location storage abstraction provided by
 the [locations on the
 stack](https://dwarfstd.org/issues/230524.1.html) proposal. It should
@@ -20,10 +20,10 @@ be noted that this is a problem with the operator itself, not with
 composite storage or the concept of pieces.
 
 Another limitation of the piece operators is that their operands are
-inline operands, and thus cannot be computed at runtime.  This was
+inline operands, and thus cannot be computed at runtime. This was
 previously discussed in issue
 [211206.2](https://dwarfstd.org/issues/211206.2.html) (stack piece
-operators), and is also discussed further down this document.  The
+operators), and is also discussed further down this document. The
 solution proposed in 211206.2 predates the acceptance of the locations
 on the stack proposal, back when piece operators were still syntactic
 separators that operated on their own expression stack, forcing
@@ -31,11 +31,11 @@ separators that operated on their own expression stack, forcing
 After locations on the stack, it is now possible to design replacement
 operators that simply pop arguments from the current, shared stack.
 
-Yet another limitation is one of natural composition.  With the piece
+Yet another limitation is one of natural composition. With the piece
 operators, it is not possible to start from a pre-computed, shared
 composite and replace some part of it. For example when a field of
 a structure or an array element is promoted to a register for a
-specific PC range.  The producer must instead rebuild a new composite
+specific PC range. The producer must instead rebuild a new composite
 piece by piece, which results in DWARF expressions that are not as
 compact as they could be.
 
@@ -44,12 +44,12 @@ model of composite storage itself but of the existing operators used
 to construct composites.
 
 To address these limitations, this proposal defines a new operator,
-overlay (with variants `DW_OP_overlay` and `DW_OP_bit_overlay`).  It
+overlay (with variants `DW_OP_overlay` and `DW_OP_bit_overlay`). It
 produces composite locations and is designed to replace usages of the
 aforementioned piece operators without the limitations while allowing
-objects to be described in a more natural and composable way.  The new
+objects to be described in a more natural and composable way. The new
 operator semantics align naturally with the post-"locations on the
-stack" model.  However, the resulting composites are just normal
+stack" model. However, the resulting composites are just normal
 composites, completely indistinguishable from ones created by the
 preexisting operators.
 
@@ -94,11 +94,11 @@ beginning of the object.
 
 In addition to simple overlaying as above, the overlay operators can
 also be used for concatenation, by allowing a piece to be overlaid to
-the right of the base location, beyond base's end.  This gives it the
+the right of the base location, beyond base's end. This gives it the
 power to replace `DW_OP_piece` and `DW_OP_bit_piece`.
 
 For example, consider the location of a variable of a 64-bit integer
-type, that has been split into a 32-bit register pair.  We would
+type, that has been split into a 32-bit register pair. We would
 describe this as the second 32-bit register overlaying on the right of
 the first register:
 
@@ -117,11 +117,11 @@ This results in the following composite:
      +0       +4       +8
 
 As a further extension to concatenation, the operator allows
-overlaying beyond the extent of the base storage.  When an overlay is
+overlaying beyond the extent of the base storage. When an overlay is
 placed beyond the extent of the base storage, the gap is "filled" with
 undefined storage, much like `DW_OP_piece` does when the piece is
-empty.  For example, consider the location of a variable of the same
-struct type with three 32-bit fields, mentioned earlier.  If the
+empty. For example, consider the location of a variable of the same
+struct type with three 32-bit fields, mentioned earlier. If the
 compiler chooses to promote fields a and c to registers, and optimize
 out field b, we may describe this with concatenation with a gap, like
 so:
@@ -168,7 +168,7 @@ on.
 
 The DWARF location description for the array needs to express that all
 elements are in memory, except the slice that has been promoted to the
-vector register.  The starting position of the slice is a runtime
+vector register. The starting position of the slice is a runtime
 value based on the iteration index modulo the vectorization size. This
 cannot be expressed by `DW_OP_piece` and `DW_OP_bit_piece` which only
 allow constant offsets to be expressed.
@@ -667,14 +667,14 @@ called "Overlay Composites".
 >   a slice from the storage of `overlay location`.
 >
 >   The slice of bytes obtained from the storage of `overlay location`
->   is referred to as the `overlay`.  The `overlay` begins at `overlay
->   location` and has a size of `overlay width`.  The `overlay`
+>   is referred to as the `overlay`. The `overlay` begins at `overlay
+>   location` and has a size of `overlay width`. The `overlay`
 >   must not extend outside of the bounds of the storage of `overlay
 >   location`.
 >
 
 >   The slice of bytes replaced in the storage of `base location` is
->   referred to as the `overlay base`.  It begins at `base location`
+>   referred to as the `overlay base`. It begins at `base location`
 >   offset by `base offset` and has a size of `overlay width`. The
 >   `overlay width` cannot extend beyond the end of the overlay's
 >   storage or else the expression is invalid.
@@ -705,13 +705,13 @@ called "Overlay Composites".
 >   location` with a slice from the storage of `overlay location`.
 >
 >   The slice of bits obtained from the storage of `overlay location`
->   is referred to as the `overlay`.  The `overlay` begins at `overlay
->   location` and has a size in bits of `overlay width`.  The
+>   is referred to as the `overlay`. The `overlay` begins at `overlay
+>   location` and has a size in bits of `overlay width`. The
 >   `overlay` must not extend outside of the bounds of the storage of
 >   `overlay location`.
 >
 >   The slice of bits replaced in the storage of `base location` is
->   referred to as the `overlay base`.  It begins at `base location`
+>   referred to as the `overlay base`. It begins at `base location`
 >   offset by `base offset` and has a size of `overlay width` in
 >   bits. The `overlay width` cannot extend beyond the end of the
 >   overlay's storage or else the expression is invalid.
