@@ -2,29 +2,55 @@
 
 ## Introduction
 
-Composites are a powerful abstraction in DWARF, that allows describing
-an object that may have parts stored in different locations.
+Composites and pieces are powerful DWARF abstractions that describe
+objects whose parts may reside in different locations.
 
-Despite sharing the names, it is important to realize the distinction
-between the concepts of composites and pieces, and the operators that
-currently can be used to create them.  Currently, you can create
-composites with the DW_OP_composite, DW_OP_piece, and DW_OP_bit_piece
-operators.  DW_OP_bit_piece in particular has the problem that its
-offset operand depends on the type of location, which conflicts with
-the unified location storage abstraction that locations-on-the-stack
-provides.  Note this is a problem with the operator itself, not the
-composites or pieces concepts.
+While the terms "composite" and "piece" are often associated with the
+piece operators, it is important to distinguish between the concepts
+themselves and the operators used to construct them.
 
-**Fixme: Demonstrate the problems Add The offset is not computable,
-can't handle an unbounded array**
+Currently, you can create composites with the `DW_OP_composite`,
+`DW_OP_piece`, and `DW_OP_bit_piece` operators.  The `DW_OP_bit_piece`
+operator in particular has the problem that its offset operand depends
+on the type of location.  This behavior conflicts with the unified
+location storage abstraction provided by the [locations on the
+stack](https://dwarfstd.org/issues/230524.1.html) proposal.  Note that
+this is a problem with the operator itself, not with the composite or
+piece concepts.
 
-This proposal defines a new overlay operator (DW_OP_overlay) that also
-produces a composite location.  It is designed such that it can
-replace usages of the aforementioned piece operators, while allowing
-describing objects in a more natural, and more composable way in many
-cases.  The resulting composites, are, however, just normal
-composites, completely indistinguishable from ones created by the
-preexisting operators.
+Another limitation of the piece operators is that their operands are
+inline operands, and thus cannot be computed at runtime.  This was
+previously discussed in issue
+[211206.2](https://dwarfstd.org/issues/211206.2.html) (stack piece
+operators), and is also discussed further down this document.  The
+solution proposed in 211206.2 predates the acceptance of the locations
+on the stack proposal, back when piece operators were still syntactic
+separators that operated on their own expression stack, forcing
+211206.2 to rely on DWARF expressions as inline bytecode operands.
+After locations on the stack, it is now possible to design replacement
+operators that simply pop arguments from the current, shared stack.
+
+Yet another limitation is one of natural composition.  With the piece
+operators, it is not possible to start from a pre-computed, shared
+composite, and replace some part of it, as for example when a field of
+a structure, or an array element, is promoted to a register for a
+specific PC range.  The producer must instead rebuild a new composite
+piece by piece, which results in DWARF expressions that are not as
+compact as they could be.
+
+It is important to emphasize that these are not limitations of the
+composite model itself but of the existing operators used to construct
+composites.
+
+To address these limitations, this proposal defines a new operator,
+overlay (with variants `DW_OP_overlay` and `DW_OP_bit_overlay`).  It
+produces composite locations and is designed to replace usages of the
+aforementioned piece operators, without the limitations, while
+allowing objects to be described in a more natural and composable way
+in many cases.  The new operator semantics align naturally with the
+post-"locations on the stack" model.  The resulting composites are,
+however, just normal composites, completely indistinguishable from
+ones created by the preexisting operators.
 
 In its basic form, the overlay operator produces a composite location
 by conceptually taking a base location and overlaying a new location
@@ -66,9 +92,9 @@ as in the base memory location, i.e., +FB + 0x40, and points at the
 beginning of the object.
 
 In addition to simple overlaying as above, the overlay operators can
-also be used for concatenation, by allowing overlaying a piece on the
-right of the base location, beyond base's end.  This gives it the
-power to replace the flawed DW_OP_piece and DW_OP_bit_piece.
+also be used for concatenation, by allowing a piece to be overlaid to
+the right of the base location, beyond base's end.  This gives it the
+power to replace `DW_OP_piece` and `DW_OP_bit_piece`.
 
 For example, consider the location of a variable of a 64-bit integer
 type, that has been split into a 32-bit register pair.  We would
@@ -91,12 +117,13 @@ This results in the following composite:
 
 As a further extension to concatenation, the operator allows
 overlaying beyond the extent of the base storage.  When an overlay is
-is placed beyond the extent of the base storage, the gap is "filled" with
-undefined storage, much like DW_OP_piece does when the piece is empty.
-For example, consider the location of a variable of the same struct
-type with three 32-bit fields, mentioned earlier.  If the compiler
-chooses to promote fields a and c to registers, and optimize out field
-b, we may describe this with concatenation with a gap, like so:
+placed beyond the extent of the base storage, the gap is "filled" with
+undefined storage, much like `DW_OP_piece` does when the piece is
+empty.  For example, consider the location of a variable of the same
+struct type with three 32-bit fields, mentioned earlier.  If the
+compiler chooses to promote fields a and c to registers, and optimize
+out field b, we may describe this with concatenation with a gap, like
+so:
 
                       +--------+
                       |   c    |     (reg2)
@@ -112,9 +139,9 @@ This results in the following composite:
     +--------+--------+--------+
      +0       +4       +8
 
-The following section goes into detail.  It describes many use cases
-where overlay is useful, including those that originally motivated
-overlay.
+The following section describes in detail the use cases that motivated
+the overlay operator and illustrates additional ways it can be
+applied.
 
 ## Problem Description
 
