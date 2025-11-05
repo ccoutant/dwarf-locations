@@ -1,11 +1,5 @@
 # General Support for Address Spaces
 
-Depends on: [Location Descriptions on the DWARF Stack][1]
-
-[1x]: 230524.1.html
-[1]: 005-locations-on-stack.md
-
-
 ## PROBLEM DESCRIPTION
 
 AMDGPU needs to be able to describe addresses that are in different kinds of
@@ -119,90 +113,7 @@ Table 2.2: Attribute names
 > --------------------- | --------------------------------------------------------------
 > `DW_AT_address_space` | Architecture specific address space (see 2.x "Address Spaces")
 
-In Section 2.5.2.1 "Memory Locations" of [Allow location
-description on the DWARF evaluation stack] proposal, after the paragraph that
-starts "A location description that is comprised of one byte address memory
-location description SL is defined to be a memory byte address location
-description" add the following paragraph:
-
-> `DW_ASPACE_none` is defined as the target architecture default address space.
-> See 2.x Address Spaces.
-
-In Section 2.5.2.1 "Memory Locations" of [Allow location
-description on the DWARF evaluation stack] proposal, after the definition of
-`DW_OP_addrx` add:
-
-> 3.  `DW_OP_form_aspace_address`  
->     `DW_OP_form_aspace_address` pops top two stack entries. The first must be
->     an integral type value that represents a target architecture specific
->     address space identifier AS. The second must be an integral type value
->     that represents an address A.
-> 
->     The address size S is defined as the address bit size of the target
->     architecture specific address space that corresponds to AS.
-> 
->     A is adjusted to S bits by zero extending if necessary, and then
->     treating the least significant S bits as an unsigned value A'.
-> 
->     It pushes a location description L with one memory location description
->     SL on the stack. SL specifies the memory location storage LS that
->     corresponds to AS with a bit offset equal to A' scaled by 8 (the byte
->     size).
-> 
->     If AS is an address space that is specific to context elements, then LS
->     corresponds to the location storage associated with the current context.
-> 
->     [non-normative] For example, if AS is for per thread storage then LS is
->     the location storage for the current thread. Therefore, if L is accessed
->     by an operation, the location storage selected when the location
->     description was created is accessed, and not the location storage
->     associated with the current context of the access operation.
-> 
->     The DWARF expression is ill-formed if AS is not one of the values
->     defined by the target architecture specific `DW_ASPACE_*` values.
-> 
->     See Section 2.5.2.3 "Implicit Locations" for
->     special rules concerning implicit pointer values produced by
->     dereferencing implicit location descriptions created by the
->     `DW_OP_implicit_pointer` and `DW_OP_aspace_implicit_pointer` operations.
-
-In Section 2.5.2.1 "Memory Locations" of [Allow location
-description on the DWARF evaluation stack] proposal, after the definition of
-`DW_OP_bregx` add:
-
-> 9.  `DW_OP_aspace_bregx`  
->     `DW_OP_aspace_bregx` has two operands. The first is an unsigned
->     LEB128 integer that represents a register number R. The second is a signed
->     LEB128 integer that represents a byte displacement B. It pops one stack
->     entry that is required to be an integral type value that represents a target
->     architecture specific address space identifier AS.
-> 
->     The action is the same as for `DW_OP_breg`<N>, except that R is used as
->     the register number, B is used as the byte displacement, and AS is used as
->     the address space identifier.
-> 
->     The DWARF expression is ill-formed if AS is not one of the values defined by
->     the target architecture specific `DW_ASPACE_*` values.
-
-In Section 2.5.2.3 "Implicit Locations" of [Allow
-location description on the DWARF evaluation stack] proposal, after the
-definition of `DW_OP_implicit_pointer`, add:
-
-> 4.  `DW_OP_aspace_implicit_pointer`  
->     `DW_OP_aspace_implicit_pointer` has two operands that are the same as for
->     `DW_OP_implicit_pointer`.
-> 
->     It pops one stack entry that must be an integral type value that
->     represents a target architecture specific address space identifier AS.
-> 
->     The location description L that is pushed on the stack is the same as
->     for `DW_OP_implicit_pointer`, except that the address space identifier
->     used is AS.
-> 
->     The DWARF expression is ill-formed if AS is not one of the values
->     defined by the target architecture specific `DW_ASPACE_*` values.
-
-Add the following after Section 2.12 "Address Classes":
+Add the following after Section 2.11 "Address Classes":
 
 > 2.x Address Spaces
 > 
@@ -247,7 +158,82 @@ Add the following after Section 2.12 "Address Classes":
 May want to clarify what `DW_AT_address_class` is for, now that the x86 examples
 have been removed, in a separate issue.
 
-In Section 5.3 "Type Modifier Entries", after the paragraph starting "A modified
+In Section 3.7 "Memory Locations", add the following at the
+end of the first paragraph:
+
+> `DW_ASPACE_none` is defined as the target architecture default address space.
+> See 2.x Address Spaces.
+
+After the definition of `DW_OP_addrx` add:
+
+> 3.  `DW_OP_form_aspace_address`  
+>     `DW_OP_form_aspace_address` pops top two stack entries. The first must be
+>     an integral type value that represents a target architecture specific
+>     address space identifier AS. The second must be an integral type value
+>     that represents an address A.
+> 
+>     The address size S is defined as the address bit size of the target
+>     architecture specific address space that corresponds to AS.
+> 
+>     A is adjusted to S bits by zero extending if necessary, and then
+>     treating the least significant S bits as an unsigned value A'.
+> 
+>     It pushes a location description L with one memory location description
+>     SL on the stack. SL specifies the memory location storage LS that
+>     corresponds to AS with a bit offset equal to A' scaled by 8 (the byte
+>     size).
+> 
+>     If AS is an address space that is specific to context elements, then LS
+>     corresponds to the location storage associated with the current context.
+> 
+>     [non-normative] For example, if AS is for per thread storage then LS is
+>     the location storage for the current thread. Therefore, if L is accessed
+>     by an operation, the location storage selected when the location
+>     description was created is accessed, and not the location storage
+>     associated with the current context of the access operation.
+> 
+>     The DWARF expression is ill-formed if AS is not one of the values
+>     defined by the target architecture specific `DW_ASPACE_*` values.
+> 
+>     See Section 2.5.2.3 "Implicit Locations" for
+>     special rules concerning implicit pointer values produced by
+>     dereferencing implicit location descriptions created by the
+>     `DW_OP_implicit_pointer` and `DW_OP_aspace_implicit_pointer` operations.
+
+After the definition of `DW_OP_bregx` add:
+
+> 7.  `DW_OP_aspace_bregx`  
+>     `DW_OP_aspace_bregx` has two operands. The first is an unsigned
+>     LEB128 integer that represents a register number R. The second is a signed
+>     LEB128 integer that represents a byte displacement B. It pops one stack
+>     entry that is required to be an integral type value that represents a target
+>     architecture specific address space identifier AS.
+> 
+>     The action is the same as for `DW_OP_breg`<N>, except that R is used as
+>     the register number, B is used as the byte displacement, and AS is used as
+>     the address space identifier.
+> 
+>     The DWARF expression is ill-formed if AS is not one of the values defined by
+>     the target architecture specific `DW_ASPACE_*` values.
+
+In Section 3.11 "Implicit Pointer Locations", after the
+definition of `DW_OP_implicit_pointer`, add:
+
+> 2.  `DW_OP_aspace_implicit_pointer`  
+>     `DW_OP_aspace_implicit_pointer` has two operands that are the same as for
+>     `DW_OP_implicit_pointer`.
+> 
+>     It pops one stack entry that must be an integral type value that
+>     represents a target architecture specific address space identifier AS.
+> 
+>     The location description L that is pushed on the stack is the same as
+>     for `DW_OP_implicit_pointer`, except that the address space identifier
+>     used is AS.
+> 
+>     The DWARF expression is ill-formed if AS is not one of the values
+>     defined by the target architecture specific `DW_ASPACE_*` values.
+
+In Section 6.3 "Type Modifier Entries", after the paragraph starting "A modified
 type entry describing a pointer or reference type...", add the following
 paragraph:
 
@@ -264,8 +250,6 @@ paragraph:
 > current context except: the result kind is location description; the initial
 > stack is empty; and the object is the location description of P.
 
-### FIXME: [[ Don't yet have the notion of "context" ]]
-
 [For further discussion -- remove?]
 With the expanded support for DWARF address spaces, it may be worth examining
 if they can be used for what was formerly supported by DWARF 5 segments that
@@ -276,7 +260,7 @@ extended to allow a exprloc form (so that `DW_OP_form_aspace_address` can be
 used) or the `DW_AT_address_space` attribute be allowed on all DIEs that
 formerly allowed `DW_AT_segment`.
 
-In Section 6.1.1.1 "Contents of the Name Index", replace the bullet: 
+In Section 7.1.1.1 "Contents of the Name Index", replace the bullet: 
 
 > * `DW_TAG_variable` debugging information entries with a `DW_AT_location`
 >   attribute that includes a `DW_OP_addr` or `DW_OP_form_tls_address` operator
@@ -289,9 +273,9 @@ with:
 >   `DW_OP_form_tls_address` operation are included; otherwise, they are
 >   excluded.
 
-### FIXME: [[ Reword definition of CFA in 6.4 Call Frame Information ]]
+### FIXME: [[ Reword definition of CFA in 7.4 Call Frame Information ]]
 
-In Section 6.4.2.2 "CFA Definition Instructions", replace the description of the
+In Section 7.4.2.2 "CFA Definition Instructions", replace the description of the
 six CFI instructions with the following:
 
 > 1.  `DW_CFA_def_cfa`  
@@ -300,7 +284,7 @@ six CFI instructions with the following:
 >     B. AS is set to the target architecture default address space
 >     identifier. The required action is to define the current CFA rule to be
 >     equivalent to the result of evaluating the DWARF expression
->     `DW_OP_constu` AS; `DW_OP_aspace_bregx` R, B as a location description.
+>     `DW_OP_constu AS; DW_OP_aspace_bregx R, B` as a location description.
 > 
 > 2.  `DW_CFA_def_cfa_sf`  
 >     The `DW_CFA_def_cfa_sf` instruction takes two operands: an unsigned LEB128
@@ -308,8 +292,8 @@ six CFI instructions with the following:
 >     displacement B. AS is set to the target architecture default address
 >     space identifier. The required action is to define the current CFA rule
 >     to be equivalent to the result of evaluating the DWARF
->     expression `DW_OP_constu` AS; `DW_OP_aspace_bregx` R, B *
->     data_alignment_factor as a location description.
+>     expression `DW_OP_constu AS; DW_OP_aspace_bregx R, B *
+>     data_alignment_factor` as a location description.
 > 
 >     [non-normative] The action is the same as `DW_CFA_def_cfa`, except that
 >     the second operand is signed and factored.
@@ -318,7 +302,7 @@ six CFI instructions with the following:
 >     The `DW_CFA_def_cfa_register` instruction takes a single unsigned LEB128
 >     operand representing a register number R. The required action is to
 >     define the current CFA rule to be equivalent to the result of evaluating
->     the DWARF expression `DW_OP_constu` AS; `DW_OP_aspace_bregx` R, B
+>     the DWARF expression `DW_OP_constu AS; DW_OP_aspace_bregx R, B`
 >     as a location description. B and AS are the old CFA byte displacement
 >     and address space respectively.
 > 
@@ -329,8 +313,8 @@ six CFI instructions with the following:
 >     The `DW_CFA_def_cfa_offset` instruction takes a single unsigned LEB128
 >     operand representing a (non-factored) byte displacement B. The required
 >     action is to define the current CFA rule to be equivalent to the result
->     of evaluating the DWARF expression `DW_OP_constu` AS;
->     `DW_OP_aspace_bregx` R, B as a location description. R and AS are the old
+>     of evaluating the DWARF expression `DW_OP_constu AS;
+>     DW_OP_aspace_bregx R, B` as a location description. R and AS are the old
 >     CFA register number and address space respectively.
 > 
 >     If the subprogram has no current CFA rule, or the rule was defined by a
@@ -340,8 +324,8 @@ six CFI instructions with the following:
 >     The `DW_CFA_def_cfa_offset_sf` instruction takes a signed LEB128 operand
 >     representing a factored byte displacement B. The required action is to
 >     define the current CFA rule to be equivalent to the result of evaluating
->     the DWARF expression `DW_OP_constu` AS; `DW_OP_aspace_bregx` R, B
->     * data_alignment_factor as a location description. R and AS are the old
+>     the DWARF expression `DW_OP_constu AS; DW_OP_aspace_bregx R, B
+>     * data_alignment_factor` as a location description. R and AS are the old
 >     CFA register number and address space respectively.
 > 
 >     If the subprogram has no current CFA rule, or the rule was defined by a
@@ -349,12 +333,9 @@ six CFI instructions with the following:
 > 
 >     [non-normative] The action is the same as `DW_CFA_def_cfa_offset`, except
 >     that the operand is signed and factored.
-
-### FIXME: [[ Fix this... ]]
-
-> 6.  `DW_CFA_def_cfa_expression`
-> 
->     The DW_CFA_def_cfa_expression instruction takes a single operand encoded
+>
+> 6.  `DW_CFA_def_cfa_expression`  *FIXME?*  
+>     The `DW_CFA_def_cfa_expression` instruction takes a single operand encoded
 >     as a DW_FORM_exprloc value representing a DWARF expression E.
 >     The required action is to define the current CFA rule to be equivalent
 >     to the result of evaluating E with the current context, except the
@@ -364,8 +345,7 @@ six CFI instructions with the following:
 >     See A.6.4.2 Call Frame Instructions regarding restrictions on the DWARF
 >     expressions that can be used in E.
 
-In Section 6.4.2.2 "CFA Definition Instructions", add the following CFI
-instructions:
+Add the following CFI instructions:
 
 > 7.  `DW_CFA_def_aspace_cfa`  
 >     The `DW_CFA_def_aspace_cfa` instruction takes three unsigned LEB128
@@ -373,7 +353,7 @@ instructions:
 >     displacement B, and a target architecture specific address space
 >     identifier AS. The required action is to define the current CFA rule to
 >     be equivalent to the result of evaluating the DWARF expression
->     `DW_OP_constu` AS; `DW_OP_aspace_bregx` R, B as a location description.
+>     `DW_OP_constu AS; DW_OP_aspace_bregx R, B` as a location description.
 > 
 >     If AS is not one of the values defined by the target architecture
 >     specific `DW_ASPACE_*` values then the DWARF expression is ill-formed.
@@ -384,8 +364,8 @@ instructions:
 >     factored byte displacement B, and an unsigned LEB128 value representing
 >     a target architecture specific address space identifier AS. The required
 >     action is to define the current CFA rule to be equivalent to the result
->     of evaluating the DWARF expression `DW_OP_constu` AS;
->     `DW_OP_aspace_bregx` R, B * data_alignment_factor as a location
+>     of evaluating the DWARF expression `DW_OP_constu AS;
+>     DW_OP_aspace_bregx R, B * data_alignment_factor` as a location
 >     description.
 > 
 >     If AS is not one of the values defined by the target architecture
@@ -394,23 +374,23 @@ instructions:
 >     [non-normative] The action is the same as `DW_CFA_def_aspace_cfa`, except
 >     that the second operand is signed and factored.
 
-In Section 7.4 "32-Bit and 64-Bit DWARF Formats" list item 3's table, add the
+In Section 8.4 "32-Bit and 64-Bit DWARF Formats" list item 3's table, add the
 following row:
 
 > Form                             | Role
 > -------------------------------- | -----------------------
 > `DW_OP_aspace_implicit_pointer`  |   offset in .debug_info
 
-In Section 7.5.4 "Attribute Encodings", add the following row to Table 7.5
+In Section 8.5.4 "Attribute Encodings", add the following row to Table 7.5
 "Attribute encodings":
 
-> Table 7.5: Attribute encodings
+> Table 8.5: Attribute encodings
 > 
 > Attribute Name                     | Value  | Classes
 > ---------------------------------- | ------ | ----------------------------------
 > `DW_AT_address_space`              | TBA    | constant
 
-Add the following rows to table 7.9 in Section "7.7.1 DWARF Expressions":
+Add the following rows to table 8.9 in Section "8.7.1 Operator Encodings":
 
 > Operation                          | Code  | Number of Operands | Notes
 > ---------------------------------- | ----- | ------------------ | --------
@@ -418,13 +398,13 @@ Add the following rows to table 7.9 in Section "7.7.1 DWARF Expressions":
 > `DW_OP_aspace_bregx`               | TBA   | 2                  | ULEB128 register number, ULEB128 byte displacement
 > `DW_OP_aspace_implicit_pointer`    | TBA   | 2                  | 4-byte or 8-byte offset of DIE, SLEB128 byte displacement
 
-After Section 7.13 "Address Class Encodings" add the following section:
+After Section 8.13 "Address Class Encodings" add the following section:
 
-> 7.x Address Space Encodings
+> 8.x Address Space Encodings
 > 
 > The value of the common address space encoding `DW_ASPACE_none` is 0.
 
-In Section 7.24 "Call Frame Information", add the following rows to Table 7.29
+In Section 8.23 "Call Frame Information", add the following rows to Table 8.29
 "Call frame instruction encodings":
 
 > Instruction                | High 2 Bits | Low 6 Bits | Operand 1        | Operand 2        | Operand 3
@@ -432,7 +412,7 @@ In Section 7.24 "Call Frame Information", add the following rows to Table 7.29
 > `DW_CFA_def_aspace_cfa`    | 0           | TBA        | ULEB128 register | ULEB128 offset   | ULEB128 address space
 > `DW_CFA_def_aspace_cfa_sf` | 0           | TBA        | ULEB128 register | SLEB128 offset   | ULEB128 address space
 
-In Section 7.32 "Type Signature Computation", Table 7.32 "Attributes used in
+In Section 8.31 "Type Signature Computation", Table 8.32 "Attributes used in
 type signature computation", add the following attribute in alphabetical order
 to the list:
 

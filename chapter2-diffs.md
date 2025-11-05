@@ -878,8 +878,9 @@ in the source but not in the object code (perhaps due to optimization).</del>
 
 <ins>An undefined location represents a piece
 or all of an object that is present in the source but not in
-the object code (perhaps due to optimization). An undefined
-location cannot be read from or written to.</ins>
+the object code (perhaps due to optimization).
+An undefined location cannot be read.
+Writing to undefined storage has no effect.</ins>
 
 1. <ins>`DW_OP_undefined`</ins>  
 <ins>The `DW_OP_undefined` operation pushes an undefined
