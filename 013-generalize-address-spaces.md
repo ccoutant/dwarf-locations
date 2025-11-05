@@ -27,7 +27,7 @@ represent the pointer or reference type.
 
 DWARF 5 uses the concept of an address in many expressions but does
 not define how it relates to address spaces. For example,
-`DW_OP_push_object_location` pushes the address of an object. Other contexts
+`DW_OP_push_object_address` pushes the address of an object. Other contexts
 implicitly push an address on the stack before evaluating an expression. For
 example, the `DW_AT_use_location` attribute of the `DW_TAG_ptr_to_member_type`. The
 expression belongs to a source language type which may apply to objects
@@ -113,15 +113,6 @@ Table 2.2: Attribute names
 > --------------------- | --------------------------------------------------------------
 > `DW_AT_address_space` | Architecture specific address space (see 2.x "Address Spaces")
 
-In Section 2.5.2.1 "Memory Locations" of [Allow location
-description on the DWARF evaluation stack] proposal, after the paragraph that
-starts "A location description that is comprised of one byte address memory
-location description SL is defined to be a memory byte address location
-description" add the following paragraph:
-
-> `DW_ASPACE_none` is defined as the target architecture default address space.
-> See 2.x Address Spaces.
-
 Add the following after Section 2.11 "Address Classes":
 
 > 2.x Address Spaces
@@ -167,8 +158,13 @@ Add the following after Section 2.11 "Address Classes":
 May want to clarify what `DW_AT_address_class` is for, now that the x86 examples
 have been removed, in a separate issue.
 
-In Section 3.7 "Memory Locations", after the definition of
-`DW_OP_addrx` add:
+In Section 3.7 "Memory Locations", add the following at the
+end of the first paragraph:
+
+> `DW_ASPACE_none` is defined as the target architecture default address space.
+> See 2.x Address Spaces.
+
+After the definition of `DW_OP_addrx` add:
 
 > 3\.  `DW_OP_form_aspace_address`  
 >     `DW_OP_form_aspace_address` pops top two stack entries. The first must be
