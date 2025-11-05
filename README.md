@@ -23,6 +23,7 @@ Issues ready to submit to the DWARF committee:
 
 * [General Support for Address Spaces](013-generalize-address-spaces.md) ([Original text](013-generalize-address-spaces.orig.txt))
 * [DWARF Operation to Create Runtime Overlay Composite Location Description](016-overlay-composite-location-descriptions.md)
+* [DWARF Operation headers](024-revise-operations.md)
 
 Issues in progress:
 

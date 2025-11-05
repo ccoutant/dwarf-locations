@@ -181,12 +181,6 @@ description as follows:
 >    <[integral base type or generic type] A> <[integral base type or generic type] B> → <[integral base type or generic type] A'>
 >
 
-**NOTE FOR DISCUSSION**: Do we want to expand logical operators like
-and to include vector types? The concern that I have is predicate
-registers may be bigger than a generic type. I'm also not entirely
-sure that they are base types in all GPU architectures. In other
-words, can we expand the domain of these operators.
-
 > `DW_OP_div`
 >
 >    <[numeric] A>  <[numeric] B> → <[numeric] A/B>
@@ -230,19 +224,10 @@ words, can we expand the domain of these operators.
 >       <[numeric] A> → <[numeric] A+b>
 >
 
-**NOTE FOR DISCUSSION:** The justification for `DW_OP_plus_uconst`
-  seems questionable to me. I do not see why you could not just use:
-  `DW_OP_uconst <some number> DW_OP_plus`. Is this a historic
-  limitation? Should this text be reconsidered? Should this be offset_uconst?
-
 > `DW_OP_shl`
 >
 >    <[integral base type or generic type] A> <[integral base type or generic type] B> → <[integral base type or generic type] A<<B >
 >
-
-**NOTE FOR DISCUSSION:** What happens if you shift left a negative
-number of bytes? Should the number of bits to be shifted be limited to
-to a positive value.
 
 >
 > `DW_OP_shr`
@@ -271,8 +256,6 @@ description as follows:
 >
 >    <[integral] offset into TLS> → <[location] in thread's TLS >
 >
-
-**Fixme** IMHO the description needs to be rewritten.
 
 > `DW_OP_call_frame_cfa`
 >
@@ -367,24 +350,6 @@ description as follows:
 >    <[location] composite storage> → <[location] composite storage'>
 >
 
-**NOTE FOR DISCUSSION** The original conception of piece had the
-composite being created on the side not on the stack. Now that it is
-on the stack, a way of understanding piece may be that it peeks at the
-top of the stack and if the type is a composite location then it pops
-off of the stack, modifies it and then pushes it again. Maybe we
-should rewrite the description of piece this way?
-
-<[location] composite storage > `DW_OP_piece` ([ULEB] size in
-bytes) → <[location] composite storage>
-
-If the top of the stack is not a composite, then it creates an empty
-composite storage and then pushes that. Note that there is currently
-no peek or typeof operator.
-
-The problem with this is in stack based machines maintaining stack
-alignment is very important. Not knowing and not being able to know if
-a stack element is going to be popped can lead to stack misalignment.
-
 > `DW_OP_bit_piece` ([ULEB] size in bits)
 >
 >    → <[location] composite storage>
@@ -443,11 +408,6 @@ description as follows:
 >    <[base type or generic] B> <[base type or generic] A> → <[[generic] 0 or 1>
 >
 
-**NOTE FOR DISCUSSION** Does this work for only integral base types or
-  does it work for all base types? Some of the base types like vector
-  types are kind of weird like the vector types? I think that this
-  should be limited to integral base types.
-
 > `DW_OP_skip` ([2-byte signed integer] bytes to skip)
 >
 >    *no stack effects*
@@ -463,18 +423,10 @@ description as follows:
 >    *stack effects by agreement*
 >
 
-**NOTE FOR DISCUSSION**: Should I just call the type "DIE offset" and
-"DiE reference" in all places. Should we change the operator's
-description?
-
 > `DW_OP_call_ref` ([4- or 8- byte unsigned integral] .debug_info offset)
 >
 >    *stack effects by agreement*
 >
-
-**NOTE FOR DISCUSSION**: These operators are interesting moving the
-inline operands up to the operatation's declaration makes the line
-below a "stack effects" line. How to express that?
 
 In section 3.16 add the following heading between operator and its
 description as follows:
@@ -483,9 +435,6 @@ description as follows:
 >
 >       <[*any*] A> → <[*specified type*] A'>
 >
-
-**NOTE FOR DISCUSSION** Should the types that can be converted be
-specified? Some of the conversions can be kind of weird.
 
 > `DW_OP_reinterpret` ([ULEB] DIE offset with 0 for generic type)
 >
@@ -505,12 +454,6 @@ description as follows:
 >    →  *stack result by agreement*
 >
 
-**NOTE FOR DISCUSSION** What type does it push on the stack. It isn't
-  clear to me from the operation description. Presumably it is the
-  same as the formal parameter to which it is applied. This operator
-  doesn't make sense to me for different reasons than the problems
-  that Tony has with it.
-
 > `DW_OP_extended` ([ULEB] extended opcode)
 >
 >    *stack effects defined by extended operation*
@@ -521,7 +464,3 @@ description as follows:
 >    *stack effects defined by extended operation*
 >
 
-**NOTE FOR DISCUSSION** We should consider expanding table 8.9 to
-  include all the information in the header. We could easily expand it
-  to include the number of stack operands and their expected types as
-  well.
