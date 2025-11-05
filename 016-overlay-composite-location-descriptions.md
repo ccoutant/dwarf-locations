@@ -344,13 +344,13 @@ or by making the actual bytes undefined:
     DW_OP_overlay
 
 In the former case, any offset into that location beyond the first
-four bytes up to the size of the largest address space or register
-(i.e., the size of undefined storage) is meaningful but will be
-undefined. In the latter case, the range of meaningful offsets is
-limited to the maximum of the size of the underlying base storage and
-overlay itself. Thus if reg0 were 4 bytes, then the meaningful offsets
-of the overlay location would be 8 bytes. However, if the size of reg0
-were 64 bytes, then the range of meaniful offsets would be 64 bytes.
+four bytes up to the size of undefined storage (i.e., the largest
+address space or register) is meaningful but will be undefined. In the
+latter case, the range of meaningful offsets is limited to the maximum
+of the size of the underlying base storage and overlay itself. Thus if
+reg0 were 4 bytes, then the meaningful offsets of the overlay location
+would be 8 bytes. However, if the size of reg0 were 64 bytes, then the
+range of meaniful offsets would be 64 bytes.
 
 If an overlay leaves a gap between the maximum size of the underlying
 base storage and the overlay, then those bits are inferred to be
