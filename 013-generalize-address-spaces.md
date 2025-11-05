@@ -166,7 +166,7 @@ end of the first paragraph:
 
 After the definition of `DW_OP_addrx` add:
 
-> 3\.  `DW_OP_form_aspace_address`  
+> 3.  `DW_OP_form_aspace_address`  
 >     `DW_OP_form_aspace_address` pops top two stack entries. The first must be
 >     an integral type value that represents a target architecture specific
 >     address space identifier AS. The second must be an integral type value
@@ -202,7 +202,7 @@ After the definition of `DW_OP_addrx` add:
 
 After the definition of `DW_OP_bregx` add:
 
-> 7\.  `DW_OP_aspace_bregx`  
+> 7.  `DW_OP_aspace_bregx`  
 >     `DW_OP_aspace_bregx` has two operands. The first is an unsigned
 >     LEB128 integer that represents a register number R. The second is a signed
 >     LEB128 integer that represents a byte displacement B. It pops one stack
@@ -219,7 +219,7 @@ After the definition of `DW_OP_bregx` add:
 In Section 3.11 "Implicit Pointer Locations", after the
 definition of `DW_OP_implicit_pointer`, add:
 
-> 2\.  `DW_OP_aspace_implicit_pointer`  
+> 2.  `DW_OP_aspace_implicit_pointer`  
 >     `DW_OP_aspace_implicit_pointer` has two operands that are the same as for
 >     `DW_OP_implicit_pointer`.
 > 
