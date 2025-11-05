@@ -277,7 +277,7 @@ with:
 >   `DW_OP_form_tls_address` operation are included; otherwise, they are
 >   excluded.
 
-### FIXME: [[ Reword definition of CFA in 6.4 Call Frame Information ]]
+### FIXME: [[ Reword definition of CFA in 7.4 Call Frame Information ]]
 
 In Section 7.4.2.2 "CFA Definition Instructions", replace the description of the
 six CFI instructions with the following:
