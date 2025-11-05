@@ -41,7 +41,7 @@ compact as they could be.
 
 It is important to emphasize that these are not limitations of the
 model of composite storage itself but of the existing operators used
-to construct composites.
+to construct composite locations.
 
 To address these limitations, this proposal defines a new operator,
 overlay (with variants `DW_OP_overlay` and `DW_OP_bit_overlay`). It
@@ -49,9 +49,9 @@ produces composite locations and is designed to replace usages of the
 aforementioned piece operators without the limitations while allowing
 objects to be described in a more natural and composable way. The new
 operator semantics align naturally with the post-"locations on the
-stack" model. However, the resulting composites are just normal
-composites, completely indistinguishable from ones created by the
-preexisting operators.
+stack" model. However, the resulting composite locations are just
+normal composite locations that are completely indistinguishable from
+ones created by the preexisting operators.
 
 In its basic form, the overlay operator produces a composite location
 by conceptually taking a base location and overlaying a new location
