@@ -905,13 +905,6 @@ Add:
 > extra stack operands take more operations, but the same number of
 > bytes in most cases.
 
-*FIXME: I think we should add an example using predicate
-registers that are spilled to memory while a pair of nested
-conditional loops run on a vector register. Spilling predicate
-registers is something realistic that happens. Because it is a spilled
-register, the endianness matters and the problems with bit piece
-become obvious.
-
 ### Section D.13 Figure D.66 C implicit pointer example #1
 
 Replace:
@@ -934,10 +927,6 @@ With:
 		DW_OP_breg5 (2) DW_OP_stack_value
                 DW_OP_lit2 DW_OP_lit1 DW_OP_overlay
                 DW_OP_breg5 (3) DW_OP_lit3 DW_OP_lit1 DW_OP_overlay)
-
-*FIXME: Add an example where a structure stays in memory while one of
-its members is promoted to a register -- where we can use the memory
-location as the base.
 
 ### Section D.13 Figure D.68 C implicit pointer example #2
 
