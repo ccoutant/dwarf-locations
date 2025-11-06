@@ -775,13 +775,13 @@ Add:
 Then add:
 
 > There is a difference in these two examples though: The first one
-> creates a six byte location. The second one creates a location that
+> creates a six-byte location. The second one creates a location that
 > is either 6 bytes long if reg3 is less than or equal to 6 bytes long
 > or a location as long as reg3 if it is longer than 6 bytes. In this
 > case, the difference probably doesn't matter because the consumer is
 > only expecting to read 6 bytes. However, if a producer wants to
 > ensure that any bits in reg3 which extend beyond the 6 bytes of the
-> overlay are masked off they can use an expression like this:
+> overlay are masked off, they can use an expression like this:
 
     DW_OP_composite
     DW_OP_reg3
@@ -821,25 +821,19 @@ Add:
     DW_OP_lit4
     DW_OP_overlay
 
-> However, the preferred way is more compact but it will only work if
-> reg0 is at least 32b but not more than 96b or if the consumer is
-> unlikely to read more than 12 bytes, is to create an overlay on top
-> of reg0.
+> If reg0 is a 32b register, a more compact way is to create an overlay on top
+> of reg0.  This leaves a hole of undefined storage between the last bit of
+> reg0 and the beginning of the value in fbreg(-12).
 
     DW_OP_reg0
     DW_OP_fbreg (-12)
-    DW_OP_lit4
     DW_OP_lit8
+    DW_OP_lit4
     DW_OP_overlay
 
-> As long reg0 is less than 32b this will leave a hole of undefined
-> storage between the last bits of reg0 and the beginning of the value
-> in fbreg(-12).
->
-> If reg0 is more than 32b and less than 96b or if more than 12 bytes
-> are likely to be read by the consumer then the undefined bits can be
-> explicitly overlayed onto the reg0's upper bytes. This undefined
-> storage will extend beyond the value in fbreg(-12).
+> If reg0 is more than 32b, the undefined bits can be explicitly overlayed
+> onto the reg0's upper bytes. Note that if reg0 is more than 96b, bits beyond
+> byte 12 until the end of reg0 would be available in this version.
 
     DW_OP_reg0
     DW_OP_undefined
@@ -940,10 +934,10 @@ With:
            DW_AT_name("s")
            DW_AT_type(reference to S at 1$)
            DW_AT_location(expression=
-                DW_OP_breg5 (1) DW_OP_stack_value
-		DW_OP_breg5 (2) DW_OP_stack_value
+                DW_OP_breg5(1) DW_OP_stack_value
+                DW_OP_breg5(2) DW_OP_stack_value
                 DW_OP_lit2 DW_OP_lit1 DW_OP_overlay
-                DW_OP_breg5 (3) DW_OP_lit3 DW_OP_lit1 DW_OP_overlay)
+                DW_OP_breg5(3) DW_OP_lit3 DW_OP_lit1 DW_OP_overlay)
 
 *FIXME: Add an example where a structure stays in memory while one of
 its members is promoted to a register -- where we can use the memory
