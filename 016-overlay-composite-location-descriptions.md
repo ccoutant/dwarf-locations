@@ -258,6 +258,7 @@ would reference the unsigned int located at R0+2.
 An overlay can also be used to create a composite location without
 using `DW_OP_piece`. For example GPUs often store doubles in two
 32b parts. An overlay can be used to combine the locations.
+([Try it!](https://barisaktemur.github.io/dwarf-locstack/?context=%28%29&input=DW_OP_addr+0x100%0ADW_OP_addr+0x200%0ADW_OP_lit4+%3B+offset%0ADW_OP_lit4+%3B+width%0ADW_OP_overlay%0A))
 
     DW_OP_addr 0x100
     DW_OP_addr 0x200
@@ -270,7 +271,8 @@ using `DW_OP_piece`. For example GPUs often store doubles in two
     base    | 100 101 102 103                 108 ... |
             +-----------------------------------------+
 
-A similar construct using the piece operators would be:
+A similar construct using the piece operators would be as follows:
+([Try it!](https://barisaktemur.github.io/dwarf-locstack/?context=%28%29&input=DW_OP_addr+0x100%0ADW_OP_piece+4%0ADW_OP_addr+0x200%0ADW_OP_piece+4%0A))
 
     DW_OP_addr 0x100
     DW_OP_piece (4)
@@ -296,6 +298,7 @@ If the producer wants to make a location a bit more like what is created
 when using piece operators and ensure that the composite storage that
 a location references only contains 8 usable bytes, then two overlays
 can be placed over an empty composite location.
+([Try it!](https://barisaktemur.github.io/dwarf-locstack/?context=%28%29&input=DW_OP_composite%0ADW_OP_addr+0x100%0ADW_OP_lit0++%3B+offset+0%0ADW_OP_lit4++%3B+width+4%0ADW_OP_overlay%0ADW_OP_addr+0x200%0ADW_OP_lit4++%3B+offset+4%0ADW_OP_lit4++%3B+width+4%0ADW_OP_overlay%0A))
 
     DW_OP_composite
     DW_OP_addr 0x100
@@ -321,6 +324,7 @@ the underlying storage an empty composite is unnecessary.
 When a portion of the location is undefined, `DW_OP_piece` can
 concatenate an empty piece of a specific size to a previous piece to
 leave a section undefined.
+([Try it!](https://barisaktemur.github.io/dwarf-locstack/?context=%28%29&input=DW_OP_reg0%0ADW_OP_piece+4%0ADW_OP_piece+4%0A))
 
      DW_OP_reg0
      DW_OP_piece (4)
@@ -328,6 +332,7 @@ leave a section undefined.
 
 To do the same thing with overlays, the undefined portion must be
 explicit. Either by using it as the underlying base storage:
+([Try it!](https://barisaktemur.github.io/dwarf-locstack/?context=%28%0A%28TargetReg+0+%2212345678%22%29%0A%29&input=DW_OP_undefined%0ADW_OP_reg0%0ADW_OP_lit0%0ADW_OP_lit4%0ADW_OP_overlay%0A))
 
     DW_OP_undefined
     DW_OP_reg0
@@ -336,6 +341,7 @@ explicit. Either by using it as the underlying base storage:
     DW_OP_overlay
 
 or by making the actual bytes undefined:
+([Try it!](https://barisaktemur.github.io/dwarf-locstack/?context=%28%0A%28TargetReg+0+%2212345678%22%29%0A%29&input=DW_OP_reg0%0ADW_OP_undefined%0ADW_OP_lit4%0ADW_OP_lit4%0ADW_OP_overlay%0A))
 
     DW_OP_reg0
     DW_OP_undefined
@@ -366,6 +372,7 @@ section. For example:
     DW_OP_overlay
 
 would leave the offsets between 8 and 15 undefined.
+([Try it!](https://barisaktemur.github.io/dwarf-locstack/?context=%28%0A%28TargetReg+0+%2212345678%22%29%0A%28TargetReg+1+%22abcdefgh%22%29%0A%29&input=DW_OP_reg0++%3B+assume+a+64b+general+purpose+register%0ADW_OP_reg1++%3B+another+64b+register%0ADW_OP_lit16+%3B+well+beyond+the+8+bytes+of+reg0%0ADW_OP_lit8%0ADW_OP_overlay%0A))
 
 Using an overlay this way as opposed to using the piece operators has
 two big advantages.
@@ -408,10 +415,12 @@ operators with something like:
     DW_OP_offset
     DW_OP_piece 4
 
+yields:
+([Try it!](https://barisaktemur.github.io/dwarf-locstack/?context=%28%0A%28TargetReg+90+%2212345678123456781234567812345678%22%29%0A%28TargetReg+91+%22abcdefghabcdefghabcdefghabcdefgh%22%29%0A%29%0A&input=DW_OP_regx+90%0ADW_OP_lit8%0ADW_OP_offset%0ADW_OP_piece+4%0ADW_OP_regx+91%0ADW_OP_lit8%0ADW_OP_offset%0ADW_OP_piece+4%0A%0A))
+
 *Note that the small 'v' indicates where the offset into the base
   location is.*
 
-    yields:
          +---------------------------+        +---------------------------+
          |                 v         |        |                 v         |
          | ... C  B  A  9  8  7  ... |        | ... C  B  A  9  8  7  ... |
@@ -434,7 +443,9 @@ This also works if those vector registers were spilled to memory:
     DW_OP_offset
     DW_OP_piece 4
 
-    yields:
+yields:
+([Try it!](https://barisaktemur.github.io/dwarf-locstack/?context=%28%0A%28TargetReg+90+%2212345678123456781234567812345678%22%29%0A%28TargetReg+91+%22abcdefghabcdefghabcdefghabcdefgh%22%29%0A%29%0A&input=DW_OP_addr+0x100%0ADW_OP_lit8%0ADW_OP_offset%0ADW_OP_piece+4%0ADW_OP_addr+0x200%0ADW_OP_lit8%0ADW_OP_offset%0ADW_OP_piece+4%0A))
+
     +-----------------------------------------------------------------------------+
     |                   v                                   v                     |
     | ... 100 101 ... 108 109 110 111 112 ... 200 201 ... 208 209 210 211 212 ... |
@@ -477,7 +488,9 @@ Then if the variable is in registers
     DW_OP_regx vreg0
     DW_OP_call func
 
-    as above yields:
+as above yields:
+([Try it!](https://barisaktemur.github.io/dwarf-locstack/?context=%28%0A%28TargetReg+90+%2212345678123456781234567812345678%22%29%0A%28TargetReg+91+%22abcdefghabcdefghabcdefghabcdefgh%22%29%0A%29%0A&input=%28%0A+%28DW_OP_regx+91%29%0A+%28DW_OP_regx+90%29%0A+%28DW_OP_call+%28%0A+++%3B+func%3A%0A++++++DW_OP_composite%0A++++++DW_OP_swap%0A++++++DW_OP_lit8%0A++++++DW_OP_offset%0A++++++%28DW_OP_piece+4%29%0A++++++DW_OP_swap%0A++++++DW_OP_lit8%0A++++++DW_OP_offset%0A++++++%28DW_OP_piece+4%29%0A++%29%0A+%29%0A%29%0A))
+
          +---------------------------+        +---------------------------+
          |                 v         |        |                 v         |
          | ... C  B  A  9  8  7  ... |        | ... C  B  A  9  8  7  ... |
@@ -494,7 +507,9 @@ or if it is in memory:
     DW_OP_addr 0x100
     DW_OP_call func
 
-    yields:
+yields:
+([Try it!](https://barisaktemur.github.io/dwarf-locstack/?context=%28%0A%28TargetReg+90+%2212345678123456781234567812345678%22%29%0A%28TargetReg+91+%22abcdefghabcdefghabcdefghabcdefgh%22%29%0A%29%0A&input=%28%0A+%28DW_OP_addr+0x200%29%0A+%28DW_OP_addr+0x100%29%0A+%28DW_OP_call+%28%0A+++%3B+func%3A%0A++++++DW_OP_composite%0A++++++DW_OP_swap%0A++++++DW_OP_lit8%0A++++++DW_OP_offset%0A++++++%28DW_OP_piece+4%29%0A++++++DW_OP_swap%0A++++++DW_OP_lit8%0A++++++DW_OP_offset%0A++++++%28DW_OP_piece+4%29%0A++%29%0A+%29%0A%29%0A))
+
     +-----------------------------------------------------------------------------+
     |                   v                                   v                     |
     | ... 100 101 ... 108 109 110 111 112 ... 200 201 ... 208 209 210 211 212 ... |
@@ -517,7 +532,12 @@ value then the DWARF function will not work. For example:
     DW_OP_addr 0x200
     DW_OP_call func
 
-    The first part creates:
+would fail.
+([Try it!](https://barisaktemur.github.io/dwarf-locstack/?context=%28%0A%28TargetReg+0++%220000%22%29%0A%28TargetReg+90+%2212345678123456781234567812345678%22%29%0A%28TargetReg+91+%22abcdefghabcdefghabcdefghabcdefgh%22%29%0A%29%0A&input=%28%0A+%28DW_OP_addr+0x100%29%0A+DW_OP_lit8%0A+DW_OP_offset%0A+%28DW_OP_piece+2%29%0A+DW_OP_reg0%0A+%28DW_OP_piece+2%29%0A+%28DW_OP_addr+0x200%29%0A+%28DW_OP_call+%28%0A+++%3B+func%3A%0A++++++DW_OP_composite%0A++++++DW_OP_swap%0A++++++DW_OP_lit8%0A++++++DW_OP_offset%0A++++++%28DW_OP_piece+4%29%0A++++++DW_OP_swap%0A++++++DW_OP_lit8%0A++++++DW_OP_offset%0A++++++%28DW_OP_piece+4%29%0A++%29%0A+%29%0A%29%0A))
+
+The first part creates:
+([Try it!](https://barisaktemur.github.io/dwarf-locstack/?context=%28%0A%28TargetReg+0++%220000%22%29%0A%28TargetReg+90+%2212345678123456781234567812345678%22%29%0A%28TargetReg+91+%22abcdefghabcdefghabcdefghabcdefgh%22%29%0A%29%0A&input=%28%0A+%28DW_OP_addr+0x100%29%0A+DW_OP_lit8%0A+DW_OP_offset%0A+%28DW_OP_piece+2%29%0A+DW_OP_reg0%0A+%28DW_OP_piece+2%29%0A+%28DW_OP_addr+0x200%29%0A%29%0A))
+
     +-----------------------------+
     |                   v         |
     | ... 100 101 ... 108 109 ... |      +-------+
@@ -550,7 +570,9 @@ Then all three scenarios work.
     DW_OP_regx vreg0
     DW_OP_call func
 
-    yields:
+yields:
+([Try it!](https://barisaktemur.github.io/dwarf-locstack/?context=%28%0A%28TargetReg+0++%220000%22%29%0A%28TargetReg+90+%2212345678123456781234567812345678%22%29%0A%28TargetReg+91+%22abcdefghabcdefghabcdefghabcdefgh%22%29%0A%29%0A&input=%28%0A+%28DW_OP_regx+91%29%0A+%28DW_OP_regx+90%29%0A+%28DW_OP_call+%28%0A+++%3B+func%3A%0A++++DW_OP_lit8%0A++++DW_OP_offset%0A++++DW_OP_swap%0A++++DW_OP_lit8%0A++++DW_OP_offset%0A++++DW_OP_lit4%0A++++DW_OP_lit4%0A++++DW_OP_overlay%0A++%29%0A+%29%0A%29%0A))
+
          +---------------------------+
          |                 v         |
     vreg0| ... C  B  A  9  8  7  ... |
@@ -563,11 +585,15 @@ Then all three scenarios work.
                   v               v
                 [XX XX XX XX YY YY YY YY]
 
+And
+
     DW_OP_addr 0x200
     DW_OP_addr 0x100
     DW_OP_call func
 
-    yields:
+yields:
+([Try it!](https://barisaktemur.github.io/dwarf-locstack/?context=%28%0A%28TargetReg+0++%220000%22%29%0A%28TargetReg+90+%2212345678123456781234567812345678%22%29%0A%28TargetReg+91+%22abcdefghabcdefghabcdefghabcdefgh%22%29%0A%29%0A&input=%28%0A+%28DW_OP_addr+0x200%29%0A+%28DW_OP_addr+0x100%29%0A+%28DW_OP_call+%28%0A+++%3B+func%3A%0A++++DW_OP_lit8%0A++++DW_OP_offset%0A++++DW_OP_swap%0A++++DW_OP_lit8%0A++++DW_OP_offset%0A++++DW_OP_lit4%0A++++DW_OP_lit4%0A++++DW_OP_overlay%0A++%29%0A+%29%0A%29%0A))
+
     +---------------------------------------------------------------------+
     |                   v                               v                 |
     | ... 100 101 ... 108 109 10A 10B ... 200 201 ... 208 209 20A 20B ... |
@@ -582,6 +608,8 @@ Then all three scenarios work.
     |                                  YY  YY  YY  YY     |<--+
     +-----------------------------------------------------+
 
+And in
+
     DW_OP_addr 0x200
     DW_OP_addr 0x100
     DW_OP_regx AX
@@ -590,7 +618,8 @@ Then all three scenarios work.
     DW_OP_overlay # This creates the first overlay
     DW_OP_call func
 
-The first overlay looks like:
+the first overlay looks like:
+([Try it!](https://barisaktemur.github.io/dwarf-locstack/?context=%28%0A%28TargetReg+0++%220000%22%29%0A%28TargetReg+90+%2212345678123456781234567812345678%22%29%0A%28TargetReg+91+%22abcdefghabcdefghabcdefghabcdefgh%22%29%0A%29%0A&input=%28%0A+%28DW_OP_addr+0x200%29%0A+%28DW_OP_addr+0x100%29%0A+DW_OP_reg0+%3B+reg+AX%0A+DW_OP_lit10%0A+DW_OP_lit2%0A+DW_OP_overlay+%3B+This+creates+the+first+overlay%0A%29%0A))
 
     +---------------------------------+
     |  v              <-AX-->         |
@@ -599,6 +628,7 @@ The first overlay looks like:
 
 Then after func is called the double word is constructed out of the bytes
 as follows:
+([Try it!](https://barisaktemur.github.io/dwarf-locstack/?context=%28%0A%28TargetReg+0++%220000%22%29%0A%28TargetReg+90+%2212345678123456781234567812345678%22%29%0A%28TargetReg+91+%22abcdefghabcdefghabcdefghabcdefgh%22%29%0A%29%0A&input=%28%0A+%28DW_OP_addr+0x200%29%0A+%28DW_OP_addr+0x100%29%0A+DW_OP_reg0+%3B+reg+AX%0A+DW_OP_lit10%0A+DW_OP_lit2%0A+DW_OP_overlay+%3B+This+creates+the+first+overlay%0A%0A+%28DW_OP_call+%28%0A+++%3B+func%3A%0A++++DW_OP_lit8%0A++++DW_OP_offset%0A++++DW_OP_swap%0A++++DW_OP_lit8%0A++++DW_OP_offset%0A++++DW_OP_lit4%0A++++DW_OP_lit4%0A++++DW_OP_overlay%0A++%29%0A+%29%0A%29%0A))
 
     +------------------------------------------------------------------+
     |              v                                                   |
