@@ -526,13 +526,13 @@ offset off the end of a composite is undefined behavior.
 
 If on the other hand the function is defined using overlays:
 
-  func: # expects 2 locations to be on the stack when called
-    DW_OP_offset 8
-    DW_OP_swap
-    DW_OP_offset 8
-    DW_OP_lit4
-    DW_OP_lit4
-    DW_OP_overlay
+    func: # expects 2 locations to be on the stack when called
+      DW_OP_offset 8
+      DW_OP_swap
+      DW_OP_offset 8
+      DW_OP_lit4
+      DW_OP_lit4
+      DW_OP_overlay
 
 Then all three scenarios work.
 
