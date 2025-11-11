@@ -387,8 +387,8 @@ The first being that `DW_OP_piece` has an ABI dependency:
         is defined by the ABI. "
 
 While this is not often a problem with typical, relatively small CPU
-registers, GPUs make much more heavy use of vector registers, which may be
-thousands of bits long. Furthermore, to work around this ABI
+registers, GPUs make much more heavy use of vector registers, which
+may be thousands of bits long. Furthermore, to work around this ABI
 dependency on CPU registers, the ABI often defines different names for
 sub-registers. For example on the x86, the lowest 16b of the 32b
 register known as EAX can be referred to as AX and within those 16b
@@ -399,177 +399,45 @@ there are already 256 vector registers that have 2048 bits.
 These large vector registers can also be spilled to fast GPU memory to
 free up registers for a portion of a computation. Thus it is helpful
 to have DWARF expressions which refer to these source variables in the
-same way whether they are in a vector register or in memory. To allow
-the DWARF expressions to be factored the DWARF expressions must be
-composable in a way that expressions with the piece operator are not.
+same way whether they are in a vector register or in memory. Other
+approaches to solving this ABI problem have been suggested including
+[Stack piece operators](https://dwarfstd.org/issues/211206.2.html)
 
-A very common thing done in GPUs is combining two 32b slices of different vector
-registers to make a 64b double. This can be done with the piece
-operators with something like:
+A very common thing done in GPUs is combining two 32b slices of
+different vector registers to make a 64b double. This can be done
+trivially with overlay:
 
-    DW_OP_regx vreg0
-    DW_OP_lit8         # This could also be computed using DW_OP_push_lane
-    DW_OP_offset       # but in this example, we just picked a number.
-    DW_OP_piece 4
-    DW_OP_regx vreg1
-    DW_OP_lit8
-    DW_OP_offset
-    DW_OP_piece 4
+     DW_OP_regx vreg1
+     DW_OP_push_lane
+	 DW_OP_lit4
+	 DW_OP_mul
+     DW_OP_offset
+     DW_OP_regx vreg0
+     DW_OP_push_lane
+	 DW_OP_lit4
+	 DW_OP_mul
+     DW_OP_offset
 
-yields:
-([Try it!](https://barisaktemur.github.io/dwarf-locstack/?context=%28%0A%28TargetReg+90+%2212345678123456781234567812345678%22%29%0A%28TargetReg+91+%22abcdefghabcdefghabcdefghabcdefgh%22%29%0A%29%0A&input=DW_OP_regx+90%0ADW_OP_lit8%0ADW_OP_offset%0ADW_OP_piece+4%0ADW_OP_regx+91%0ADW_OP_lit8%0ADW_OP_offset%0ADW_OP_piece+4%0A%0A))
+This could very easily be factored with boiler plate DWARF functions
+which are called from many expressions:
 
-*Note that the small 'v' indicates where the offset into the base
-  location is.*
-
-         +---------------------------+        +---------------------------+
-         |                 v         |        |                 v         |
-         | ... C  B  A  9  8  7  ... |        | ... C  B  A  9  8  7  ... |
-    vreg0| ...   XX XX XX XX  ...    |   vreg1| ...   YY YY YY YY  ...    |
-         +---------------------------+        +---------------------------+
-                           \                         /
-                            \                       /
-                             v                     v
-                            [XX XX XX XX YY YY YY YY]
+     lane_slice:       ; expects a location on the stack
+	   DW_OP_push_lane
+	   DW_OP_lit4
+	   DW_OP_mul
+       DW_OP_offset
+     merge_split_double: ; expects two locations on the stack
+	   DW_OP_call lane_slice
+	   DW_OP_swap
+	   DW_OP_call lane_slice
+	   DW_OP_swap
 
 
-This also works if those vector registers were spilled to memory:
-
-    DW_OP_addr 0x100
-    DW_OP_lit8
-    DW_OP_offset
-    DW_OP_piece 4
-    DW_OP_addr 0x200
-    DW_OP_lit8
-    DW_OP_offset
-    DW_OP_piece 4
-
-yields:
-([Try it!](https://barisaktemur.github.io/dwarf-locstack/?context=%28%0A%28TargetReg+90+%2212345678123456781234567812345678%22%29%0A%28TargetReg+91+%22abcdefghabcdefghabcdefghabcdefgh%22%29%0A%29%0A&input=DW_OP_addr+0x100%0ADW_OP_lit8%0ADW_OP_offset%0ADW_OP_piece+4%0ADW_OP_addr+0x200%0ADW_OP_lit8%0ADW_OP_offset%0ADW_OP_piece+4%0A))
-
-    +-----------------------------------------------------------------------------+
-    |                   v                                   v                     |
-    | ... 100 101 ... 108 109 110 111 112 ... 200 201 ... 208 209 210 211 212 ... |
-    |                  XX  XX  XX  XX                      YY  YY  YY  YY         |
-    +-----------------------------------------------------------------------------+
-                                     \                    /
-                                      \                  /
-                                       v                v
-                                    [XX XX XX XX YY YY YY YY]
-
-This can also be generalized into a DWARF function which ignores the
-location. This would allow the compiler to use the same DWARF
-function whether the variable is stored in a register or in some kind
-of memory. It should be noted that on some architectures when a
-shorter value is placed in a larger register its placement within the
-register is defined by the architecture's ABI and may not be the same
-as `DW_OP_bit_piece` with an offset of 0.
-
-Note this example is not particularly useful as is. However
-generalizing the function to use `DW_OP_push_lane` rather than having a
-fixed offset would make a function that is generally useful and a good
-candidate for factorization. However, that general function would
-greatly increase the size of the examples below making them less
-understandable.
-
-    func: # expects 2 locations to be on the stack when called
-      DW_OP_composite
-      DW_OP_swap
-      DW_OP_lit8
-      DW_OP_offset
-      DW_OP_piece 4
-      DW_OP_swap
-      DW_OP_lit8
-      DW_OP_offset
-      DW_OP_piece 4
-
-Then if the variable is in registers
+Then the expression could be reduced to a a very compact:
 
     DW_OP_regx vreg1
     DW_OP_regx vreg0
-    DW_OP_call func
-
-as above yields:
-([Try it!](https://barisaktemur.github.io/dwarf-locstack/?context=%28%0A%28TargetReg+90+%2212345678123456781234567812345678%22%29%0A%28TargetReg+91+%22abcdefghabcdefghabcdefghabcdefgh%22%29%0A%29%0A&input=%28%0A+%28DW_OP_regx+91%29%0A+%28DW_OP_regx+90%29%0A+%28DW_OP_call+%28%0A+++%3B+func%3A%0A++++++DW_OP_composite%0A++++++DW_OP_swap%0A++++++DW_OP_lit8%0A++++++DW_OP_offset%0A++++++%28DW_OP_piece+4%29%0A++++++DW_OP_swap%0A++++++DW_OP_lit8%0A++++++DW_OP_offset%0A++++++%28DW_OP_piece+4%29%0A++%29%0A+%29%0A%29%0A))
-
-         +---------------------------+        +---------------------------+
-         |                 v         |        |                 v         |
-         | ... C  B  A  9  8  7  ... |        | ... C  B  A  9  8  7  ... |
-    vreg0| ...   XX XX XX XX  ...    |   vreg1| ...   YY YY YY YY  ...    |
-         +---------------------------+        +---------------------------+
-                           \                         /
-                            \                       /
-                             v                     v
-                            [XX XX XX XX YY YY YY YY]
-
-or if it is in memory:
-
-    DW_OP_addr 0x200
-    DW_OP_addr 0x100
-    DW_OP_call func
-
-yields:
-([Try it!](https://barisaktemur.github.io/dwarf-locstack/?context=%28%0A%28TargetReg+90+%2212345678123456781234567812345678%22%29%0A%28TargetReg+91+%22abcdefghabcdefghabcdefghabcdefgh%22%29%0A%29%0A&input=%28%0A+%28DW_OP_addr+0x200%29%0A+%28DW_OP_addr+0x100%29%0A+%28DW_OP_call+%28%0A+++%3B+func%3A%0A++++++DW_OP_composite%0A++++++DW_OP_swap%0A++++++DW_OP_lit8%0A++++++DW_OP_offset%0A++++++%28DW_OP_piece+4%29%0A++++++DW_OP_swap%0A++++++DW_OP_lit8%0A++++++DW_OP_offset%0A++++++%28DW_OP_piece+4%29%0A++%29%0A+%29%0A%29%0A))
-
-    +-----------------------------------------------------------------------------+
-    |                   v                                   v                     |
-    | ... 100 101 ... 108 109 110 111 112 ... 200 201 ... 208 209 210 211 212 ... |
-    |                  XX  XX  XX  XX                      YY  YY  YY  YY         |
-    +-----------------------------------------------------------------------------+
-                                     \                    /
-                                      \                  /
-                                       v                v
-                                    [XX XX XX XX YY YY YY YY]
-
-However if you already have a composite as your first part of your
-value then the DWARF function will not work. For example:
-
-    DW_OP_addr 0x100
-    DW_OP_lit8
-    DW_OP_offset
-    DW_OP_piece 2
-    DW_OP_regx AX
-    DW_OP_piece 2
-    DW_OP_addr 0x200
-    DW_OP_call func
-
-would fail.
-([Try it!](https://barisaktemur.github.io/dwarf-locstack/?context=%28%0A%28TargetReg+0++%220000%22%29%0A%28TargetReg+90+%2212345678123456781234567812345678%22%29%0A%28TargetReg+91+%22abcdefghabcdefghabcdefghabcdefgh%22%29%0A%29%0A&input=%28%0A+%28DW_OP_addr+0x100%29%0A+DW_OP_lit8%0A+DW_OP_offset%0A+%28DW_OP_piece+2%29%0A+DW_OP_reg0%0A+%28DW_OP_piece+2%29%0A+%28DW_OP_addr+0x200%29%0A+%28DW_OP_call+%28%0A+++%3B+func%3A%0A++++++DW_OP_composite%0A++++++DW_OP_swap%0A++++++DW_OP_lit8%0A++++++DW_OP_offset%0A++++++%28DW_OP_piece+4%29%0A++++++DW_OP_swap%0A++++++DW_OP_lit8%0A++++++DW_OP_offset%0A++++++%28DW_OP_piece+4%29%0A++%29%0A+%29%0A%29%0A))
-
-The first part creates:
-([Try it!](https://barisaktemur.github.io/dwarf-locstack/?context=%28%0A%28TargetReg+0++%220000%22%29%0A%28TargetReg+90+%2212345678123456781234567812345678%22%29%0A%28TargetReg+91+%22abcdefghabcdefghabcdefghabcdefgh%22%29%0A%29%0A&input=%28%0A+%28DW_OP_addr+0x100%29%0A+DW_OP_lit8%0A+DW_OP_offset%0A+%28DW_OP_piece+2%29%0A+DW_OP_reg0%0A+%28DW_OP_piece+2%29%0A+%28DW_OP_addr+0x200%29%0A%29%0A))
-
-    +-----------------------------+
-    |                   v         |
-    | ... 100 101 ... 108 109 ... |      +-------+
-    |                  XX  XX     |   AX | YY YY |
-    +-----------------------------+      +-------+
-                            \            /
-                             \          /
-                              v        v
-                          [ 108 109 <-AX--> ]
-
-That is because the function above does an 8 byte offset off of the
-piece built composite above which is only 4 bytes long and doing an
-offset off the end of a composite is an error.
-
-If on the other hand the function is defined using overlays:
-
-    func: # expects 2 locations to be on the stack when called
-      DW_OP_lit8
-      DW_OP_offset
-      DW_OP_swap
-      DW_OP_lit8
-      DW_OP_offset
-      DW_OP_lit4
-      DW_OP_lit4
-      DW_OP_overlay
-
-Then all three scenarios work.
-
-    DW_OP_regx vreg1
-    DW_OP_regx vreg0
-    DW_OP_call func
+    DW_OP_call merge_split_double
 
 yields:
 ([Try it!](https://barisaktemur.github.io/dwarf-locstack/?context=%28%0A%28TargetReg+0++%220000%22%29%0A%28TargetReg+90+%2212345678123456781234567812345678%22%29%0A%28TargetReg+91+%22abcdefghabcdefghabcdefghabcdefgh%22%29%0A%29%0A&input=%28%0A+%28DW_OP_regx+91%29%0A+%28DW_OP_regx+90%29%0A+%28DW_OP_call+%28%0A+++%3B+func%3A%0A++++DW_OP_lit8%0A++++DW_OP_offset%0A++++DW_OP_swap%0A++++DW_OP_lit8%0A++++DW_OP_offset%0A++++DW_OP_lit4%0A++++DW_OP_lit4%0A++++DW_OP_overlay%0A++%29%0A+%29%0A%29%0A))
@@ -586,11 +454,12 @@ yields:
                   v               v
                 [XX XX XX XX YY YY YY YY]
 
-And
+These functions also work if one or both of those vector registers has
+been spilled to memory:
 
     DW_OP_addr 0x200
     DW_OP_addr 0x100
-    DW_OP_call func
+    DW_OP_call merge_split_double
 
 yields:
 ([Try it!](https://barisaktemur.github.io/dwarf-locstack/?context=%28%0A%28TargetReg+0++%220000%22%29%0A%28TargetReg+90+%2212345678123456781234567812345678%22%29%0A%28TargetReg+91+%22abcdefghabcdefghabcdefghabcdefgh%22%29%0A%29%0A&input=%28%0A+%28DW_OP_addr+0x200%29%0A+%28DW_OP_addr+0x100%29%0A+%28DW_OP_call+%28%0A+++%3B+func%3A%0A++++DW_OP_lit8%0A++++DW_OP_offset%0A++++DW_OP_swap%0A++++DW_OP_lit8%0A++++DW_OP_offset%0A++++DW_OP_lit4%0A++++DW_OP_lit4%0A++++DW_OP_overlay%0A++%29%0A+%29%0A%29%0A))
@@ -609,7 +478,7 @@ yields:
     |                                  YY  YY  YY  YY     |<--+
     +-----------------------------------------------------+
 
-And in
+It even works if one or both of the locations is already composite location.
 
     DW_OP_addr 0x200
     DW_OP_addr 0x100
@@ -617,7 +486,7 @@ And in
     DW_OP_lit10
     DW_OP_lit2
     DW_OP_overlay # This creates the first overlay
-    DW_OP_call func
+    DW_OP_call merge_split_double
 
 the first overlay looks like:
 ([Try it!](https://barisaktemur.github.io/dwarf-locstack/?context=%28%0A%28TargetReg+0++%220000%22%29%0A%28TargetReg+90+%2212345678123456781234567812345678%22%29%0A%28TargetReg+91+%22abcdefghabcdefghabcdefghabcdefgh%22%29%0A%29%0A&input=%28%0A+%28DW_OP_addr+0x200%29%0A+%28DW_OP_addr+0x100%29%0A+DW_OP_reg0+%3B+reg+AX%0A+DW_OP_lit10%0A+DW_OP_lit2%0A+DW_OP_overlay+%3B+This+creates+the+first+overlay%0A%29%0A))
@@ -627,8 +496,8 @@ the first overlay looks like:
     | 100 ... 108 109 --- --- 10C ... |
     +---------------------------------+
 
-Then after func is called the double word is constructed out of the bytes
-as follows:
+Then after merge_split_double is called the double word is constructed
+out of the bytes as follows:
 ([Try it!](https://barisaktemur.github.io/dwarf-locstack/?context=%28%0A%28TargetReg+0++%220000%22%29%0A%28TargetReg+90+%2212345678123456781234567812345678%22%29%0A%28TargetReg+91+%22abcdefghabcdefghabcdefghabcdefgh%22%29%0A%29%0A&input=%28%0A+%28DW_OP_addr+0x200%29%0A+%28DW_OP_addr+0x100%29%0A+DW_OP_reg0+%3B+reg+AX%0A+DW_OP_lit10%0A+DW_OP_lit2%0A+DW_OP_overlay+%3B+This+creates+the+first+overlay%0A%0A+%28DW_OP_call+%28%0A+++%3B+func%3A%0A++++DW_OP_lit8%0A++++DW_OP_offset%0A++++DW_OP_swap%0A++++DW_OP_lit8%0A++++DW_OP_offset%0A++++DW_OP_lit4%0A++++DW_OP_lit4%0A++++DW_OP_overlay%0A++%29%0A+%29%0A%29%0A))
 
     +------------------------------------------------------------------+
@@ -647,9 +516,9 @@ as follows:
     |                              ZZ  ZZ  ZZ  ZZ      |<--+
     +--------------------------------------------------+
 
-The lack of sensitivity to the type of the locations passed as a
-parameter is what makes `DW_OP_overlay` composites composable in a way
-that `DW_OP_piece` composites are not.
+The independence to the underlying storage is a very powerful property
+of overlays. This composability allows DWARF expressions to be factored
+making them much more compact.
 
 ## Proposal
 
@@ -892,7 +761,7 @@ After the example below:
 > followed by the four byte value computed from the sum of the contents of
 > r3 and r4
 
-Add: 
+Add:
 
 > The equivalent expression using overlays would be:
 
