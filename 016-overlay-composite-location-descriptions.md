@@ -710,10 +710,10 @@ With:
 >   zero, whose middle four bytes are unavailable, and whose last four
 >   bytes are in memory, 12 bytes before the frame base.  This
 >   situation most likely would occur in the case where the object
->   lives at FB-12 but the first four bytes got promoted and the next
+>   lives at FB-20 but the first four bytes got promoted and the next
 >   four bytes got optimized away giving us the expression:
 
-    DW_OP_fbreg (-12) ; the default location
+    DW_OP_fbreg (-20) ; the default location
     DW_OP_reg0        ; the promoted 32b variable
     DW_OP_lit0
     DW_OP_lit4
