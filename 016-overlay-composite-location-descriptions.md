@@ -654,17 +654,24 @@ Add the following rows to Table 8.9 "DWARF Operation Encodings":
 
 After the piece example:
 
+    DW_OP_composite
     DW_OP_reg3
     DW_OP_piece (4)
     DW_OP_reg10
     DW_OP_piece (2)
 
+Replace:
+
 >   A variable whose first four bytes reside in register 3 and whose next two
 >   bytes reside in register 10.
 
-Add:
+With:
 
-> a similar effect can be done with an overlay:
+>   A variable whose first four bytes reside in register 3 and whose
+>   next two bytes reside in register 10. For example as if a six byte
+>   structure were passed by value using two 32 bit registers. An
+>   overlay can do the same thing. On a little endian machine the
+>   expression would be:
 
     DW_OP_reg3
     DW_OP_reg10
@@ -672,74 +679,62 @@ Add:
     DW_OP_lit2
     DW_OP_overlay
 
-Then add:
+>   and on a big endian machine the expression would likely be:
 
-> There is a difference in these two examples though: The first one
-> creates a six-byte location. The second one creates a location that
-> is either 6 bytes long if reg3 is less than or equal to 6 bytes long
-> or a location as long as reg3 if it is longer than 6 bytes. In this
-> case, the difference probably doesn't matter because the consumer is
-> only expecting to read 6 bytes. However, if a producer wants to
-> ensure that any bits in reg3 which extend beyond the 6 bytes of the
-> overlay are masked off, they can use an expression like this:
-
-    DW_OP_composite
     DW_OP_reg3
-    DW_OP_lit0
-    DW_OP_lit4
-    DW_OP_overlay
     DW_OP_reg10
+	DW_OP_lit2
+	DW_OP_offset
     DW_OP_lit4
     DW_OP_lit2
     DW_OP_overlay
 
 Then after the example:
 
+    DW_OP_composite
     DW_OP_reg0
     DW_OP_piece (4)
     DW_OP_piece (4)
     DW_OP_fbreg (-12)
     DW_OP_piece (4)
+
+Replace:
 
 >   A twelve byte value whose first four bytes reside in register zero, whose
 >   middle four bytes are unavailable (perhaps due to optimization), and
 >   whose last four bytes are in memory, 12 bytes before the frame base.
 
-Add:
+With:
 
-> A similar effect can be done with overlays a couple of different
-> ways. The most general way places all the pieces over an empty
-> composite.
+>   A twelve byte value whose first four bytes reside in register
+>   zero, whose middle four bytes are unavailable, and whose last four
+>   bytes are in memory, 12 bytes before the frame base.  This
+>   situation most likely would occur in the case where the object
+>   lives at FB-12 but the first four bytes got promoted and the next
+>   four bytes got optimized away giving us the expression:
 
-    DW_OP_composite
-    DW_OP_reg0
+    DW_OP_fbreg (-12) ; the default location
+    DW_OP_reg0        ; the promoted 32b variable
     DW_OP_lit0
     DW_OP_lit4
     DW_OP_overlay
-    DW_OP_fbreg (-12)
-    DW_OP_lit8
+    DW_OP_undefined   ; the variable that was optimized away
+    DW_OP_lit4
     DW_OP_lit4
     DW_OP_overlay
 
-> If reg0 is a 32b register, a more compact way is to create an overlay on top
-> of reg0.  This leaves a hole of undefined storage between the last bit of
-> reg0 and the beginning of the value in fbreg(-12).
+>   This location can be incrementally built up as optimization passes
+>   act on the variable promoting some portions and optimizing out
+>   others.
+
+>   Assuming that reg0 is a 32b register, and the end result is known
+>   a more compact way to specify the location is to create an overlay
+>   on top of reg0. Because any gap between the end of the base
+>   storage and the overlay is undefined, thhis leaves a hole of
+>   undefined storage between the last bit of reg0 and the beginning
+>   of the value in fbreg(-12).
 
     DW_OP_reg0
-    DW_OP_fbreg (-12)
-    DW_OP_lit8
-    DW_OP_lit4
-    DW_OP_overlay
-
-> If reg0 is more than 32b, the undefined bits can be explicitly overlayed
-> onto the reg0's upper bytes. Note that if reg0 is more than 96b, bits beyond
-> byte 12 until the end of reg0 would be available in this version.
-
-    DW_OP_reg0
-    DW_OP_undefined
-    DW_OP_lit4
-    DW_OP_lit4
-    DW_OP_overlay
     DW_OP_fbreg (-12)
     DW_OP_lit8
     DW_OP_lit4
@@ -747,6 +742,7 @@ Add:
 
 After the example below:
 
+    DW_OP_composite
     DW_OP_lit1
     DW_OP_stack_value
     DW_OP_piece (4)
@@ -778,6 +774,7 @@ Add:
 
 After:
 
+    DW_OP_composite
     DW_OP_reg0
     DW_OP_bit_piece (1, 31)
     DW_OP_bit_piece (7, 0)
@@ -792,7 +789,6 @@ Add:
 
 > A similar expression done with bit overlays:
 
-    DW_OP_composite
     DW_OP_reg0
     DW_OP_lit31
     DW_OP_bit_offset
