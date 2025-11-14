@@ -411,29 +411,29 @@ trivially with overlay:
 
      DW_OP_regx vreg1
      DW_OP_push_lane
-	 DW_OP_lit4
-	 DW_OP_mul
+     DW_OP_lit4
+     DW_OP_mul
      DW_OP_offset
      DW_OP_regx vreg0
      DW_OP_push_lane
-	 DW_OP_lit4
-	 DW_OP_mul
+     DW_OP_lit4
+     DW_OP_mul
      DW_OP_offset
 
 This could very easily be factored with boiler plate DWARF functions
 which are called from many expressions:
 
      lane_slice:       ; expects a location on the stack
-	   DW_OP_push_lane
-	   DW_OP_lit4
-	   DW_OP_mul
+       DW_OP_push_lane
+       DW_OP_lit4
+       DW_OP_mul
        DW_OP_offset
      merge_split_double: ; expects two locations on the stack
-	   DW_OP_call lane_slice
-	   DW_OP_swap
-	   DW_OP_call lane_slice
-	   DW_OP_swap
-	   DW_OP_overlay
+       DW_OP_call lane_slice
+       DW_OP_swap
+       DW_OP_call lane_slice
+       DW_OP_swap
+       DW_OP_overlay
 
 Then the expression could be reduced to a a very compact:
 
@@ -691,8 +691,8 @@ With:
 
     DW_OP_reg3
     DW_OP_reg10
-	DW_OP_lit2
-	DW_OP_offset
+    DW_OP_lit2
+    DW_OP_offset
     DW_OP_lit4
     DW_OP_lit2
     DW_OP_overlay
@@ -916,7 +916,7 @@ Replace figure "D.8? SIMD Lane Example: DWARF Encoding" with:
 
     .loclist.1:          # src
         range [.l0, .l1)
-	    DW_OP_reg1
+            DW_OP_reg1
         range [.l1, .l2)
             DW_OP_implicit_pointer ($DP1, 0)
         range [.l2, .l4)
