@@ -173,9 +173,10 @@ value based on the iteration index modulo the vectorization size. This
 cannot be expressed by `DW_OP_piece` and `DW_OP_bit_piece` which only
 allow constant offsets to be expressed.
 
-Therefore, a new operator is defined that takes two location
-descriptions plus an offset and a size, and creates a composite that uses
-the second location description as an overlay of the first, positioned
+Therefore, a new pair of operators, `DW_OP_overlay` and
+`DW_OP_bit_overlay`, is defined that takes two location descriptions
+plus an offset and a size, and creates a composite that uses the
+second location description as an overlay of the first, positioned
 according to the offset and size.
 
 Consider an array that has been partially registerized such that the
@@ -189,14 +190,15 @@ function, for example:
     }
 
 Inside the vectorized loop body, the machine code loads
-src[i]..src[i+7] and dst[i]..dst[i+7] into registers, adds them, and
-stores the result back into dst[i]..dst[i+7].
+`src[i]..src[i+7]` and `dst[i]..dst[i+7]` into registers, adds them, and
+stores the result back into `dst[i]..dst[i+7]`.
 
-Considering the location of dst and src in the loop body, the elements
-dst[i]..dst[i+7] and src[i]..src[i+7] would be located in vector
-registers, all other elements are located in memory. Let register R0
-contain the base address of dst, register R1 contain i, and vector
-register R2 contain the registerized dst[i]..dst[i+7] elements.
+Considering the location of `dst` and `src` in the loop body, the
+elements `dst[i]..dst[i+7]` and `src[i]..src[i+7]` would be located in
+vector registers, all other elements are located in memory. Let
+register `R0` contain the base address of `dst`, register `R1` contain
+`i`, and vector register `R2` contain the registerized
+`dst[i]..dst[i+7]` elements.
 
      + dst's address stored in R0
      v
@@ -211,25 +213,25 @@ register R2 contain the registerized dst[i]..dst[i+7] elements.
      +------------------------+
 
 We can describe the location of dst as a memory location with a
-register location overlaid at a runtime offset involving i:
+register location overlaid at a runtime offset involving `i`:
 
     // 1. Memory location description of dst elements located in memory:
-    `DW_OP_breg0` 0
+    DW_OP_breg0 0
 
     // 2. Register location description of element dst[i] is located in R2:
-    `DW_OP_reg2`
+    DW_OP_reg2
 
     // 3. Offset of the register within the memory of dst:
-    `DW_OP_breg1` 0
-    `DW_OP_lit4`
-    `DW_OP_mul`
+    DW_OP_breg1 0
+    DW_OP_lit4
+    DW_OP_mul
 
     // 4. The size of the vector register:
-    `DW_OP_const1u 32`
+    DW_OP_const1u 32
 
     // 5. Make a composite location description for dst that is the memory #1
     //    with the register #2 positioned as an overlay at offset #3 of size #4:
-    `DW_OP_overlay`
+    DW_OP_overlay
 
 On the first iteration of the vectorized loop, the overlay would look like:
 
@@ -239,9 +241,9 @@ On the first iteration of the vectorized loop, the overlay would look like:
     dst  | 0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F 10 ... |
          +-------------------------------------------------------+
 
-A consumer accessing dst[8] would reference the unsigned int R0+8 but
-when the consumer accesses dst[2], it would reference the byte located at
-offset 8 of register R2.
+A consumer accessing `dst[8]` would reference the unsigned int `R0+8`
+but when the consumer accesses `dst[2]`, it would reference the byte
+located at offset 8 of register `R2`.
 
 Then on the second iteration of the vectorized loop after i had been
 incremented by 8:
@@ -253,8 +255,8 @@ incremented by 8:
          +-------------------------------------------------------+
 
 The situation would be reversed. The consumer accessing dst[8] would now
-reference the first byte of R2, but when accessing dst[2], it
-would reference the unsigned int located at R0+2.
+reference the first byte of `R2`, but when accessing `dst[2]`, it
+would reference the unsigned int located at `R0+2`.
 
 An overlay can also be used to create a composite location without
 using `DW_OP_piece`. For example GPUs often store doubles in two
@@ -290,7 +292,7 @@ those 8 bytes is an error.
 On the other hand, an overlay creates a location that extends out to
 the full extent of the underlying base storage, both to the left and
 to the right. Thus in this example, if the base address space is 64b
-long, any offset that does not overlow the generic type would be
+long, any offset that does not overflow the generic type would be
 valid. In this way, composite overlay locations are more similar to an
 address where the consumer determines how many bytes to read from the
 location.
@@ -431,7 +433,7 @@ which are called from many expressions:
 	   DW_OP_swap
 	   DW_OP_call lane_slice
 	   DW_OP_swap
-
+	   DW_OP_overlay
 
 Then the expression could be reduced to a a very compact:
 
@@ -538,9 +540,20 @@ In Section 3.12 Composite Locations, keep the following introductory paragraphs:
 > the previous piece. The maximum size of a block of composite storage
 > is the size of the largest address space or register.
 
+Then replace the sentence:
+
 > Typically, the size of a composite storage is the same as that of
-> the object it describes. If the composite storage is smaller than the
-> object, the remaining bits of the object are treated as undefined.
+> the object it describes.
+
+With:
+
+> Typically, the size of a composite storage is at least as large as
+> the object it describes.
+
+Then after:
+
+> If the composite storage is smaller than the object, the remaining
+> bits of the object are treated as undefined.
 >
 > In the process of fetching a value from a composite location, the consumer
 > may need to fetch and assemble bits from more than one piece.
@@ -578,16 +591,13 @@ called "Overlay Composites".
 >
 >   The slice of bytes obtained from the storage of `overlay location`
 >   is referred to as the `overlay`. The `overlay` begins at `overlay
->   location` and has a size of `overlay width`. The `overlay`
->   must not extend outside of the bounds of the storage of `overlay
->   location`.
+>   location` and has a size of `overlay width`. The `overlay width`
+>   cannot extend beyond the bounds of the storage of `overlay
+>   location` or else the expression is invalid.
 >
-
 >   The slice of bytes replaced in the storage of `base location` is
 >   referred to as the `overlay base`. It begins at `base location`
->   offset by `base offset` and has a size of `overlay width`. The
->   `overlay width` cannot extend beyond the end of the overlay's
->   storage or else the expression is invalid.
+>   offset by `base offset` and has a size of `overlay width`.
 >
 >   *If the `overlay width` is zero and offset is within the bounds of
 >   the base location's storage, then the consumer may leave the `base
@@ -616,20 +626,18 @@ called "Overlay Composites".
 >
 >   The slice of bits obtained from the storage of `overlay location`
 >   is referred to as the `overlay`. The `overlay` begins at `overlay
->   location` and has a size in bits of `overlay width`. The
->   `overlay` must not extend outside of the bounds of the storage of
->   `overlay location`.
+>   location` and has a size in bits of `overlay width`. The `overlay
+>   width` cannot extend beyond the end of the overlay's storage or
+>   else the expression is invalid.
 >
 >   The slice of bits replaced in the storage of `base location` is
 >   referred to as the `overlay base`. It begins at `base location`
->   offset by `base offset` and has a size of `overlay width` in
->   bits. The `overlay width` cannot extend beyond the end of the
->   overlay's storage or else the expression is invalid.
+>   offset by `base offset` and has a size of `overlay width` in bits.
 >
->   *If the `overlay width` is zero and offset is within the bounds of
->   the base location's storage, then the consumer may leave the `base
->   location` on the top of the stack rather than creating composite
->   storage.*
+>   *If the `overlay width` is zero and `offset` is within the bounds
+>   of the base location's storage, then the consumer may leave the
+>   `base location` on the top of the stack rather than creating
+>   composite storage.*
 >
 >   If the `overlay base` extends beyond the bounds of the storage of
 >   `base location`, the storage of the resulting location is first
