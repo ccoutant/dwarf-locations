@@ -330,11 +330,11 @@ Make the same change in item 2, DW_CFA_same_value.
 Replace the text of item 3, DW_CFA_offset, with the following:
 
     --------------------------------------------------------------------
-	The DW_CFA_offset instruction takes two operands: a register number
-	R (encoded with the opcode) and an unsigned LEB128 constant
-	representing a factored displacement B. The required action is to
-	change the rule for the register specified by R to be an offset(B *
-	data_alignment_factor) rule.
+    The DW_CFA_offset instruction takes two operands: a register number
+    R (encoded with the opcode) and an unsigned LEB128 constant
+    representing a factored displacement B. The required action is to
+    change the rule for the register specified by R to be an offset(B *
+    data_alignment_factor) rule.
     --------------------------------------------------------------------
 
 In item 4, DW_CFA_offset_extended, change "a register number and a factored
@@ -363,10 +363,10 @@ Replace the text of item 7, DW_CFA_val_offset_sf, with the following:
 Replace the text of item 8, DW_CFA_register, with the following:
 
     --------------------------------------------------------------------
-	The DW_CFA_register instruction takes two unsigned LEB128 operands
-	representing register numbers R1 and R2 respectively. The required
-	action is to set the rule for the register specified by R1 to be a
-	register(R2) rule.
+    The DW_CFA_register instruction takes two unsigned LEB128 operands
+    representing register numbers R1 and R2 respectively. The required
+    action is to set the rule for the register specified by R1 to be a
+    register(R2) rule.
     --------------------------------------------------------------------
 
 In item 9, DW_CFA_expression, replace the description with the following:
@@ -377,8 +377,8 @@ In item 9, DW_CFA_expression, replace the description with the following:
     representing a DWARF operation expression E. The required action is to
     change the rule for the register specified by R to be an expression(E) rule.
 
-	[non-normative] That is, E computes the location description where
-	the register value can be retrieved.
+    [non-normative] That is, E computes the location description where
+    the register value can be retrieved.
 
     [non-normative] See 6.4.2 Call Frame Instructions regarding restrictions on
     the DWARF expression operations that can be used in E.
