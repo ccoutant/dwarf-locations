@@ -290,7 +290,6 @@ leveraging this property.
 An overlay can also be used to create a composite location without
 using `DW_OP_piece`. For example GPUs often store doubles in two
 32b parts. An overlay can be used to combine the locations.
-([Try it!](https://barisaktemur.github.io/dwarf-locstack/?context=%28%29&input=DW_OP_addr+0x100%0ADW_OP_addr+0x200%0ADW_OP_lit4+%3B+offset%0ADW_OP_lit4+%3B+width%0ADW_OP_overlay%0A))
 
     DW_OP_addr 0x100
     DW_OP_addr 0x200
@@ -303,13 +302,16 @@ using `DW_OP_piece`. For example GPUs often store doubles in two
     base    | 100 101 102 103                 108 ... |
             +-----------------------------------------+
 
+([Try it!](https://barisaktemur.github.io/dwarf-locstack/?context=%28%29&input=DW_OP_addr+0x100%0ADW_OP_addr+0x200%0ADW_OP_lit4+%3B+offset%0ADW_OP_lit4+%3B+width%0ADW_OP_overlay%0A))
+
 A similar construct using the piece operators would be as follows:
-([Try it!](https://barisaktemur.github.io/dwarf-locstack/?context=%28%29&input=DW_OP_addr+0x100%0ADW_OP_piece+4%0ADW_OP_addr+0x200%0ADW_OP_piece+4%0A))
 
     DW_OP_addr 0x100
     DW_OP_piece (4)
     DW_OP_addr 0x200
     DW_OP_piece (4)
+
+([Try it!](https://barisaktemur.github.io/dwarf-locstack/?context=%28%29&input=DW_OP_addr+0x100%0ADW_OP_piece+4%0ADW_OP_addr+0x200%0ADW_OP_piece+4%0A))
 
 However, there is a difference. The piece operator creates a location
 referencing composite storage which is 8 bytes long. It is assumed
@@ -330,7 +332,6 @@ If the producer wanted to use an overlay operator to produce exactly
 what the piece operators produce (a storage with just the relevant
 bytes), then it could overlay two locations over an empty composite
 location.
-([Try it!](https://barisaktemur.github.io/dwarf-locstack/?context=%28%29&input=DW_OP_composite%0ADW_OP_addr+0x100%0ADW_OP_lit0++%3B+offset+0%0ADW_OP_lit4++%3B+width+4%0ADW_OP_overlay%0ADW_OP_addr+0x200%0ADW_OP_lit4++%3B+offset+4%0ADW_OP_lit4++%3B+width+4%0ADW_OP_overlay%0A))
 
     // Base
     DW_OP_composite
@@ -355,6 +356,8 @@ location.
                 |+--------------------------------+|
                 +---------------------------------++
 
+([Try it!](https://barisaktemur.github.io/dwarf-locstack/?context=%28%29&input=DW_OP_composite%0ADW_OP_addr+0x100%0ADW_OP_lit0++%3B+offset+0%0ADW_OP_lit4++%3B+width+4%0ADW_OP_overlay%0ADW_OP_addr+0x200%0ADW_OP_lit4++%3B+offset+4%0ADW_OP_lit4++%3B+width+4%0ADW_OP_overlay%0A))
+
 However, it is currently believed that in most cases the extra step of
 making the underlying storage an empty composite is unnecessary.  The
 composites produced by the piece operators and the overlay operators
@@ -363,15 +366,15 @@ should be functionally equivalent.
 When a portion of the location is undefined, `DW_OP_piece` can
 concatenate an empty piece of a specific size to a previous piece to
 leave a section undefined.
-([Try it!](https://barisaktemur.github.io/dwarf-locstack/?context=%28%29&input=DW_OP_reg0%0ADW_OP_piece+4%0ADW_OP_piece+4%0A))
 
      DW_OP_reg0
      DW_OP_piece (4)
      DW_OP_piece (4)
 
+([Try it!](https://barisaktemur.github.io/dwarf-locstack/?context=%28%29&input=DW_OP_reg0%0ADW_OP_piece+4%0ADW_OP_piece+4%0A))
+
 To do the same thing with overlays, the undefined portion must be
 explicit. Either by using it as the underlying base storage:
-([Try it!](https://barisaktemur.github.io/dwarf-locstack/?context=%28%0A%28TargetReg+0+%2212345678%22%29%0A%29&input=DW_OP_undefined%0ADW_OP_reg0%0ADW_OP_lit0%0ADW_OP_lit4%0ADW_OP_overlay%0A))
 
     // Overlaying 4 bytes of reg0 on top of undefined location
     DW_OP_undefined
@@ -380,8 +383,9 @@ explicit. Either by using it as the underlying base storage:
     DW_OP_lit4
     DW_OP_overlay
 
+([Try it!](https://barisaktemur.github.io/dwarf-locstack/?context=%28%0A%28TargetReg+0+%2212345678%22%29%0A%29&input=DW_OP_undefined%0ADW_OP_reg0%0ADW_OP_lit0%0ADW_OP_lit4%0ADW_OP_overlay%0A))
+
 or by making the actual bytes undefined:
-([Try it!](https://barisaktemur.github.io/dwarf-locstack/?context=%28%0A%28TargetReg+0+%2212345678%22%29%0A%29&input=DW_OP_reg0%0ADW_OP_undefined%0ADW_OP_lit4%0ADW_OP_lit4%0ADW_OP_overlay%0A))
 
     // Overlaying 4 bytes of undefined location on top of reg0
     DW_OP_reg0
@@ -389,6 +393,8 @@ or by making the actual bytes undefined:
     DW_OP_lit4
     DW_OP_lit4
     DW_OP_overlay
+
+([Try it!](https://barisaktemur.github.io/dwarf-locstack/?context=%28%0A%28TargetReg+0+%2212345678%22%29%0A%29&input=DW_OP_reg0%0ADW_OP_undefined%0ADW_OP_lit4%0ADW_OP_lit4%0ADW_OP_overlay%0A))
 
 In the former case, the resulting composite storage has the size of
 the undefined storage (i.e., the largest address space or register).
@@ -414,9 +420,10 @@ example:
     DW_OP_lit8
     DW_OP_overlay
 
+([Try it!](https://barisaktemur.github.io/dwarf-locstack/?context=%28%0A%28TargetReg+0+%2212345678%22%29%0A%28TargetReg+1+%22abcdefgh%22%29%0A%29&input=DW_OP_reg0++%3B+assume+a+64b+general+purpose+register%0ADW_OP_reg1++%3B+another+64b+register%0ADW_OP_lit16+%3B+well+beyond+the+8+bytes+of+reg0%0ADW_OP_lit8%0ADW_OP_overlay%0A))
+
 This would leave the offsets between 8 (end of `reg0`) and 15
 (beginning of `reg1`) undefined.
-([Try it!](https://barisaktemur.github.io/dwarf-locstack/?context=%28%0A%28TargetReg+0+%2212345678%22%29%0A%28TargetReg+1+%22abcdefgh%22%29%0A%29&input=DW_OP_reg0++%3B+assume+a+64b+general+purpose+register%0ADW_OP_reg1++%3B+another+64b+register%0ADW_OP_lit16+%3B+well+beyond+the+8+bytes+of+reg0%0ADW_OP_lit8%0ADW_OP_overlay%0A))
 
 ## Proposal
 
