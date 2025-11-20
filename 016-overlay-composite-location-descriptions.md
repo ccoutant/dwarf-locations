@@ -191,8 +191,11 @@ currently processed elements are held in registers, whereas the
 remainder of the array remains in memory. Consider the loop in this C
 function, for example:
 
-    extern void foo(uint32_t dst[], uint32_t src[], int len) {
-        for (int i = 0; i < len; ++i)
+    extern void foo() {
+        uint32_t dst[LEN];
+        uint32_t src[LEN];
+        // ...
+        for (int i = 0; i < LEN; ++i)
             dst[i] += src[i];
     }
 
