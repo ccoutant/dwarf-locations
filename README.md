@@ -9,8 +9,8 @@ more manageable proposals, in a form acceptable to the DWARF committee.
 
 Issues approved by the DWARF committee:
 
-* [Expression Evaluation Context](001a-context.md) (Issue [241011.1][241011.1])
-* [Locations on the Stack](005-locations-on-stack.md) (Issue [230524.1][230524.1])
+* [Expression Evaluation Context](archive/001a-context.md) (Issue [241011.1][241011.1])
+* [Locations on the Stack](archive/005-locations-on-stack.md) (Issue [230524.1][230524.1])
 * Tensor types Issue [230413.1][230413.1]
 * Add lane support for SIMD/SIMT machines [211206.1][211206.1]
 
@@ -40,10 +40,10 @@ Clarifications and editorial reorganization:
 
 Issues superseded by others:
 
-* [Editorial Reorganization](006-editorial.txt) (Included in Locations on the Stack)
-* [Generalize Offsetting of Location Descriptions](010-generalize-offsetting.txt) (Included in Locations on the Stack)
-* [Generalize Creation of Undefined Location Descriptions](011-generalize-undefined.txt) (Included in Locations on the Stack)
-* [Generalize Creation of Composite Location Descriptions](012-generalize-composite.txt) (Replaced by DW_OP_composite in Locations on the Stack)
+* [Editorial Reorganization](archive/006-editorial.txt) (Included in Locations on the Stack)
+* [Generalize Offsetting of Location Descriptions](archive/010-generalize-offsetting.txt) (Included in Locations on the Stack)
+* [Generalize Creation of Undefined Location Descriptions](archive/011-generalize-undefined.txt) (Included in Locations on the Stack)
+* [Generalize Creation of Composite Location Descriptions](archive/012-generalize-composite.txt) (Replaced by DW_OP_composite in Locations on the Stack)
 
 Independent issues not part of this series:
 
