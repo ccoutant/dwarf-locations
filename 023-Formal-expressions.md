@@ -1,36 +1,32 @@
-# Add an appendix that gives definitions of expressions more precisely
+# Add an appendix that gives a DWARF expression evaluator
 
 ## Problem Description
 
 With DWARF expressions becoming considerably more complicated with the
-structures needed to support GPUs, several members of the DWARF for
-GPUs working group felt that it would be helpful to define the DWARF
-expression operators in a more formal way, which preferably is also
-executable. This would allow both producers and consumers to verify
-their implementations with respect to a reference
-implementation. However adding these formal definitions of operators
-to the text of the spec itself is not in keeping with the style of the
-existing standard.
+structures needed to support GPUs and with the "locations on the
+stack" change to DWARF expression evalution, several members of the
+DWARF for GPUs working group felt that it would be helpful to have an
+executable, lightweight DWARF expression evaluator. This would allow
+both producers and consumers to experiment with DWARF expressions and
+thus expedite their learning process. It would also help stakeholders
+to share ideas for new operators by defining their semantics in the
+evaluator.
 
-It was decided that a functional programming language would be the
-best way to define the semantics of the DWARF operators. This would
-allow the structure of the mathematics to be represented in a way that
-could be executed by a concise evaluator.
-
-The evaluator's focus at the current phase is to show how locations
-and values are operated on the same evaluation stack and how
-locations, in particular composites, can be built. To this aim,
-several examples accompany the implementation. For the purposes of
-being concise, the evaluator at the moment does not define all DWARF
-operators. We envision that the implementation would be extended with
-new cases and examples as a community effort.
+To this aim, we present a DWARF expression evaluator implemented in
+the OCaml functional programming language. The evaluator's focus at
+the current phase is to show how locations and values are operated on
+the same evaluation stack and how locations, in particular composites,
+can be built. Several examples accompany the implementation. For the
+purposes of being concise, the evaluator at the moment does not define
+all DWARF operators. We envision that the implementation would be
+extended with new cases and examples as a community effort.
 
 The evaluator is currently available at
 
   https://github.com/barisaktemur/dwarf-locstack/blob/main/dwarf_locstack.ml
 
-For example, an operator that produces a location on the stack is
-`DW_OP_reg1` and is implemented as
+For example, the `DW_OP_reg1` operator, which produces a location on
+the stack is is implemented as
 
 ```
   | DW_OP_reg1  -> Loc(Reg 1, 0)::stack
@@ -87,7 +83,9 @@ as
 
 and evaluates to
 
-    [Loc (Composite [(4, 6, (Reg 10, 0)); (0, 4, (Reg 3, 0))], 0)]
+    [Loc (Composite [(4, 6, (Reg 10, 0));
+                     (0, 4, (Reg 3, 0))],
+          0)]
 
 This precisely shows, as written in D.1.3, "A variable whose first four
 bytes reside in register 3 and whose next two 7 bytes reside in
@@ -128,36 +126,30 @@ A web-based playground is also available at
 Here, users can run experiments with a simplified syntax and also see
 the progression of the evaluation stack.
 
-The `DW_OP_pick` example above is available at
+The `DW_OP_pick` example above is available [here](
+https://barisaktemur.github.io/dwarf-locstack/?context=%28%29&input=DW_OP_const4s+1000%0ADW_OP_lit29%0ADW_OP_lit17%0ADW_OP_pick+2)
 
-  https://barisaktemur.github.io/dwarf-locstack/?context=%28%29&input=DW_OP_const4s+1000%0ADW_OP_lit29%0ADW_OP_lit17%0ADW_OP_pick+2
+The composite location examples, respectively, are [here](
+https://barisaktemur.github.io/dwarf-locstack/?context=%28%0A%29&input=DW_OP_composite%0ADW_OP_reg3%0ADW_OP_piece+4%0ADW_OP_reg10%0ADW_OP_piece+2)
+and [here](
+https://barisaktemur.github.io/dwarf-locstack/?context=%28%0A%28TargetReg+3+%22%5C005%5C000%5C000%5C000%22%29%0A%28TargetReg+4+%22%5C002%5C000%5C000%5C000%22%29%0A%29&input=DW_OP_composite%0ADW_OP_lit1%0ADW_OP_stack_value%0ADW_OP_piece+4%0ADW_OP_breg3+0%0ADW_OP_breg4+0%0ADW_OP_plus%0ADW_OP_stack_value%0ADW_OP_piece+4%0A).
 
-The composite location examples, respectively, are at
-
-  https://barisaktemur.github.io/dwarf-locstack/?context=%28%0A%29&input=DW_OP_composite%0ADW_OP_reg3%0ADW_OP_piece+4%0ADW_OP_reg10%0ADW_OP_piece+2
-
-and
-
-  https://barisaktemur.github.io/dwarf-locstack/?context=%28%0A%28TargetReg+3+%22%5C005%5C000%5C000%5C000%22%29%0A%28TargetReg+4+%22%5C002%5C000%5C000%5C000%22%29%0A%29&input=DW_OP_composite%0ADW_OP_lit1%0ADW_OP_stack_value%0ADW_OP_piece+4%0ADW_OP_breg3+0%0ADW_OP_breg4+0%0ADW_OP_plus%0ADW_OP_stack_value%0ADW_OP_piece+4%0A
-
-We intent to move the repository and the playground to
-git.dwarfstd.org or sourceware.org, if the proposal is accepted.
+We intent to move the repository and the playground from the personal
+github space to an official location, if the proposal is accepted.
 
 ## Proposal
 
 ### Add a new Appendix G
 
-Add a new "Appendix G" Called "DWARF Expressions Semantics
-(Informative)" after "Appendix F" moving the subsequent appendices
+Add a new "Appendix G" Called "DWARF Expression Evaluation
+(Informative)" after "Appendix F", moving the subsequent appendices
 further down the alphabet.
 
-The exact behavior of some DWARF expression operators is not precisely
-defined in the text of standard. Instead, an informal description of
-the behavior is given. As an aid to improve tool authors'
-understanding, a DWARF expression evaluator has been implemented in
-OCaml, a functional programming language, so that producers and
-consumers can compare their implementation to an objective standard of
-how the authors thought that expressions would be processed.
+As an aid to improve tool authors' understanding of DWARF operator
+semantics, an executable DWARF expression evaluator has been
+implemented in OCaml, a functional programming language.  The
+evaluator can help producer and consumer developers in their
+understanding of DWARF expressions by running experiments.
 
 The evaluator is available at
 
@@ -165,7 +157,7 @@ The evaluator is available at
 
 An interactive playground is also provided at
 
-  https://<a dwarfstd.org or sourceware.org web URL>
+  https://playground-url
 
 At the time the standard is published, the code is tagged
 "dwarf-6.0". However, as behavioral semantic questions must be
