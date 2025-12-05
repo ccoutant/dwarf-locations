@@ -125,10 +125,24 @@ Add a new attribute `DW_AT_address_space` to pointer and reference
 types.  This allows the compiler to specify which address space is
 being used to represent the pointer or reference type.
 
+**For discussion** This probably needs more explanation. I wrote about
+it in my reply to Cary. I think this basically requires Baris's
+refined type proposal and this attribute should be applied to all GPU
+pointers. I believe that this is consistent with Tony's original
+idea. I think we need an example in Appendix D showing how this should
+work.
+
 Add a new `DW_OP_mem` operation defined to create a memory location
 description from an address and address space. It can be used to
 specify the location of a variable that is allocated in a specific
 address space.
+
+**For discussion** Why isn't this a flavor of addr. We probably need
+to cover relocation here.
+
+**For Discussion** Is the OpenCL reasoning that Tony cited compelling
+enough that the address space can't be an operand. If so we should
+probably state that in the document.
 
 Implicit conversion back to a value is limited only to the default
 address space to maintain compatibility with DWARF 5. This approach of
