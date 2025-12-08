@@ -11,15 +11,15 @@ differently.
 ## How GPU memory addresses are different
 
 While the system's normal address space is universally accessible and
-therefore context independent memory. GPU memory is often times
-context dependent. The definition of this context has already been
-accepted into the DWARF6 standard with issue 241011.1 Expression
-Evaluation Context https://dwarfstd.org/issues/241011.1.html. Unlike
+therefore context independent memory. GPU memory is often context
+dependent. The definition of this context has already been accepted
+into the DWARF6 standard with issue 241011.1 Expression Evaluation
+Context [241011.1](https://dwarfstd.org/issues/241011.1.html). Unlike
 system memory where an address like 0x1000 refers to the same location
 independent of the evaluation context. GPU memory pools can be local
 to a GPU's processing unit and every processing unit may have its own
-memory pool. Thus within a specific address space, the address 0x1000
-may reference diffeerent bits depending on which context it is
+memory pool. Thus, within a specific address space, the address 0x1000
+may reference different bits depending on which context it is
 evaluated from. This is very similar to registers where every
 processor has its own set of registers and the context disambiguates
 which one the consumer should refer to.
@@ -51,10 +51,10 @@ mode in order to point the consumer to the correct location. This
 would expand the size of the DWARF generated and it would make the job
 of generating debuginfo harder for the producer.
 
-These GPU memories can also have addresses widths that are different
-widths than they system memory addresses. It is currently common for
-an address in GPU memory to be 32b long while a system's memory
-address is 64b.
+These GPU memories can also have address widths that are different
+than the system memory addresses. It is currently common for an
+address in GPU memory to be 32b long while a system's memory address
+is 64b.
 
 ## An address as a location rather than as a value
 
@@ -67,7 +67,7 @@ expression. For example, the `DW_AT_use_location` attribute of the
 language type which may apply to objects allocated in different kinds
 of storage. Therefore, it is important that an expression that uses
 the location can do so without regard to what kind of storage it
-specifies. As it appliers to memory location this means that a simple
+specifies. As it applies to memory location this means that a simple
 value is insufficient. The address space of a memory location
 description is also required. For example, a pointer to member value
 may want to be applied to an object that may reside in any address
@@ -81,8 +81,8 @@ pointers from old 16-bit x86 code. The attribute affects the size and
 interpretation of the bits of the pointer, but the pointer still
 refers to the "default" address space of the target.
 
-The attribute has also been used for subprograms and subroutine types, to
-specify what addressing mode should be used to call the subprogram.
+The attribute has also been used for subprograms and subroutine types,
+to specify what addressing mode should be used to call the subprogram.
 
 While it is similar to address classes in that a pointer type for one
 address space may be a different size from that for another address
@@ -90,7 +90,7 @@ space, the address space is not part of the pointer value, but is
 implicit in the type of the pointer. The bits of the pointer refer to
 an address in a completely separate address space.
 
-### Why DW_OP_xderef is not sufficient
+### Why `DW_OP_xderef` is not sufficient
 
 The DWARF 5 `DW_OP_xderef*` operations allow a value to be converted
 into an address within a specified address space which is then
@@ -109,13 +109,13 @@ a completely different numbering system to reference it. On the other
 hand there is nothing in this design which precludes hardware from
 using swizzled pointers to implement address spaces.
 
-If address spaces were implemeted by a consumer by swizzling pointers,
-then there would likely need to be reserved ranges of addresses
-defined in the ABI which could interfere with other addresses in the
-system memory. That would require the consumer to have special
-treatment for such values. Furthermore, purely swizzled pointer do not
-capture the semantic differenes of address spaces like context
-dependence, pointer size, or embedded access patterns.
+If address spaces were implemented by a consumer by swizzling
+pointers, then there would likely need to be reserved ranges of
+addresses defined in the ABI which could interfere with other
+addresses in the system memory. That would require the consumer to
+have special treatment for such values. Furthermore, purely swizzled
+pointers do not capture the semantic differences of address spaces
+like context dependence, pointer size, or embedded access patterns.
 
 **Insert basic example of OMP mapping to GPU memory.
 
@@ -145,8 +145,8 @@ enough that the address space can't be an operand. If so we should
 probably state that in the document.
 
 Implicit conversion back to a value is limited only to the default
-address space to maintain compatibility with DWARF 5. This approach of
-extending memory location descriptions to support address spaces,
+address space to maintain compatibility with DWARF 5\. This approach
+of extending memory location descriptions to support address spaces,
 allows all existing DWARF 5 expressions to have the identical
 semantics.
 
@@ -184,9 +184,9 @@ In Section 2.2 "Attribute Types", add the following row to Table 2.2
 
 Table 2.2: Attribute names
 
-> Attribute             | Usage
-> --------------------- | --------------------------------------------------------------
-> `DW_AT_address_space` | Architecture specific address space (see 2.12 "Address Spaces")
+| Attribute | Usage |
+| :---- | :---- |
+| `DW_AT_address_space` | Architecture specific address space (see 2.12 "Address Spaces") |
 
 Add the following after Section 2.11 "Address Classes":
 
@@ -197,15 +197,15 @@ Add the following after Section 2.11 "Address Classes":
 >    expression location descriptions to describe in which target
 >    architecture specific memory area data resides.
 >
->    *Target architecture specific DWARF address spaces may
->    correspond to hardware supported facilities such as memory
->    utilizing base address registers, scratchpad memory, and memory
->    with special interleaving.  The size of addresses in these
->    address spaces may vary. Their access and allocation may be
->    hardware managed with each thread or group of threads having
->    access to independent storage. For these reasons they may have
->    properties that do not allow them to be viewed as part of the
->    unified global virtual address space accessible by all threads.*
+>    *Target architecture specific DWARF address spaces may correspond
+>    to hardware supported facilities such as memory utilizing base
+>    address registers, scratchpad memory, and memory with special
+>    interleaving.  The size of addresses in these address spaces may
+>    vary. Their access and allocation may be hardware managed with
+>    each thread or group of threads having access to independent
+>    storage. For these reasons they may have properties that do not
+>    allow them to be viewed as part of the unified global virtual
+>    address space accessible by all threads.*
 >
 >    *It is target architecture specific whether multiple DWARF
 >    address spaces are supported and how source language memory
@@ -224,21 +224,21 @@ Add the following after Section 2.11 "Address Classes":
 >
 >    DWARF address space identifiers are used by:
 >
->    * The `DW_AT_address_space` attribute.
+>    * The `DW_AT_address_space` attribute.  
 >
 >    * The DWARF operations: `DW_OP_mem`, `DW_OP_aspace_bregx` and
->   `DW_OP_aspace_deref*`.
+>    `DW_OP_aspace_deref*`.
 
-In Section 3.7 "Memory Locations", add the following at the
-end of the first paragraph:
+In Section 3.7 "Memory Locations", add the following at the end of the
+first paragraph:
 
 >    `DW_ASPACE_default` is defined as the target architecture default
->     address space.  See 2.12 Address Spaces.
+>    address space.  See 2.12 Address Spaces.
 
 After the definition of `DW_OP_addrx` add:
 
->    3. `DW_OP_mem`
->    <[integral] A> <[integral] AS> → <[memory location] SL>
+>    3. `DW_OP_mem` 
+>       <[integral] A> <[integral] AS> → <[memory location] SL>
 >
 >    `DW_OP_mem` pops top two stack entries. The first must be an
 >    integral type value that represents a target architecture
@@ -270,12 +270,11 @@ After the definition of `DW_OP_addrx` add:
 >
 >    The DWARF expression is ill-formed if AS is not one of the values
 >    defined by the target architecture specific `DW_ASPACE_*` values.
->
 
 After the definition of `DW_OP_bregx` add:
 
 >    7. `DW_OP_aspace_bregx` ([ULEB128] R, [LEB128] B)
->    <[integral] AS> → <[location] A >
+>        <[integral] AS> → <[location] A >
 >
 >    `DW_OP_aspace_bregx` has two operands. The first is an unsigned
 >    LEB128 integer that represents a register number R. The second is
@@ -284,9 +283,9 @@ After the definition of `DW_OP_bregx` add:
 >    value that represents a target architecture specific address
 >    space identifier AS.
 >
->    The action is the same as for `DW_OP_breg`<N>, except that R is
->    used as the register number, B is used as the byte displacement,
->    and AS is used as the address space identifier.
+>    The action is the same as for `DW_OP_breg`, except that R is used
+>    as the register number, B is used as the byte displacement, and
+>    AS is used as the address space identifier.
 >
 >    The DWARF expression is ill-formed if AS is not one of the values
 >    defined by the target architecture specific `DW_ASPACE_*` values.
@@ -313,57 +312,59 @@ the following paragraph:
 >    location description; the initial stack is empty; and the object
 >    is the location description of P.
 
-
 In Section 7.1.1.1 "Contents of the Name Index", replace the bullet:
 
 >    * `DW_TAG_variable` debugging information entries with a
->    `DW_AT_location` attribute that includes a `DW_OP_addr` or
->    `DW_OP_form_tls_address` operator are included; otherwise, they
->    are excluded.
+>      `DW_AT_location` attribute that includes a `DW_OP_addr` or
+>      `DW_OP_form_tls_address` operator are included; otherwise, they
+>      are excluded.
 
 with:
 
 >    * `DW_TAG_variable` debugging information entries with a
->    `DW_AT_location` attribute that includes a `DW_OP_addr`,
->    `DW_OP_mem`, or `DW_OP_form_tls_address` operation are included;
->    otherwise, they are excluded.
+>       `DW_AT_location` attribute that includes a `DW_OP_addr`,
+>       `DW_OP_mem`, or `DW_OP_form_tls_address` operation are
+>       included; otherwise, they are excluded.
 
-In Section 8.5.4 "Attribute Encodings", add the following row to Table 7.5
-"Attribute encodings":
+In Section 8.5.4 "Attribute Encodings", add the following row to Table
+8.5 "Attribute encodings":
 
-> Table 8.5: Attribute encodings
+Table 8.5: Attribute encodings
+
+>    | Attribute Name | Value | Classes | 
+>    | :---- | :---- | :---- |
+>    | `DW_AT_address_space` | TBA | constant |
+
+Add the following rows to table 8.9 in Section "8.7.1 Operator
+Encodings":
+
+>    | Operation | Code | Number of Operands | Notes |
+>    | :---- | :---- | :---- | :---- |
+>    | `DW_OP_mem`                 | TBA | 0 |  |
+>    | `DW_OP_aspace_bregx` | TBA | 2 | ULEB128 register number, ULEB128 byte displacement |
+
+After Section 8.13 "Address Class Encodings" add the following
+section:
+
+>    8.x Address Space Encodings
 >
-> Attribute Name                     | Value  | Classes
-> ---------------------------------- | ------ | ----------------------------------
-> `DW_AT_address_space`              | TBA    | constant
-
-Add the following rows to table 8.9 in Section "8.7.1 Operator Encodings":
-
-> Operation                          | Code  | Number of Operands | Notes
-> ---------------------------------- | ----- | ------------------ | --------
-> `DW_OP_mem                `        | TBA   | 0                  |
-> `DW_OP_aspace_bregx`               | TBA   | 2                  | ULEB128 register number, ULEB128 byte displacement
-
-After Section 8.13 "Address Class Encodings" add the following section:
-
-> 8.x Address Space Encodings
+>    The value of the common address space encoding `DW_ASPACE_none` is 0.
 >
-> The value of the common address space encoding `DW_ASPACE_none` is 0.
 
+In Section 8.31 "Type Signature Computation", Table 8.32 "Attributes
+used in type signature computation", add the following attribute in
+alphabetical order to the list:
 
-In Section 8.31 "Type Signature Computation", Table 8.32 "Attributes used in
-type signature computation", add the following attribute in alphabetical order
-to the list:
+`DW_AT_address_space`
 
-> `DW_AT_address_space`
+In Appendix A "Attributes by Tag Value (Informative)", add the
+following to Table A.1 Attributes by tag value":
 
-In Appendix A "Attributes by Tag Value (Informative)", add the following to
-Table A.1 Attributes by tag value":
+Table A.1: Attributes by tag value
 
-> Table A.1: Attributes by tag value
->
-> Tag Name                       | Applicable Attributes
-> ------------------------------ | ---------------------
-> `DW_TAG_pointer_type`          | `DW_AT_address_space`
-> `DW_TAG_reference_type`        | `DW_AT_address_space`
-> `DW_TAG_rvalue_reference_type` | `DW_AT_address_space`
+>    | Tag Name | Applicable Attributes |
+>    | :---- | :---- |
+>    | `DW_TAG_pointer_type` | `DW_AT_address_space` |
+>    | `DW_TAG_reference_type` | `DW_AT_address_space` |
+>    | `DW_TAG_rvalue_reference_type` | `DW_AT_address_space` |
+
