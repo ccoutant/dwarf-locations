@@ -71,7 +71,7 @@ addresses all three of the situations mentioned above.
 
 Float promotion - While the producer could use DW_OP_regval_type
 pointing to the extended precision float type when the value is in a
-registerm, if it were spilled to memory without conversion back to a
+register, if it were spilled to memory without conversion back to a
 64b double then it could end the location expression with
 `DW_OP_reinterpret`. Then the location would point to a memory address
 and instead of reading 8 bytes it would read 10 bytes.
@@ -93,7 +93,7 @@ limitations.
 ## PROPOSAL
 
 In section 3.4 after the description of DW_OP_regval_type add the
-following non-nomraltive paragraph:
+following non-nomaltive paragraph:
 
 >    *When the compiler changes the type of a variable and its
 >    location is stored in a register, this operation can be used to
@@ -104,19 +104,19 @@ following non-nomraltive paragraph:
 
 In section 3.16 Type Conversions 
 
-Remove the sentence at the end of the description of
-`DW_OP_reinterpret` which says: "The type of the operand and result
-type must have the same size in bits."
+Replace the description of DW_OP_reinterpret with:
 
-Then add the paragraphs.
-
->    *In previous versions of DWARF `DW_OP_reinterpret` was limited to
->    only reinterpreting types that had the same size in bits. This
->    restriction has been removed in DWARF6`*
+>    The DW_OP_reinterpret operation pops the top stack entry, when it
+>    is a value it reinterprets the bits in the value as a value of a
+>    different type, then pushes the result. 
 >
->    When the compiler changes the type of variable,
->    `DW_OP_reinterpret` signals this to the consumer so that the
->    correct number of bits are fetched and properly interpreted.
+>    When the top of the stack is a location, the object at that
+>    location is understood to have changed type from its original
+>    type. This reinterpretation of the type signals to the consumer
+>    that the size of the type has changed requiring a different
+>    number of bits fetched from storage and/or the encoding of those
+>    bits has changed requiring a different presentation of those
+>    bits. The location with its new type is pushed onto the stack.
 >
 >    *Some examples of when the compiler may change the type of a
 >    variable are when a double is promoted to a extended precision
@@ -127,5 +127,13 @@ Then add the paragraphs.
 >    example is if there is a pointer to an object which is moved to
 >    an address space which uses addresses which are smaller than
 >    those used by the system.*
+>
+>    DW_OP_reinterpret takes one operand, which is an unsigned LEB128
+>    integer that represents the offset of a debugging information
+>    entry in the current compilation unit, or value 0 which
+>    represents the generic type. If the operand is non-zero, the
+>    referenced entry must be a DW_TAG_base_type entry that provides
+>    the type to which the value is reinterpreted.
+
 
 FIXME: consider adding some best practice examples into appendix D.
