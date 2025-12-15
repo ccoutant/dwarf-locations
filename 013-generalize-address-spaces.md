@@ -94,10 +94,9 @@ an address in a completely separate address space.
 
 The DWARF 5 `DW_OP_xderef*` operations allow a value to be converted
 into an address within a specified address space which is then
-read. But it provides no way to create a memory location description
-for an address in the non-default address space. For example, GPU
-variables can be allocated in local scratch pad memory at a fixed
-address.
+read. But it provides no way to create a memory location for an
+address in the non-default address space. For example, GPU variables
+can be allocated in local scratch pad memory at a fixed address.
 
 ### Address spaces are not just swizzled pointers
 
@@ -146,9 +145,8 @@ probably state that in the document.
 
 Implicit conversion back to a value is limited only to the default
 address space to maintain compatibility with DWARF 5\. This approach
-of extending memory location descriptions to support address spaces,
-allows all existing DWARF 5 expressions to have the identical
-semantics.
+of extending memory location to support address spaces, allows all
+existing DWARF 5 expressions to have the identical semantics.
 
 Having the address space within the location also allows great
 implementation freedom. For example, a compiler could choose to access
@@ -165,17 +163,16 @@ Having address spaces within the location also makes it available to
 consumers and therefore developers. This can also be an aid to
 programmers who are seeking to optimize their code.
 
-Since memory location descriptions are an abstraction of storage. The
-same set of operations can operate on memory locations independent of
-their underlying storage. Therefore, operations like `DW_OP_deref*`
-can be used on any memory location descriptions even those referring
-to different address spaces. Consequently, the `DW_OP_xderef*`
-operations are unnecessary, except as a more compact way to encode a
-non-default address space address followed by dereferencing
-it. Therefore we propose renaming those operators to
-`DW_OP_aspace_deref*` to be consistent with the other operators which
-refer to address spaces and making the old `DW_OP_xderef` names
-aliases.
+Since memory locations are an abstraction of storage. The same set of
+operations can operate on memory locations independent of their
+underlying storage. Therefore, operations like `DW_OP_deref*` can be
+used on any memory locations even those referring to different address
+spaces. Consequently, the `DW_OP_xderef*` operations are unnecessary,
+except as a more compact way to encode a non-default address space
+address followed by dereferencing it. Therefore we propose renaming
+those operators to `DW_OP_aspace_deref*` to be consistent with the
+other operators which refer to address spaces and making the old
+`DW_OP_xderef` names aliases.
 
 ## PROPOSAL
 
@@ -194,7 +191,7 @@ Add the following after Section 2.11 "Address Classes":
 >
 >    DWARF address spaces correspond to target architecture specific
 >    linearly addressable memory areas. They are used in DWARF
->    expression location descriptions to describe in which target
+>    expression locations to describe in which target
 >    architecture specific memory area data resides.
 >
 >    *Target architecture specific DWARF address spaces may correspond
@@ -238,7 +235,7 @@ first paragraph:
 After the definition of `DW_OP_addrx` add:
 
 >    3. `DW_OP_mem` 
->       <[integral] A> <[integral] AS> → <[memory location] SL>
+>       <[integral] A> <[integral] AS> → <[memory location] L>
 >
 >    `DW_OP_mem` pops top two stack entries. The first must be an
 >    integral type value that represents a target architecture
@@ -253,28 +250,34 @@ After the definition of `DW_OP_addrx` add:
 >    A is adjusted to S bits by zero extending if necessary, and then
 >    treating the least significant S bits as an unsigned value A'.
 >
->    It pushes a location description L with one memory location
->    description SL on the stack. SL specifies the memory location
->    storage.
+>    It pushes a memory location within the address space AS whose
+>    offset is A.
 >
 >    If AS is an address space that is specific to context elements,
->    then LS corresponds to the location storage associated with the
->    current context.
+>    then L corresponds to the location storage associated with the
+>    current context when the location is created, not the context
+>    when that location is used.
 >
->    *For example, if AS is for per thread storage then LS is the
+>    *For example, if AS is for per thread storage then L is the
 >    location storage for the current thread. Therefore, if L is
 >    accessed by an operation, the location storage selected when the
->    location description was created is accessed, and not the
->    location storage associated with the current context of the
->    access operation.*
+>    location was created is accessed, and not the location storage
+>    associated with the current context of the access operation.*
+
+**For discussion** how could you change the context of a location
+while executing an expression.
 >
 >    The DWARF expression is ill-formed if AS is not one of the values
 >    defined by the target architecture specific `DW_ASPACE_*` values.
 
+**For discussion** the relationship between `DW_OP_addr` and
+`DW_OP_mem` (Baris)
+
+
 After the definition of `DW_OP_bregx` add:
 
 >    7. `DW_OP_aspace_bregx` ([ULEB128] R, [LEB128] B)
->        <[integral] AS> → <[location] A >
+>        <[integral] AS> → <[memory location] A >
 >
 >    `DW_OP_aspace_bregx` has two operands. The first is an unsigned
 >    LEB128 integer that represents a register number R. The second is
@@ -310,7 +313,7 @@ the following paragraph:
 >    `DW_OP_deref_type` DR; `DW_OP_constu` AS; `DW_OP_mem` expression
 >    was evaluated with the current context except: the result kind is
 >    location description; the initial stack is empty; and the object
->    is the location description of P.
+>    is the location of P.
 
 In Section 7.1.1.1 "Contents of the Name Index", replace the bullet:
 
@@ -323,7 +326,7 @@ with:
 
 >    * `DW_TAG_variable` debugging information entries with a
 >       `DW_AT_location` attribute that includes a `DW_OP_addr`,
->       `DW_OP_mem`, or `DW_OP_form_tls_address` operation are
+>       `DW_OP_mem`, or `DW_OP_form_tls_address` operator are
 >       included; otherwise, they are excluded.
 
 In Section 8.5.4 "Attribute Encodings", add the following row to Table
