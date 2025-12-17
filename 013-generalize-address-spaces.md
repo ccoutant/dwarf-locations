@@ -122,33 +122,44 @@ like context dependence, pointer size, or embedded access patterns.
 
 Add a new attribute `DW_AT_address_space` to pointer and reference
 types.  This allows the compiler to specify which address space is
-being used to represent the pointer or reference type.
-
-**For discussion** This probably needs more explanation. I wrote about
-it in my reply to Cary. I think this basically requires Baris's
-refined type proposal and this attribute should be applied to all GPU
-pointers. I believe that this is consistent with Tony's original
-idea. I think we need an example in Appendix D showing how this should
-work.
+being used to encode the value of the pointer or reference type.
 
 Add a new `DW_OP_mem` operation defined to create a memory location
 description from an address and address space. It can be used to
 specify the location of a variable that is allocated in a specific
 address space.
 
-**For discussion** Why isn't this a flavor of addr. We probably need
-to cover relocation here.
+`DW_OP_mem` can be a thought of as a more general form of `DW_OP_addr`
+with `DW_OP_addr` being a short hand form of:
 
-**For Discussion** Is the OpenCL reasoning that Tony cited compelling
-enough that the address space can't be an operand. If so we should
-probably state that in the document.
+	DW_OP_lit0 ; DW_AS_default is by definition 0
+    DW_OP_const<N>u X
+	DW_OP_mem
+
+Unlike `DW_OP_addr` which takes the address as an inline operand,
+`DW_OP_mem` takes both of its parameters from the stack. This allows
+them both to be dynamically computed. The case for the address being
+dynamically computed is fairly obvious. One unobvious use is to allow
+the address to be relocated when it is supplied using `DW_OP_constx`.
+
+The address space being a stack parameter may be less obvious but at
+least one language, OpenCL, allows the address space to be computed
+and so it was determined that it was best to make this a stack
+parameter as well.
 
 Implicit conversion back to a value is limited only to the default
-address space to maintain compatibility with DWARF 5\. This approach
+address space to maintain compatibility with DWARF 5. This approach
 of extending memory location to support address spaces, allows all
 existing DWARF 5 expressions to have the identical semantics.
 
-Having the address space within the location also allows great
+Having the address space included as part of the memory location as
+opposed to being separate value, fixes one of the problems with
+`DW_OP_xderef` where the address space is a separate value from the
+address. This requires producers and consumers to manage two values
+rather than one location.
+
+Address spaces need not uniquely reference bits. The same bits may be
+accessible through multiple address spaces. This allows great
 implementation freedom. For example, a compiler could choose to access
 private memory when mapping a source language thread to the lane of a
 wavefront in a SIMT manner. Or a compiler could choose to access the
@@ -191,7 +202,7 @@ Add the following after Section 2.11 "Address Classes":
 >
 >    DWARF address spaces correspond to target architecture specific
 >    linearly addressable memory areas. They are used in DWARF
->    expression locations to describe in which target
+>    location expressions to describe in which target
 >    architecture specific memory area data resides.
 >
 >    *Target architecture specific DWARF address spaces may correspond
@@ -209,7 +220,7 @@ Add the following after Section 2.11 "Address Classes":
 >    spaces map to target architecture specific DWARF address
 >    spaces. A target architecture may map multiple source language
 >    memory spaces to the same target architecture specific DWARF
->    address class. Optimization may determine that variable lifetime
+>    address spaces. Optimization may determine that variable lifetime
 >    and access pattern allows them to be allocated in faster
 >    scratchpad memory represented by a different DWARF address space
 >    than the default for the source language memory space.*
@@ -221,7 +232,7 @@ Add the following after Section 2.11 "Address Classes":
 >
 >    DWARF address space identifiers are used by:
 >
->    * The `DW_AT_address_space` attribute.  
+>    * The `DW_AT_address_space` attribute.
 >
 >    * The DWARF operations: `DW_OP_mem`, `DW_OP_aspace_bregx` and
 >    `DW_OP_aspace_deref*`.
@@ -234,14 +245,14 @@ first paragraph:
 
 After the definition of `DW_OP_addrx` add:
 
->    3. `DW_OP_mem` 
+>    3. `DW_OP_mem`
 >       <[integral] A> <[integral] AS> → <[memory location] L>
 >
 >    `DW_OP_mem` pops top two stack entries. The first must be an
 >    integral type value that represents a target architecture
 >    specific address space identifier AS. The second is also an
->    integral type which represents the address A the offset into that
->    address space.
+>    integral type which represents the address A as the offset into
+>    that address space.
 >
 >    The address size S is defined as the address bit size of the
 >    target architecture specific address space that corresponds to
@@ -255,24 +266,21 @@ After the definition of `DW_OP_addrx` add:
 >
 >    If AS is an address space that is specific to context elements,
 >    then L corresponds to the location storage associated with the
->    current context when the location is created, not the context
->    when that location is used.
+>    current context when the `DW_OP_mem` operation is evaluated, not
+>    the context when the location returned by the evaluation of
+>    `DW_OP_mem` is used.
 >
 >    *For example, if AS is for per thread storage then L is the
 >    location storage for the current thread. Therefore, if L is
 >    accessed by an operation, the location storage selected when the
 >    location was created is accessed, and not the location storage
 >    associated with the current context of the access operation.*
-
-**For discussion** how could you change the context of a location
-while executing an expression.
+>
+>    *`DW_OP_addr` is a more compact form of `DW_OP_lit0;
+>    DW_OP_constNu X; DW_OP_mem`*
 >
 >    The DWARF expression is ill-formed if AS is not one of the values
 >    defined by the target architecture specific `DW_ASPACE_*` values.
-
-**For discussion** the relationship between `DW_OP_addr` and
-`DW_OP_mem` (Baris)
-
 
 After the definition of `DW_OP_bregx` add:
 
@@ -334,7 +342,7 @@ In Section 8.5.4 "Attribute Encodings", add the following row to Table
 
 Table 8.5: Attribute encodings
 
->    | Attribute Name | Value | Classes | 
+>    | Attribute Name | Value | Classes |
 >    | :---- | :---- | :---- |
 >    | `DW_AT_address_space` | TBA | constant |
 
@@ -370,4 +378,3 @@ Table A.1: Attributes by tag value
 >    | `DW_TAG_pointer_type` | `DW_AT_address_space` |
 >    | `DW_TAG_reference_type` | `DW_AT_address_space` |
 >    | `DW_TAG_rvalue_reference_type` | `DW_AT_address_space` |
-
