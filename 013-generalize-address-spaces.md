@@ -185,6 +185,13 @@ those operators to `DW_OP_aspace_deref*` to be consistent with the
 other operators which refer to address spaces and making the old
 `DW_OP_xderef` names aliases.
 
+### Scope of proposal
+
+The scope of this proposal is limited to introducing address spaces to
+memory locations. Additional changes are needed to support address
+spaces in CFI. However, they are not included in this proposal. Those
+changes will be presented in a subsequent proposal.
+
 ## PROPOSAL
 
 In Section 2.2 "Attribute Types", add the following row to Table 2.2
@@ -280,7 +287,7 @@ After the definition of `DW_OP_addrx` add:
 >    DW_OP_constNu X; DW_OP_mem`*
 >
 >    The DWARF expression is ill-formed if AS is not one of the values
->    defined by the target architecture specific `DW_ASPACE_*` values.
+>    defined by the target architecture's ABI.
 
 After the definition of `DW_OP_bregx` add:
 
@@ -313,15 +320,15 @@ the following paragraph:
 >    `DW_TAG_rvalue_reference_type`) may have a `DW_AT_address_space`
 >    attribute with a constant value AS representing an architecture
 >    specific DWARF address space (see 2.12 "Address Spaces"). If
->    omitted, this defaults to `DW_ASPACE_default`. DR is the offset
->    of a hypothetical debug information entry D in the current
->    compilation unit for an integral base type matching the address
->    size of AS. An object P having the given pointer or reference
->    type is dereferenced as if the `DW_OP_push_object_location`;
->    `DW_OP_deref_type` DR; `DW_OP_constu` AS; `DW_OP_mem` expression
->    was evaluated with the current context except: the result kind is
->    location description; the initial stack is empty; and the object
->    is the location of P.
+>    omitted, this defaults to `DW_ASPACE_default`. An object P having
+>    the given pointer or reference type is dereferenced as if the
+>    `DW_OP_push_object_location`; `DW_OP_deref_type` referencing is
+>    the offset of a hypothetical DIE in the current compilation unit
+>    for an integral base type matching the address size of AS.;
+>    `DW_OP_constu` AS; `DW_OP_mem` expression was evaluated with the
+>    current context except: the result kind is a location
+>    description; the initial stack is empty; and the object is the
+>    location of P.
 
 In Section 7.1.1.1 "Contents of the Name Index", replace the bullet:
 
