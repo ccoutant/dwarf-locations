@@ -315,6 +315,8 @@ In Section 6.3 "Type Modifier Entries", after the paragraph starting
 "A modified type entry describing a pointer or reference type...", add
 the following paragraph:
 
+**Fixme** OMG this is horrible
+
 >    A modified type entry describing a pointer or reference type
 >    (using `DW_TAG_pointer_type`, `DW_TAG_reference_type` or
 >    `DW_TAG_rvalue_reference_type`) may have a `DW_AT_address_space`
@@ -322,9 +324,9 @@ the following paragraph:
 >    specific DWARF address space (see 2.12 "Address Spaces"). If
 >    omitted, this defaults to `DW_ASPACE_default`. An object P having
 >    the given pointer or reference type is dereferenced as if the
->    `DW_OP_push_object_location`; `DW_OP_deref_type` referencing is
->    the offset of a hypothetical DIE in the current compilation unit
->    for an integral base type matching the address size of AS.;
+>    `DW_OP_push_object_location`; `DW_OP_deref_type` referencing the
+>    offset of a hypothetical DIE in the current compilation unit for
+>    an integral base type matching the address size of AS.;
 >    `DW_OP_constu` AS; `DW_OP_mem` expression was evaluated with the
 >    current context except: the result kind is a location
 >    description; the initial stack is empty; and the object is the
