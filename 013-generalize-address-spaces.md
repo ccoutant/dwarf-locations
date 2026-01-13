@@ -29,18 +29,21 @@ memory is structured in such a way that accessing the bits at address
 0x101 are the bits immediately after the ones in address
 0x100. However, some GPU memory pools are designed such that when
 accessed a particular way the bits at address 0x101 are a stride away
-from the bits at 0x100 that way a particular compute unit can address
+from the bits at 0x100 such that a particular compute unit can address
 memory in a linear fashion 0x100 0x101 and reference data for itself
 and the next compute unit can also access addresses 0x100 0x101 and
-get entirely different bits also local to itself. Strides need not be
-the only embedded access pattern.
+get entirely different bits, also local to itself, that are
+interleaved in the stride gap of the other compute units. Strides are
+just one example, strides need not be the only embedded access
+pattern.
 
 This stride addressed memory pool may reference the same bank of bits
 may be accessible from a different address space a different way, that
 is fine. There is no requirement that there is only one way to access
 a particular set of bits. In fact, it is common for a GPU to provide
 access to the same bits through different address spaces. One access
-pattern is used for serial code while another is used vectorized code.
+pattern is used for serial code while another is used for vectorized
+code.
 
 In DWARF the reason why this is needed is the compiler may use a
 particular addressing mode during code generation to handle this kind
@@ -115,8 +118,6 @@ addresses in the system memory. That would require the consumer to
 have special treatment for such values. Furthermore, purely swizzled
 pointers do not capture the semantic differences of address spaces
 like context dependence, pointer size, or embedded access patterns.
-
-**Insert basic example of OMP mapping to GPU memory.
 
 ## Proposed solution
 
@@ -268,20 +269,21 @@ After the definition of `DW_OP_addrx` add:
 >    A is adjusted to S bits by zero extending if necessary, and then
 >    treating the least significant S bits as an unsigned value A'.
 >
->    It pushes a memory location within the address space AS whose
+>    It pushes a memory location L within the address space AS whose
 >    offset is A.
 >
 >    If AS is an address space that is specific to context elements,
->    then L corresponds to the location storage associated with the
->    current context when the `DW_OP_mem` operation is evaluated, not
->    the context when the location returned by the evaluation of
->    `DW_OP_mem` is used.
+>    then the pushed location L corresponds to the location storage
+>    associated with the current context when the `DW_OP_mem`
+>    operation is evaluated, not the context when the location
+>    returned by the evaluation of `DW_OP_mem` is used.
 >
->    *For example, if AS is for per thread storage then L is the
->    location storage for the current thread. Therefore, if L is
->    accessed by an operation, the location storage selected when the
->    location was created is accessed, and not the location storage
->    associated with the current context of the access operation.*
+>    *For example, if AS is for per thread storage then, the location
+>    storage corresponds to the current thread. Therefore if the
+>    location is accessed by an operation, the location storage
+>    selected when the location was created is accessed, and not the
+>    location storage associated with the current context of the
+>    access operation.*
 >
 >    *`DW_OP_addr` is a more compact form of `DW_OP_lit0;
 >    DW_OP_constNu X; DW_OP_mem`*
@@ -368,7 +370,8 @@ section:
 
 >    8.x Address Space Encodings
 >
->    The value of the common address space encoding `DW_ASPACE_none` is 0.
+>    The value of the common address space encoding
+>    `DW_ASPACE_default` is 0.
 >
 
 In Section 8.31 "Type Signature Computation", Table 8.32 "Attributes
