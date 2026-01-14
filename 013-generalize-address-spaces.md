@@ -308,7 +308,9 @@ After the definition of `DW_OP_bregx` add:
 >    AS is used as the address space identifier.
 >
 >    The DWARF expression is ill-formed if AS is not one of the values
->    defined by the target architecture specific `DW_ASPACE_*` values.
+>    defined by the target architecture. Targets architectures are
+>    encouraged to define DW_ASPACE_* constants for their address
+>    spaces.
 
 In section 3.13 Rename `DW_OP_xderef*` to `DW_OP_aspace_deref*` and
 note that `DW_OP_xderef*` is still available as an alias.
@@ -317,7 +319,33 @@ In Section 6.3 "Type Modifier Entries", after the paragraph starting
 "A modified type entry describing a pointer or reference type...", add
 the following paragraph:
 
-**Fixme** OMG this is horrible
+**Fixme** OMG this is horrible. The part that makes me cringe is the
+part that refers to "P". The problem as I see it is that we have
+previously said that one of the reasons for address spaces is context
+dependent memory and that the memory location must be interpreted with
+the context at the time the memory location was created not the
+context when the DW_OP_mem location is created not the context when
+the location is accessed. If a memory location is declared using
+DW_AT_address_space, what context does it assume?**
+
+**The answer seems to be as if:
+DW_OP_push_object_location
+DW_OP_deref_type**
+
+**and then a bunch of text about how to interpret the type of
+DW_OP_deref_type for the pointer type for that address space. I think
+you did a fine job of simplifying that but you didn't address the
+context issue.**
+
+**It feels like an early vs late binding time problem: The rule binding
+the location to the context at the time it was created is a kind of
+early binding.  There is no context at declaration time when
+DW_AT_address_space is emitted. So it must pick up the context late
+when evaluated.**
+
+**So there are two things that this paragraph must do:
+Explain the binding time issue clearly..
+Make sure the size of a pointer is correct.**
 
 >    A modified type entry describing a pointer or reference type
 >    (using `DW_TAG_pointer_type`, `DW_TAG_reference_type` or
