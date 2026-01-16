@@ -11,48 +11,41 @@ differently.
 ## How GPU memory addresses are different
 
 While the system's normal address space is universally accessible and
-therefore context independent memory. GPU memory is often context
+therefore context independent memory, GPU memory is often context
 dependent. The definition of this context has already been accepted
-into the DWARF6 standard with issue 241011.1 Expression Evaluation
-Context [241011.1](https://dwarfstd.org/issues/241011.1.html). Unlike
-system memory where an address like 0x1000 refers to the same location
+into the DWARF6 standard with issue [241011.1 Expression Evaluation
+Context](https://dwarfstd.org/issues/241011.1.html). Unlike system
+memory where an address like 0x1000 refers to the same location
 independent of the evaluation context. GPU memory pools can be local
 to a GPU's processing unit and every processing unit may have its own
-memory pool. Thus, within a specific address space, the address 0x1000
-may reference different bits depending on which context it is
-evaluated from. This is very similar to registers where every
-processor has its own set of registers and the context disambiguates
-which one the consumer should refer to.
+memory pool. A couple of examples of this are: [Intel's SharedLocal
+Memory](https://www.intel.com/content/www/us/en/docs/oneapi/optimization-guide-gpu/2025-2/shared-local-memory.html)
+and [AMD's
+LDS](https://rocm.docs.amd.com/projects/HIP/en/develop/understand/hardware_implementation.html#local-data-share-lds)
+Thus, within a specific address space, the address 0x1000 may
+reference different bits depending on which context it is evaluated
+from. This is very similar to registers where every processor has its
+own set of registers and the context disambiguates which one the
+consumer should refer to. More formally when a pool of memory is
+context dependent each address space defines a locality scope amd
+locations within that address space are bound to a particular instance
+of storage with that scope.
 
-In GPUs some address spaces have embedded access patterns. Normal
-memory is structured in such a way that accessing the bits at address
-0x101 are the bits immediately after the ones in address
-0x100. However, some GPU memory pools are designed such that when
-accessed a particular way the bits at address 0x101 are a stride away
-from the bits at 0x100 such that a particular compute unit can address
-memory in a linear fashion 0x100 0x101 and reference data for itself
-and the next compute unit can also access addresses 0x100 0x101 and
-get entirely different bits, also local to itself, that are
-interleaved in the stride gap of the other compute units. Strides are
-just one example, strides need not be the only embedded access
-pattern.
-
-This stride addressed memory pool may reference the same bank of bits
-may be accessible from a different address space a different way, that
-is fine. There is no requirement that there is only one way to access
-a particular set of bits. In fact, it is common for a GPU to provide
-access to the same bits through different address spaces. One access
-pattern is used for serial code while another is used for vectorized
-code.
-
-In DWARF the reason why this is needed is the compiler may use a
-particular addressing mode during code generation to handle this kind
-of memory access. If this access mode were not conceptually abstracted
-into an address space, then the compiler would have to generate DWARF
-expressions which conceptually undoes the work done by the addressing
-mode in order to point the consumer to the correct location. This
-would expand the size of the DWARF generated and it would make the job
-of generating debuginfo harder for the producer.
+There is no requirement that a particular set of bits is only
+accessible through only one address space. In fact, it is common for a
+GPU to provide access to the same bits through different address
+spaces. This allows uses of memory locations within alternative
+address spaces that are quite different than on CPUs. In some GPUs
+some address spaces have embedded access patterns. Compilers often use
+one access pattern for serial code while another is used for
+vectorized code. If this access pattern were not conceptually
+abstracted into an address space, then the compiler would have to
+generate DWARF expressions which conceptually undoes the work done by
+the addressing mode in order to point the consumer to the correct
+location. This would expand the size of the DWARF generated and it
+would make the job of generating debuginfo harder for the
+producer. Another common example of an embedded access pattern is
+strided memory.
 
 These GPU memories can also have address widths that are different
 than the system memory addresses. It is currently common for an
@@ -216,12 +209,13 @@ Add the following after Section 2.11 "Address Classes":
 >    *Target architecture specific DWARF address spaces may correspond
 >    to hardware supported facilities such as memory utilizing base
 >    address registers, scratchpad memory, and memory with special
->    interleaving.  The size of addresses in these address spaces may
->    vary. Their access and allocation may be hardware managed with
->    each thread or group of threads having access to independent
->    storage. For these reasons they may have properties that do not
->    allow them to be viewed as part of the unified global virtual
->    address space accessible by all threads.*
+>    interleaving.  The size of addresses in these address spaces is
+>    not necessarily the same as the size of addresses in the default
+>    address space. Their access and allocation may be hardware
+>    managed with each thread or group of threads having access to
+>    independent storage. For these reasons they may have properties
+>    that do not allow them to be viewed as part of the unified global
+>    virtual address space accessible by all threads.*
 >
 >    *It is target architecture specific whether multiple DWARF
 >    address spaces are supported and how source language memory
@@ -391,7 +385,7 @@ Encodings":
 >    | Operation | Code | Number of Operands | Notes |
 >    | :---- | :---- | :---- | :---- |
 >    | `DW_OP_mem`                 | TBA | 0 |  |
->    | `DW_OP_aspace_bregx` | TBA | 2 | ULEB128 register number, ULEB128 byte displacement |
+>    | `DW_OP_aspace_bregx` | TBA | 2 | ULEB128 register number, LEB128 byte displacement |
 
 After Section 8.13 "Address Class Encodings" add the following
 section:
