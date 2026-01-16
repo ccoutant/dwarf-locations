@@ -18,7 +18,7 @@ Context](https://dwarfstd.org/issues/241011.1.html). Unlike system
 memory where an address like 0x1000 refers to the same location
 independent of the evaluation context. GPU memory pools can be local
 to a GPU's processing unit and every processing unit may have its own
-memory pool. A couple of examples of this are: [Intel's SharedLocal
+memory pool. A couple of examples of this are: [Intel's Shared Local
 Memory](https://www.intel.com/content/www/us/en/docs/oneapi/optimization-guide-gpu/2025-2/shared-local-memory.html)
 and [AMD's
 LDS](https://rocm.docs.amd.com/projects/HIP/en/develop/understand/hardware_implementation.html#local-data-share-lds)
@@ -27,7 +27,7 @@ reference different bits depending on which context it is evaluated
 from. This is very similar to registers where every processor has its
 own set of registers and the context disambiguates which one the
 consumer should refer to. More formally when a pool of memory is
-context dependent each address space defines a locality scope amd
+context dependent each address space defines a locality scope and
 locations within that address space are bound to a particular instance
 of storage with that scope.
 
@@ -69,6 +69,14 @@ description is also required. For example, a pointer to member value
 may want to be applied to an object that may reside in any address
 space.
 
+### Why `DW_OP_xderef` is not sufficient
+
+The DWARF 5 `DW_OP_xderef*` operations allow a value to be converted
+into an address within a specified address space which is then
+read. But it provides no way to create a memory location for an
+address in the non-default address space. For example, GPU variables
+can be allocated in local scratch pad memory at a fixed address.
+
 ### Address spaces are not address classes
 
 Address class is an attribute of a pointer type that distinguishes
@@ -85,14 +93,6 @@ address space may be a different size from that for another address
 space, the address space is not part of the pointer value, but is
 implicit in the type of the pointer. The bits of the pointer refer to
 an address in a completely separate address space.
-
-### Why `DW_OP_xderef` is not sufficient
-
-The DWARF 5 `DW_OP_xderef*` operations allow a value to be converted
-into an address within a specified address space which is then
-read. But it provides no way to create a memory location for an
-address in the non-default address space. For example, GPU variables
-can be allocated in local scratch pad memory at a fixed address.
 
 ### Address spaces are not just swizzled pointers
 
@@ -279,8 +279,8 @@ After the definition of `DW_OP_addrx` add:
 >    location storage associated with the current context of the
 >    access operation.*
 >
->    *`DW_OP_addr` is a more compact form of `DW_OP_lit0;
->    DW_OP_constNu X; DW_OP_mem`*
+>    *`DW_OP_addr(X)` is a more compact form of `DW_OP_lit0;
+>    DW_OP_constNu(X); DW_OP_mem`*
 >
 >    The DWARF expression is ill-formed if AS is not one of the values
 >    defined by the target architecture's ABI.
@@ -313,48 +313,27 @@ In Section 6.3 "Type Modifier Entries", after the paragraph starting
 "A modified type entry describing a pointer or reference type...", add
 the following paragraph:
 
-**Fixme** OMG this is horrible. The part that makes me cringe is the
-part that refers to "P". The problem as I see it is that we have
-previously said that one of the reasons for address spaces is context
-dependent memory and that the memory location must be interpreted with
-the context at the time the memory location was created not the
-context when the DW_OP_mem location is created not the context when
-the location is accessed. If a memory location is declared using
-DW_AT_address_space, what context does it assume?**
-
-**The answer seems to be as if:
-DW_OP_push_object_location
-DW_OP_deref_type**
-
-**and then a bunch of text about how to interpret the type of
-DW_OP_deref_type for the pointer type for that address space. I think
-you did a fine job of simplifying that but you didn't address the
-context issue.**
-
-**It feels like an early vs late binding time problem: The rule binding
-the location to the context at the time it was created is a kind of
-early binding.  There is no context at declaration time when
-DW_AT_address_space is emitted. So it must pick up the context late
-when evaluated.**
-
-**So there are two things that this paragraph must do:
-Explain the binding time issue clearly..
-Make sure the size of a pointer is correct.**
-
 >    A modified type entry describing a pointer or reference type
 >    (using `DW_TAG_pointer_type`, `DW_TAG_reference_type` or
 >    `DW_TAG_rvalue_reference_type`) may have a `DW_AT_address_space`
 >    attribute with a constant value AS representing an architecture
 >    specific DWARF address space (see 2.12 "Address Spaces"). If
->    omitted, this defaults to `DW_ASPACE_default`. An object P having
->    the given pointer or reference type is dereferenced as if the
->    `DW_OP_push_object_location`; `DW_OP_deref_type` referencing the
->    offset of a hypothetical DIE in the current compilation unit for
->    an integral base type matching the address size of AS.;
->    `DW_OP_constu` AS; `DW_OP_mem` expression was evaluated with the
->    current context except: the result kind is a location
->    description; the initial stack is empty; and the object is the
->    location of P.
+>    omitted, this defaults to `DW_ASPACE_default`. When a location is
+>    created which refers to an instance of this variable there are
+>    three components to this location: the context, the address
+>    space, and the offset into that address space. If the location
+>    refers to a context dependant address space, the location is
+>    bound to the instance of that address space as if
+>    `DW_OP_push_object_location` were executed in the context of that
+>    variable's instance. The address space of that location is set as
+>    if the expression `DW_OP_constu` AS; `DW_OP_mem` were evaluated
+>    for that instance of the variable. Since the size of an address
+>    within an alternative address space can be different than the
+>    target's default address space, the type and therefore the size
+>    of the offset into that address space will be as if
+>    `DW_OP_deref_type` were used to reference a DIE of an integral
+>    base type in the current compilation unit whose size and encoding
+>    match addresses in that address space.
 
 In Section 7.1.1.1 "Contents of the Name Index", replace the bullet:
 
