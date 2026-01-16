@@ -208,7 +208,7 @@ Add the following after Section 2.11 "Address Classes":
 >
 >    *Target architecture specific DWARF address spaces may correspond
 >    to hardware supported facilities such as memory utilizing base
->    address registers, scratchpad memory, and memory with special
+>    address registers, scratch pad memory, and memory with special
 >    interleaving.  The size of addresses in these address spaces is
 >    not necessarily the same as the size of addresses in the default
 >    address space. Their access and allocation may be hardware
@@ -224,7 +224,7 @@ Add the following after Section 2.11 "Address Classes":
 >    memory spaces to the same target architecture specific DWARF
 >    address spaces. Optimization may determine that variable lifetime
 >    and access pattern allows them to be allocated in faster
->    scratchpad memory represented by a different DWARF address space
+>    scratch pad memory represented by a different DWARF address space
 >    than the default for the source language memory space.*
 >
 >    Although DWARF address space identifiers are target architecture
@@ -322,7 +322,7 @@ the following paragraph:
 >    created which refers to an instance of this variable there are
 >    three components to this location: the context, the address
 >    space, and the offset into that address space. If the location
->    refers to a context dependant address space, the location is
+>    refers to a context dependent address space, the location is
 >    bound to the instance of that address space as if
 >    `DW_OP_push_object_location` were executed in the context of that
 >    variable's instance. The address space of that location is set as
