@@ -63,11 +63,38 @@ moved from system memory to GPU memory by an optimization, the
 consumer will need to know that the size of the pointer has changed
 from 8 bytes to 4 bytes when accessing it.
 
+## Other uses
+
+There are other cases where the producer can assist the consumer by
+providing more precise type information.
+
+### Derived types
+
+One example could be when a compiler knows the type more precisely
+than the variable's type natively idicates. For eample: `BaseV *bv2 =
+new DerivedV;` adding more precise type information could allow the
+consumer to print the full contents of the variable rather than just
+the parts included in the base class. Some consumers can already do
+this by referring to the vtable to identify the derived type but
+having the actual known type which is known by the producer makes this
+simpler.
+
+It also allows a consumer handle situations which are currently not
+handled such as `(gdb) p func( *bv2)` when `int func(Derived arg);`
+without the user having to cast the variable to its known type.
+
+### void pointers with known types
+
+Another potential use is to give the objects pointed to by void
+pointers their type. For example given `int x;void *generic=&x` the
+compiler knows that object pointed to by generic is an int.
+
 ## Proposed fix
 
-Remove the restriction on `DW_OP_reinterpret` that requires "The type
-of the operand and result type must have the same size in bits." This
-addresses all three of the situations mentioned above.
+Remove the restrictions on `DW_OP_reinterpret` that requires the type
+to be a base type and that "The type of the operand and result type
+must have the same size in bits." This addresses all of the situations
+mentioned above.
 
 Float promotion - While the producer could use DW_OP_regval_type
 pointing to the extended precision float type when the value is in a
@@ -86,6 +113,10 @@ Pointer size changes associated with address space relocations could
 be pointed to by having the final op in the location being
 DW_OP_reinterpret referring to a 4 byte pointer to the correct type.
 
+The other uses would just assist consumers in cases where they would
+not be able to satisfy the user's request or would require a manual
+cast to accomplish the user's request.
+
 This change is backward compatible with DWARF5 and earlier because all
 previous uses of DW_OP_reinterpret would be subject to the bit size
 limitations.
@@ -102,13 +133,13 @@ following non-nomaltive paragraph:
 >    floating point number by copying it to an extended precision
 >    floating point register.*
 
-In section 3.16 Type Conversions 
+In section 3.16 Type Conversions
 
 Replace the description of DW_OP_reinterpret with:
 
 >    The DW_OP_reinterpret operation pops the top stack entry, when it
 >    is a value it reinterprets the bits in the value as a value of a
->    different type, then pushes the result. 
+>    different type, then pushes the result.
 >
 >    When the top of the stack is a location, the object at that
 >    location is understood to have changed type from its original
@@ -132,8 +163,70 @@ Replace the description of DW_OP_reinterpret with:
 >    integer that represents the offset of a debugging information
 >    entry in the current compilation unit, or value 0 which
 >    represents the generic type. If the operand is non-zero, the
->    referenced entry must be a DW_TAG_base_type entry that provides
->    the type to which the value is reinterpreted.
+>    referenced entry must be a type entry that provides the type to
+>    which the value is reinterpreted.
+>
+>    *In versions of DWARF through DWARF5, DW_OP_reinterpret was
+>    limited to DW_TAG_base_type type entries. This restriction has
+>    been lifted to allow for new uses of `DW_OP_reinterpret`.*
 
+Add a new section to Appendix D
 
-FIXME: consider adding some best practice examples into appendix D.
+>    D.<n> Refined Type Example
+>
+>    Consider the C++ example where a variable resides in memory but
+>    within a certain range of PCs member of a structure is promoted
+>    to a register and the compiler is able to prove that the range of
+>    values allow it to reside within 8 bits.
+>
+>    class foo {
+>    public:
+>      unsigned int a, b;
+>    };
+>
+>    DW_TAG_base_type
+>      DW_AT_byte_size   : 4
+>      DW_AT_encoding    : 7	(unsigned)
+>      DW_AT_name        : unsigned int
+>    DW_TAG_base_type
+>      DW_AT_byte_size   : 1
+>      DW_AT_encoding    : 7	(unsigned)
+>      DW_AT_name        : unsigned char
+>    DW_TAG_class_type
+>       DW_AT_name        : foo
+>       DW_AT_byte_size   : 8
+>       DW_TAG_member
+>         DW_AT_name        : a
+>         DW_AT_type        : <unsigned int>
+>         DW_AT_data_member_location: 0
+>         DW_AT_accessibility: 1	(public)
+>       DW_TAG_member
+>         DW_AT_name        : b
+>         DW_AT_type        : <unsigned int>
+>         DW_AT_data_member_location: 4
+>         DW_AT_accessibility: 1	(public)
+>    DW_TAG_class_type
+>       DW_AT_name        : __foo_refined_1
+>       DW_AT_byte_size   : 8
+>       DW_AT_artificial  : 1
+>       DW_AT_abstract_origin : <class foo>
+>       DW_TAG_member
+>         DW_AT_name        : a
+>         DW_AT_type        : <unsigned char>
+>         DW_AT_data_member_location: 0
+>         DW_AT_accessibility: 1	(public)
+>       DW_TAG_member
+>         DW_AT_name        : b
+>         DW_AT_type        : <unsigned int>
+>         DW_AT_data_member_location: 4
+>         DW_AT_accessibility: 1	(public)
+>
+>     DW_LLE_default_location:
+>       DW_OP_addr 0x100
+>     DW_LLE_startx_endx PC1 PC2
+>       DW_OP_addr 0x100
+>       DW_OP_reg1
+>       DW_OP_lit0
+>       DW_OP_lit1
+>       DW_OP_overlay
+>       DW_OP_reinterpret <class __foo_refined_1>
