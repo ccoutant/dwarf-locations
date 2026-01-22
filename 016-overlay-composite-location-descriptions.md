@@ -479,7 +479,7 @@ Move the rest of the existing section into subsection 3.12.1 Piece Operations:
 
 ### Add Section 3.12.2
 Add a new Section 3.12.2 after "Composite Piece Description Operations",
-called "Overlay Composites".
+called "Overlay Operations".
 
 > *Conceptually, these new composite operators create a new composite
 > location which is pushed on the stack with an offset the same as the
