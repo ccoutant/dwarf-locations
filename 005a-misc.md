@@ -128,6 +128,23 @@ bank ordering defined by the architecture provides full flexibility. Since
 this was added as part of DWARF 6, would advocate to remove it from the
 final version.]
 
+## 3.5 Arithmetic and Logical Operations
+
+[ben: Do we want to expand logical operators like and to include
+vector types? The concern that I have is predicate registers may be
+bigger than a generic type. I'm also not entirely sure that they are
+base types in all GPU architectures. In other words, can we expand the
+domain of these operators.]
+
+[ben: What happens if you shift left a negative number of bytes?
+Should the number of bits to be shifted be limited to to a positive
+value.]
+
+[ben: The justification for DW_OP_plus_uconst seems questionable to
+me. I do not see why you could not just use: DW_OP_uconst <some
+number> DW_OP_plus. Is this a historic limitation? Should this text be
+reconsidered? Should this be offset_uconst? - cary said yes]
+
 ## 3.7 Memory Locations
 
 > The single operand of the `DW_OP_breg<n>` operations
@@ -165,7 +182,7 @@ final version.]
 
 
 
-## 3.13 Control Flow Operations
+## 3.15 Control Flow Operations
 
 > <span class="add">If the `DW_AT_location` attribute is encoded using class
 > `locdesc`, then these</span>
@@ -179,3 +196,8 @@ final version.]
 > `loclist` (or `vallist`), then the location (or value) list is evaluated
 > using a separate empty stack, and the resulting location (or value) is
 > pushed on the stack.
+
+[ben: Does this work for only integral base types or does it work for
+all base types? Some of the base types like vector types are kind of
+weird like the vector types? I think that this should be limited to
+integral base types.]
