@@ -75,3 +75,79 @@ an applicable attribute to the following TAG values:
 >    DW_TAG_formal_parameter
 >    DW_TAG_subprogram
 >    DW_TAG_variable
+
+Add new example section to the appendix:
+
+>    D.N Refined Type Examples
+>
+>    Consider a C++-like program as in Figure D.X where a pointer
+>    always points to a derived instance.
+>
+>        Base *bp = new Derived;
+>
+>    A possible DWARF description is in D.X.
+>
+>        1$: DW_TAG_variable
+>                DW_AT_name("bp")
+>                DW_AT_type(reference to 2$ "Base *")
+>                DW_AT_refined_type(reference to 3$ "Derived *")
+>                DW_AT_location(...)
+>
+>        2$: DW_TAG_pointer_type
+>                DW_AT_type(reference to $4 "Base")
+>        3$: DW_TAG_pointer_type
+>                DW_AT_type(reference to $5 "Derived")
+>        4$: DW_TAG_structure_type
+>                DW_AT_name("Base")
+>                ...
+>        5$: DW_TAG_structure_type
+>                DW_AT_name("Derived")
+>                ...
+>
+>    Consider another case where the pointee type is known in certain
+>    PC ranges only:
+>
+>        Base *bp = ...;
+>        ...
+>        if (...) {
+>            bp = new Derived;
+>            ...
+>        } else {
+>            bp = new DerivedTwo;
+>            ...
+>        }
+>        ...
+>
+>    Refined type information can be given in a location list, as
+>    shown in Figure D.X.
+>
+>        1$: DW_TAG_variable
+>                DW_AT_name("bp")
+>                DW_AT_type(reference to 2$ "Base *")
+>                DW_AT_location(location list $9)
+>
+>        2$: DW_TAG_pointer_type
+>                DW_AT_type(reference to $5 "Base")
+>        3$: DW_TAG_pointer_type
+>                DW_AT_type(reference to $6 "Derived")
+>        4$: DW_TAG_pointer_type
+>                DW_AT_type(reference to $7 "DerivedTwo")
+>        5$: DW_TAG_structure_type
+>                DW_AT_name("Base")
+>                ...
+>        6$: DW_TAG_structure_type
+>                DW_AT_name("Derived")
+>                ...
+>        7$: DW_TAG_structure_type
+>                DW_AT_name("DerivedTwo")
+>                ...
+>
+>        ! .debug_loclists section.
+>        $9: DW_LLE_refined_type(reference to $3 "Derived *")
+>            DW_LLE_start_end[PC1 .. PC2) ! Then-block range.
+>                ...
+>            DW_LLE_refined_type(reference to $4 "DerivedTwo *")
+>            DW_LLE_start_end[PC3 .. PC4) ! Else-block range.
+>                ...
+>            ...
+>            DW_LLE_end_of_list
