@@ -56,7 +56,7 @@ is 64b.
 
 DWARF 5 has the concept of an address in many expressions but does not
 define how it relates to address spaces. For example,
-`DW_OP_push_object_location` pushes the address of an object. Other
+`DW_OP_push_object_address` pushes the address of an object. Other
 contexts implicitly push an address on the stack before evaluating an
 expression. For example, the `DW_AT_use_location` attribute of the
 `DW_TAG_ptr_to_member_type`. The expression belongs to a source
@@ -123,18 +123,20 @@ description from an address and address space. It can be used to
 specify the location of a variable that is allocated in a specific
 address space.
 
-`DW_OP_mem` can be a thought of as a more general form of `DW_OP_addr`
-with `DW_OP_addr` being a short hand form of:
-
-	DW_OP_lit0 ; DW_AS_default is by definition 0
-    DW_OP_const<N>u X
-	DW_OP_mem
-
 Unlike `DW_OP_addr` which takes the address as an inline operand,
 `DW_OP_mem` takes both of its parameters from the stack. This allows
 them both to be dynamically computed. The case for the address being
 dynamically computed is fairly obvious. One unobvious use is to allow
 the address to be relocated when it is supplied using `DW_OP_constx`.
+
+`DW_OP_mem` can be a thought of as a more general form of `DW_OP_addr`
+with `DW_OP_addr` being a short hand form of:
+
+```
+DW_OP_lit0 ; DW_AS_default is by definition 0
+DW_OP_const<N>u X
+DW_OP_mem
+```
 
 The address space being a stack parameter may be less obvious but at
 least one language, OpenCL, allows the address space to be computed
