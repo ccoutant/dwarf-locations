@@ -258,15 +258,16 @@ After the definition of `DW_OP_addrx` add:
 >    integral type which represents the address A as the offset into
 >    that address space.
 >
->    The address size S is defined as the address bit size of the
->    target architecture specific address space that corresponds to
->    AS.
->
->    A is adjusted to S bits by zero extending if necessary, and then
->    treating the least significant S bits as an unsigned value A'.
->
 >    It pushes a memory location L within the address space AS whose
 >    offset is A.
+>
+>    In the case where the address size used within the address space
+>    AS is smaller than the size of A, the address is truncated to the
+>    size of the address size used within AS.
+>
+>    In the case where the address size used within the address space
+>    AS is larger than the size of A, the address is zero extended to
+>    the size of the address size used within AS.
 >
 >    If AS is an address space that is specific to context elements,
 >    then the pushed location L corresponds to the location storage
