@@ -16,7 +16,7 @@ dependent. The definition of this context has already been accepted
 into the DWARF6 standard with issue [241011.1 Expression Evaluation
 Context](https://dwarfstd.org/issues/241011.1.html). Unlike system
 memory where an address like 0x1000 refers to the same location
-independent of the evaluation context. GPU memory pools can be local
+independent of the evaluation context, GPU memory pools can be local
 to a GPU's processing unit and every processing unit may have its own
 memory pool. A couple of examples of this are: [Intel's Shared Local
 Memory](https://www.intel.com/content/www/us/en/docs/oneapi/optimization-guide-gpu/2025-2/shared-local-memory.html)
@@ -40,8 +40,8 @@ some address spaces have embedded access patterns. Compilers often use
 one access pattern for serial code while another is used for
 vectorized code. If this access pattern were not conceptually
 abstracted into an address space, then the compiler would have to
-generate DWARF expressions which conceptually undoes the work done by
-the addressing mode in order to point the consumer to the correct
+generate DWARF expressions that would undo the work done by the
+addressing mode in order to point the consumer to the correct
 location. This would expand the size of the DWARF generated and it
 would make the job of generating debuginfo harder for the
 producer. Another common example of an embedded access pattern is
@@ -130,7 +130,7 @@ dynamically computed is fairly obvious. One unobvious use is to allow
 the address to be relocated when it is supplied using `DW_OP_constx`.
 
 `DW_OP_mem` can be a thought of as a more general form of `DW_OP_addr`
-with `DW_OP_addr` being a short hand form of:
+with `DW_OP_addr(X)` being a short hand form of:
 
 ```
 DW_OP_lit0 ; DW_AS_default is by definition 0
@@ -259,7 +259,7 @@ After the definition of `DW_OP_addrx` add:
 >    that address space.
 >
 >    It pushes a memory location L within the address space AS whose
->    offset is A.
+>    offset is A potentially modified by the following rules.
 >
 >    In the case where the address size used within the address space
 >    AS is smaller than the size of A, the address is truncated to the
@@ -275,7 +275,7 @@ After the definition of `DW_OP_addrx` add:
 >    operation is evaluated, not the context when the location
 >    returned by the evaluation of `DW_OP_mem` is used.
 >
->    *For example, if AS is for per thread storage then, the location
+>    *For example, if AS is for per thread storage, then the location
 >    storage corresponds to the current thread. Therefore if the
 >    location is accessed by an operation, the location storage
 >    selected when the location was created is accessed, and not the
@@ -305,11 +305,11 @@ After the definition of `DW_OP_bregx` add:
 >    AS is used as the address space identifier.
 >
 >    The DWARF expression is ill-formed if AS is not one of the values
->    defined by the target architecture. Targets architectures are
+>    defined by the target architecture. Target architectures are
 >    encouraged to define DW_ASPACE_* constants for their address
 >    spaces.
 
-In section 3.13 Rename `DW_OP_xderef*` to `DW_OP_aspace_deref*` and
+In section 3.13 rename `DW_OP_xderef*` to `DW_OP_aspace_deref*` and
 note that `DW_OP_xderef*` is still available as an alias.
 
 In Section 6.3 "Type Modifier Entries", after the paragraph starting
