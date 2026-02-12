@@ -19,10 +19,11 @@ Issues submitted to the DWARF committee:
 * [[004](004-clarifications-mem.txt)] Clarifications for Memory Location Descriptions (DWARF Issue [230120.3][230120.3])
 * [[002](002-clarifications-loc.txt)] Clarifications for Location Descriptions (DWARF Issue [230120.2][230120.2])
 * [[016](016-overlay-composite-location-descriptions.md)] DWARF Operation to Create Runtime Overlay Composite Location Description (DWARF Issue [251120.1][251120.1])
+* [[013](013-generalize-address-spaces.md)] General Support for Address Spaces
+* Standardize Operation Headings (DWARF Issue [260127.1][260127.1])
 
 Issues in progress:
 
-* [[013](013-generalize-address-spaces.md)] General Support for Address Spaces ([Original text](013-generalize-address-spaces.orig.txt))
 * [[005a](005a-misc.md)] Deferred Issues from Tony’s Review of Locations on Stack
 * [[015](015-vector-composite-location-descriptions.txt)] DWARF Operations to Create Vector Composite Location Descriptions
 * [[017](017-call-frame-entry-registers.txt)] DWARF Operation to Access Call Frame Entry Registers
@@ -56,3 +57,4 @@ Independent issues not part of this series:
 [211206.1]: https://dwarfstd.org/issues/211206.1.html
 [230413.1]: https://dwarfstd.org/issues/230413.1.html
 [251120.1]: https://dwarfstd.org/issues/251120.1.html
+[260127.1]: https://dwarfstd.org/issues/260127.1.html
