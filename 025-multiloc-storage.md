@@ -310,3 +310,9 @@ section.  For example:
 > location list may overlap.  When they do, they describe a situation in
 > which an object exists simultaneously in more than one place (see
 > Section 3.XX on page NN).
+
+### Section 8.7.1 add new operator
+In Section 8.7.1 (DWARF Expressions, Operator Encodings), add the
+following row to Table 8.9 (DWARF operation encodings):
+
+- `DW_OP_multiloc` (no operands)
