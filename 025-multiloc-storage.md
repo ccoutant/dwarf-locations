@@ -36,13 +36,17 @@ kind of location storage, called *multiloc* storage, short for
 multi-location.
 
 This is a simple, yet powerful and fundamental change.  With this,
-everywhere in the spec that refers to locations, automatically and
-transparently works in the multi-location case too.  For example, a
+everywhere in the spec that refers to locations, including DWARF
+expression operations, automatically and transparently works in the
+multi-location case too without any special casing.  For example, a
 `DW_OP_deref` on a multiloc location works just like with other
 locations, it simply reads bytes from it, using the rules for multiloc
 storage.  For an object that happens to be live at multiple places,
-`DW_OP_push_object_location` simply pushes a multiloc location.  Et
-cetera.
+`DW_OP_push_object_location` can now push a multiloc location, so that
+a location expression that returns a location based on
+`DW_OP_push_object_location` returns a multiloc to the consumer, in
+case the consumer/user wants to write to it, which should update all
+locations.  Et cetera.
 
 Multiloc storage and composite storage become naturally recursively
 composable.  I.e.:
