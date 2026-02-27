@@ -202,6 +202,60 @@ prior, as it pushed an integer value of generic type on the stack,
 representing a machine address.  Only in DWARF 6, with locations on
 the stack, did it start pushing a memory location.
 
+## Comparison with Issue 251017.1 (Compound Storage as a Generalization of Composite Storage and Multiple Locations)
+
+Instead of a new multiloc storage kind, [Issue
+251017.1](https://dwarfstd.org/issues/251017.1.html) proposes making
+composite storage itself handle multi-location.  This author argues
+that that results in a more complicated model unnecessarily, with the
+introduction of transparent vs opaque mappings, with terminology that
+isn't obviously tied to multi-location even though that's the ultimate
+intent.
+
+The need to distinguish transparent vs opaque mappings itself shows
+that the generalization in reality does not generalize.  In the end,
+we still have a new kind of storage, just pushed down as a new kind of
+compound storage mapping.
+
+In the multiloc storage model, there's a cleaner separation of
+concerns and terminology that is more to the point.
+
+`DW_OP_copy` in Issue 251017.1 essentially serves the same purpose as
+`DW_OP_multiloc` in this proposal, and they both have the same
+interface (pop two locations, push a new one).  How they are designed
+under the hood, and how they are specified, is different.
+
+This proposal does not introduce an operator equivalent to Issue
+251017.1's `DW_OP_overlay_copy`, for the following reasons:
+
+1. In this author's view, `DW_OP_multiloc` in combination with
+`DW_OP_overlay` (from
+[251120.1](https://dwarfstd.org/issues/251120.1.html), the overlay
+proposal) achieves the same effect, at the cost of two extra bytes in
+the DWARF expression bytecode (`DW_OP_dup` + `DW_OP_multiloc`).  It is
+not clear whether this warrants a new operator.
+
+1. The intent of this proposal is to add the fundamental building
+blocks first.  `DW_OP_overlay_copy` has a dependency on
+[251120.1](https://dwarfstd.org/issues/251120.1.html) (DW_OP_overlay)
+which this proposal currently does not currently have.
+
+If however, there is desire to add `DW_OP_overlay_copy`, the model
+introduced by this proposal accomodates it perfectly:
+`DW_OP_overlay_copy` can be simply specified as creating a composite
+with a multiloc piece.
+
+## Impact of Issue 251017.2 (Incremental Location Lists Using Overlays)
+
+The incremental location list proposal essentially changes locations
+lists to be just one long DWARF expression, with an "if (PC in range)
+... endif" conditional around each LLE.  If that proposal is accepted,
+then location lists with overlapping PCs simply no longer
+automatically create a multiloc.  That is essentially a one line
+change to the spec.  This would not impact the multiloc storage model,
+which would still be used with `DW_OP_multiloc` / `DW_OP_copy` /
+`DW_OP_overlay_copy`.
+
 ## Proposal
 
 ### Section 2.5 refer to new multiloc section
