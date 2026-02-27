@@ -113,6 +113,8 @@ example, with address X being 0xf00:
     DW_OP_addr 0xf08
     DW_OP_piece 4        (3 - a memory location piece)
 
+([click to try example on the dwarf-evaluator playground](https://aktemur.github.io/dwarf-evaluator/?context=%28%29&input=DW_OP_addr+0xf00%0ADW_OP_piece+4%0ADW_OP_addr+0xf04%0ADW_OP_reg1%0ADW_OP_multiloc%0ADW_OP_piece+4%0ADW_OP_addr+0xf08%0ADW_OP_piece+4))
+
 Example 2 - multiloc formed from composite and memory (DW_OP_piece)
 
 Alternatively, and isomorphically in the consumer's perspective, we
@@ -134,6 +136,8 @@ like so:
     DW_OP_piece 4        (3 - a memory location piece)
     DW_OP_addr 0xf00     (4 - the base memory location)
     DW_OP_multiloc       (create multiloc from memory (4) and the {1, 2, 3} composite)
+
+([click to try example on the dwarf-evaluator playground](https://aktemur.github.io/dwarf-evaluator/?context=%28%29&input=DW_OP_addr+0xf00%0ADW_OP_piece+4%0ADW_OP_reg1%0ADW_OP_piece+4%0ADW_OP_addr+0xf08%0ADW_OP_piece+4%0ADW_OP_addr+0xf00%0ADW_OP_multiloc))
 
 Example 3 - multiloc formed from composite and memory (DW_OP_overlay):
 
@@ -159,6 +163,8 @@ The locations of examples 1 and 2 are isomorphic, because from the
 consumer's perspective, there is no difference -- the rules for
 multiloc storage and composite storage compose naturally such that
 reads and writes to the two locations produce the same results.
+
+([click to try example on the dwarf-evaluator playground](https://aktemur.github.io/dwarf-evaluator/?context=%28%28TargetReg+1+%2201234567%22%29%29&input=DW_OP_addr+0xf00%0ADW_OP_dup%0ADW_OP_reg1%0ADW_OP_lit4%0ADW_OP_lit4%0ADW_OP_overlay%0ADW_OP_multiloc))
 
 ## Nesting
 
