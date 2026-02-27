@@ -233,12 +233,13 @@ instead of six:
 Append the following entry to the existing storage kinds list, after
 the "Composite storage" entry:
 
-> - Multiloc storage. A hybrid form of storage where a single piece of
->   a program object is live at multiple locations. Its size is the
->   size of the smallest of the storages of the multiple underlying
->   locations. Reading from multiloc storage reads from any of the
->   underlying locations. Writing to multiloc storage writes to all
->   the underlying locations.
+> - Multiloc storage. A hybrid storage form in which a single portion
+>   of a program object is simultaneously live in multiple
+>   locations. The size of a multiloc storage is the minimum number of
+>   contiguous bits accessible in each of its underlying locations,
+>   starting at each location's offset. A read from multiloc storage
+>   may use any one of the underlying locations. A write to multiloc
+>   storage updates all underlying locations.
 
 Add the following non-normative notes after the storage kind list:
 
