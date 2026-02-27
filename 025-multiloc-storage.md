@@ -201,20 +201,20 @@ the stack, did it start pushing a memory location.
 ### Section 2.5 refer to new multiloc section
 In Section 2.5 Values and Locations, replace:
 
-> A location list may have overlapping PC ranges, and thus may yield
+> <del>A location list may have overlapping PC ranges, and thus may yield
 > multiple locations at a given PC. In this case, the consumer may
 > assume that the object value stored is the same in all locations,
 > excluding bits of the object that serve as padding. Non-padding bits
 > that are undefined (for example, as a result of optimization) must
-> be undefined in all the locations.
+> be undefined in all the locations.</del>
 >
-> *A location list that yields multiple locations can be used to
+> <del>*A location list that yields multiple locations can be used to
 > describe objects that reside in more than one piece of storage at
 > the same time. An object may have more than one location as a result
 > of optimization. For example, a value that is only read may be
 > promoted from memory to a register for some region of code, but
 > later code may revert to reading the value from memory as the
-> register may be used for other purposes.*
+> register may be used for other purposes.*</del>
 
 With:
 
