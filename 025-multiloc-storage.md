@@ -32,20 +32,20 @@ appear in the middle of an expression, but the spec doesn't fully
 specify how that works.
 
 This proposal starts closing the gap, by making multi-locations a new
-kind of location storage, called multi-location storage, or
-*multiloc*, for short.
+kind of location storage, called *multiloc* storage, short for
+multi-location.
 
 This is a simple, yet powerful and fundamental change.  With this,
 everywhere in the spec that refers to locations, automatically and
 transparently works in the multi-location case too.  For example, a
-`DW_OP_deref` on a multi-location location works just like with other
-locations, it simply reads bytes from it, using the rules for
-multi-location storage.  For an object that happens to be live at
-multiple places, `DW_OP_push_object_location` simply pushes a multiloc
-location.  Et cetera.
+`DW_OP_deref` on a multiloc location works just like with other
+locations, it simply reads bytes from it, using the rules for multiloc
+storage.  For an object that happens to be live at multiple places,
+`DW_OP_push_object_location` simply pushes a multiloc location.  Et
+cetera.
 
-Multi-location storage and composite storage become naturally
-recursively composable.  I.e.:
+Multiloc storage and composite storage become naturally recursively
+composable.  I.e.:
 
 - Composites can contain pieces of any storage kind, including
   multilocs and other composites.
@@ -60,9 +60,9 @@ behavior change.  It is just a refactor.
 
 In addition, this proposal defines a new DWARF expression operator,
 `DW_OP_multiloc`, which pops two locations from the stack and pushes a
-new multi-location location formed from the two locations.  This
-operator can be used as an an alternative to a location list with
-overlapping PC entries.
+new multiloc location formed from the two locations.  This operator
+can be used as an an alternative to a location list with overlapping
+PC entries.
 
 For example, to represent the location of an object that is live in
 both memory at address 0xf00 and in register 0, we can simply do:
@@ -173,14 +173,12 @@ implementors.
 
 ## Naming
 
-While "multi-location location" is a mouthful, it was picked because
-it is accurate.  Experience across many discussion about the topic
-with other people shows that the "multiloc" shorthand is the term most
-frequently used in practice, easily understood, and that appears
-naturally.
+"multiloc" was picked because it is accurate.  It names the storage
+for what it is.
 
 In turn, the `DW_OP_multiloc` operator's name follows the pattern of
-most other operators that push new locations.  E.g.:
+most other operators that push new locations, of being named by the
+storage kind they create.  E.g.:
 
     DW_OP_regX              => push register location
     DW_OP_undefined         => push undefined location
@@ -235,38 +233,38 @@ instead of six:
 Append the following entry to the existing storage kinds list, after
 the "Composite storage" entry:
 
-> - Multi-location storage. A hybrid form of storage where a single
->   piece of a program object is live at multiple locations. Its size
->   is the size of the smallest of the storages of the multiple
->   underlying locations. Reading from multi-location storage reads
->   from any of the underlying locations. Writing to multi-location
->   storage writes to all the underlying locations.
+> - Multiloc storage. A hybrid form of storage where a single piece of
+>   a program object is live at multiple locations. Its size is the
+>   size of the smallest of the storages of the multiple underlying
+>   locations. Reading from multiloc storage reads from any of the
+>   underlying locations. Writing to multiloc storage writes to all
+>   the underlying locations.
 
 Add the following non-normative notes after the storage kind list:
 
-> *Composite storage and multi-location storage are orthogonal and
+> *Composite storage and multiloc storage are orthogonal and
 > composable. Composite storage can contain pieces of any storage
-> kind, including multi-location. Multi-location storage can be formed
-> from locations of any storage kind, including composite.*
+> kind, including multiloc. Multiloc storage can be formed from
+> locations of any storage kind, including composite.*
 
 > *A consumer may flatten composite storage composed of composite
 > pieces, to avoid nesting in its internal representation.  Whether to
 > flatton or not is purely an implementation choice with no visible
-> semantic difference.  Similarly, a consumer may flatten
-> multi-location storage composed of multi-locations.*
+> semantic difference.  Similarly, a consumer may flatten multiloc
+> storage composed of multiloc locations.*
 
 ### Section 3.xx [NEW]
 Add a new section after Section 3.12, “Composite Locations”, called
-"Multi-Location Locations (multiloc)", with new text derived from the
-text deleted from Section 2.5:
+"Multiloc Locations", with new text derived from the text deleted from
+Section 2.5:
 
-> A multi-location location (a.k.a. multiloc) is used to describe
-> objects that reside in more than one piece of storage at the same
-> time. An object may have more than one location as a result of
-> optimization. For example, a value that is only read may be promoted
-> from memory to a register for some region of code, but later code
-> may revert to reading the value from memory as the register may be
-> used for other purposes.
+> A multiloc location is used to describe objects that reside in more
+> than one piece of storage at the same time. An object may have more
+> than one location as a result of optimization. For example, a value
+> that is only read may be promoted from memory to a register for some
+> region of code, but later code may revert to reading the value from
+> memory as the register may be used for other purposes.
+>
 >
 > The consumer may assume that the object value stored is the same in
 > all the underlying locations of a multiloc, excluding bits of the
