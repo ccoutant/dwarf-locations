@@ -38,15 +38,89 @@ multi-location.
 This is a simple, yet powerful and fundamental change.  With this,
 everywhere in the spec that refers to locations, including DWARF
 expression operations, automatically and transparently works in the
-multi-location case too without any special casing.  For example, a
-`DW_OP_deref` on a multiloc location works just like with other
-locations, it simply reads bytes from it, using the rules for multiloc
-storage.  For an object that happens to be live at multiple places,
-`DW_OP_push_object_location` can now push a multiloc location, so that
-a location expression that returns a location based on
-`DW_OP_push_object_location` returns a multiloc to the consumer, in
-case the consumer/user wants to write to it, which should update all
-locations.  Et cetera.
+multi-location case too without any special casing.
+
+For example:
+
+- A `DW_OP_deref` on a multiloc location works just like with other
+  locations, it simply reads bytes from it, using the rules for multiloc
+  storage.
+
+- For an object that happens to be live at multiple places,
+  `DW_OP_push_object_location` can now push a multiloc location.
+
+  Before, if the object is live in multiple locations, a consumer
+  would have to choose one to push.  This meant that if the expression
+  that uses `DW_OP_push_object_location` returns that location or a
+  location based on it, e.g.:
+
+    DW_AT_data_location:
+      DW_OP_push_object_location
+      DW_OP_offset 4
+
+  then the resulting location returned back to the consumer is also a
+  single location.  If the debugger user writes to that resulting
+  location, it misses updating the other locations where the object is
+  also live.
+
+- Et cetera.
+
+
+The proposal tweaks the location list description to say that the
+overlapping PC entries case creates a multiloc location.  This can
+mostly be seen as a simple refactor, but it also opens the possibility
+of roundtripping the multiple locations to
+`DW_OP_push_object_location` as a single multiloc.
+
+In addition, this proposal defines a new DWARF expression operator,
+`DW_OP_multiloc`, which pops two locations from the stack and pushes a
+new multiloc location formed from the two locations.  This operator
+can be used as an an alternative to a location list with overlapping
+PC entries.
+
+Example 1 - multiloc with two simple locations
+
+For example, to represent the simple, but typical case of the location
+of a scalar 32-bit integer `A` that is live in both memory at address
+X=0xf00 and in register 0, like so:
+
+    Location 1 (storage=memory, offset=0xf00):
+
+    +----------------...-+
+    |    | A     |       |
+    +----------------...-+
+    0    |X              |end-of-memory
+
+    Location 2 (storage=register 0, offset=0):
+
+    +-------+
+    | A     |
+    +-------+
+    0       |end-of-register
+
+we can simply do:
+
+    DW_OP_addr 0xf00
+    DW_OP_reg0
+    DW_OP_multiloc
+
+resulting in the following multiloc location, containing the two
+original locations:
+
+    Location 3 (storage=multiloc, offset=0):
+
+    +-------+
+    | mem   |
+    +-------+
+    | reg0  |
+    +-------+
+    0       |end-of-multiloc
+
+([click to try example on the dwarf-evaluator playground](https://aktemur.github.io/dwarf-evaluator/?context=%28%29&input=DW_OP_addr+0xf00%0ADW_OP_reg0%0ADW_OP_multiloc%0A))
+
+You can only access as many bits are there are available in the
+smallest of the underlying locations, so location 3's multiloc storage
+has the size of register 0, 32 bits.
 
 Multiloc storage and composite storage become naturally recursively
 composable.  I.e.:
@@ -56,26 +130,6 @@ composable.  I.e.:
 - Multilocs can be formed from locations of any storage kind,
   including composites and other multilocs.
 
-More on this below.
-
-The proposal tweaks the location list description to say that the
-overlapping PC entries case creates a multiloc location.  This has no
-behavior change.  It is just a refactor.
-
-In addition, this proposal defines a new DWARF expression operator,
-`DW_OP_multiloc`, which pops two locations from the stack and pushes a
-new multiloc location formed from the two locations.  This operator
-can be used as an an alternative to a location list with overlapping
-PC entries.
-
-For example, to represent the location of an object that is live in
-both memory at address 0xf00 and in register 0, we can simply do:
-
-    DW_OP_addr 0xf00
-    DW_OP_reg0
-    DW_OP_multiloc
-
-As mentioned before, multilocs and composites are fully composable.
 As a simple example, consider the location of a variable of a struct
 type with three 32-bit fields, whose default location is in memory at
 address X:
@@ -83,7 +137,7 @@ address X:
               +-----------------------------------------------+
     memory:   |    |     a     |     b     |     c     |      |
               +-----------------------------------------------+
-              |0   |X                                         |end-of-memory
+              0    |X                                         |end-of-memory
 
 
 If the compiler chooses to promote field `b` to `reg1` for some
@@ -92,7 +146,7 @@ describe this as a composite with a four-byte memory piece for `a`
 (1), a four-bytes multiloc piece for `b` (2), and another four-byte
 memory piece for `c` (3):
 
-Example 1 - composite with multiloc piece:
+Example 2 - composite with multiloc piece
 
                         (1)         (2)         (3)
                    +-----------+-----------+-----------+
@@ -115,7 +169,7 @@ example, with address X being 0xf00:
 
 ([click to try example on the dwarf-evaluator playground](https://aktemur.github.io/dwarf-evaluator/?context=%28%29&input=DW_OP_addr+0xf00%0ADW_OP_piece+4%0ADW_OP_addr+0xf04%0ADW_OP_reg1%0ADW_OP_multiloc%0ADW_OP_piece+4%0ADW_OP_addr+0xf08%0ADW_OP_piece+4))
 
-Example 2 - multiloc formed from composite and memory (DW_OP_piece)
+Example 3 - multiloc formed from composite and memory (DW_OP_piece)
 
 Alternatively, and isomorphically in the consumer's perspective, we
 could represent the object's location with a multiloc formed from a
@@ -139,7 +193,12 @@ like so:
 
 ([click to try example on the dwarf-evaluator playground](https://aktemur.github.io/dwarf-evaluator/?context=%28%29&input=DW_OP_addr+0xf00%0ADW_OP_piece+4%0ADW_OP_reg1%0ADW_OP_piece+4%0ADW_OP_addr+0xf08%0ADW_OP_piece+4%0ADW_OP_addr+0xf00%0ADW_OP_multiloc))
 
-Example 3 - multiloc formed from composite and memory (DW_OP_overlay):
+The locations of examples 2 and 3 are isomorphic, because from the
+consumer's perspective, there is no difference -- the rules for
+multiloc storage and composite storage compose naturally such that
+reads and writes to the two locations produce the same results.
+
+Example 4 - multiloc formed from composite and memory (DW_OP_overlay)
 
 The same location can be expressed with the overlay operator
 introduced in Issue
@@ -158,11 +217,6 @@ like so:
 [1] - not strictly accurate, as with overlay, the composite covers the
       whole base memory storage, but similar enough for the
       illustration.
-
-The locations of examples 1 and 2 are isomorphic, because from the
-consumer's perspective, there is no difference -- the rules for
-multiloc storage and composite storage compose naturally such that
-reads and writes to the two locations produce the same results.
 
 ([click to try example on the dwarf-evaluator playground](https://aktemur.github.io/dwarf-evaluator/?context=%28%28TargetReg+1+%2201234567%22%29%29&input=DW_OP_addr+0xf00%0ADW_OP_dup%0ADW_OP_reg1%0ADW_OP_lit4%0ADW_OP_lit4%0ADW_OP_overlay%0ADW_OP_multiloc))
 
@@ -243,7 +297,7 @@ which this proposal currently does not currently have.
 If however, there is desire to add `DW_OP_overlay_copy`, the model
 introduced by this proposal accomodates it perfectly:
 `DW_OP_overlay_copy` can be simply specified as creating a composite
-with a multiloc piece.
+with a multiloc piece, similar to Example 2.
 
 ## Impact of Issue 251017.2 (Incremental Location Lists Using Overlays)
 
