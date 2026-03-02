@@ -157,7 +157,7 @@ reconsidered? Should this be offset_uconst? - cary said yes]
 > address obtained from the register and the resulting memory
 > location is pushed onto the stack.
 
-## 3.9 Implicit Locations
+## 3.10 Implicit Locations
 
 > The `DW_OP_implicit_pointer` operation has two operands: a
 > reference to a debugging information entry that describes
