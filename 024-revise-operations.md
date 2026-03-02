@@ -352,7 +352,8 @@ description as follows:
 
 > `DW_OP_bit_piece` ([ULEB] size in bits)
 >
->    → <[location] composite storage>
+>    → <[location] composite storage>  **or**
+>    <[location] composite storage> → <[location] composite storage'>
 >
 
 In section 3.13 add the following heading between operator and its
