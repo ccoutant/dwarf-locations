@@ -24,11 +24,11 @@ dumping the raw contents of the register and then decoding it
 manually. A programmer may not know to do this or know how to do
 this. It also is a very cumbersome work around.
 
-A better option is to address this situation is to have the producer
-use DW_OP_regval_type so long as the variable is in a
-register. However, if one of these extended floating point registers
-representing a smaller type is spilled to memory without conversion
-back to a 64b double then the problem still exists.
+A better option to address this situation is to have the producer use
+DW_OP_regval_type so long as the variable is in a register. However,
+if one of these extended floating point registers representing a
+smaller type is spilled to memory without conversion back to a 64b
+double then the problem still exists.
 
 ### Type width reduction optimization
 
@@ -71,7 +71,7 @@ providing more precise type information.
 ### Derived types
 
 One example could be when a compiler knows the type more precisely
-than the variable's type natively idicates. For eample: `BaseV *bv2 =
+than the variable's type natively indicates. For eample: `BaseV *bv2 =
 new DerivedV;` adding more precise type information could allow the
 consumer to print the full contents of the variable rather than just
 the parts included in the base class. Some consumers can already do
@@ -80,13 +80,13 @@ having the actual known type which is known by the producer makes this
 simpler.
 
 It also allows a consumer handle situations which are currently not
-handled such as `(gdb) p func( *bv2)` when `int func(Derived arg);`
+handled such as `(gdb) p func(*bv2)` when `int func(Derived arg);`
 without the user having to cast the variable to its known type.
 
 ### void pointers with known types
 
 Another potential use is to give the objects pointed to by void
-pointers their type. For example given `int x;void *generic=&x` the
+pointers their type. For example given `int x; void *generic=&x` the
 compiler knows that object pointed to by generic is an int.
 
 ## Proposed fix
