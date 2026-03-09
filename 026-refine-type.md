@@ -148,7 +148,7 @@ an incompatibilty.
 	DW_OP_reinterpret <type>
 
 In DWARF 5 `DW_OP_reinterpret` would pop a generic-type 0xf00 value
-and reinterpret it as <type>. However, in DWARF6 with locations on the
+and reinterpret it as `type`. However, in DWARF6 with locations on the
 stack `DW_OP_addr` pushes a location. Then the object at that location
 is interpreted as a new type. In one case 0xf00 is treated as an
 object which has the specified type. In the other case, whatever is
@@ -212,6 +212,7 @@ In section 3.16 Type Conversions
 After DW_OP_reinterpret add a new operator:
 
 >    DW_OP_refine_type([ULEB] DIE offset for type)
+>
 >    <[location] A > → <[location] A with specified type>
 >
 >    The `DW_OP_refine_type` operation pops the location from the top
@@ -236,7 +237,8 @@ Add a new section to Appendix D
 >        1$: DW_TAG_variable
 >                DW_AT_name("bp")
 >                DW_AT_type(reference to 2$ "Base *")
->                DW_AT_location( DW_OP_reg0;
+>                DW_AT_location(
+>                        DW_OP_reg0;
 >                        DW_OP_refined_type( reference to $5 "Derived")
 >
 >        2$: DW_TAG_pointer_type
@@ -272,7 +274,6 @@ Add a new section to Appendix D
 >                DW_AT_name("bp")
 >                DW_AT_type(reference to 2$ "Base *")
 >                DW_AT_location(location list $9)
->
 >        2$: DW_TAG_pointer_type
 >                DW_AT_type(reference to $5 "Base")
 >        3$: DW_TAG_pointer_type
