@@ -159,27 +159,25 @@ location list entry's expression, and then after all matching location
 list entries are evaluated (each on its own stack copy), zip/merge the
 resulting stacks back into one.  I.e., in pseudo-code:
 
-```
-  # Clone current stack, once per matching entry, and evaluate
-  # location list expression with that cloned stack.
-  stacks = {}
-  foreach entry in matching_location_list_entries
-    stacks.push(current_stack.clone())
-    entry.eval(stacks.back())
+    # Clone current stack, once per matching entry, and evaluate
+    # location list expression with that cloned stack.
+    stacks = {}
+    foreach entry in matching_location_list_entries
+      stacks.push(current_stack.clone())
+      entry.eval(stacks.back())
 
-  # Require that all stacks have the same size after evaluation.
-  for s in stacks
-    if s.size() != stacks[0].size()
-      error()
+    # Require that all stacks have the same size after evaluation.
+    for s in stacks
+      if s.size() != stacks[0].size()
+	error()
 
-  # Zip/merge stacks back into one.
-  merged_stack = new_empty_stack()
-  for i in 0..stacks[0].size() - 1)
-    merged_stack.push(merge_stack_entries_at(stacks, i))
+    # Zip/merge stacks back into one.
+    merged_stack = new_empty_stack()
+    for i in 0..stacks[0].size() - 1)
+      merged_stack.push(merge_stack_entries_at(stacks, i))
 
-  # Continue evaluation with the new stack contents.
-  current_stack = merged_stack
-```
+    # Continue evaluation with the new stack contents.
+    current_stack = merged_stack
 
 With the `merge_stack_entries_at` function implementing the rules of
 approach #2.3.
