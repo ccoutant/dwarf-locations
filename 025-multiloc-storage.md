@@ -75,7 +75,7 @@ of roundtripping the multiple locations to
 In addition, this proposal defines a new DWARF expression operator,
 `DW_OP_multiloc`, which pops two locations from the stack and pushes a
 new multiloc location formed from the two locations.  This operator
-can be used as an an alternative to a location list with overlapping
+can be used as an alternative to a location list with overlapping
 PC entries.
 
 Example 1 - multiloc with two simple locations
@@ -118,7 +118,7 @@ original locations:
 
 ([click to try example on the dwarf-evaluator playground](https://aktemur.github.io/dwarf-evaluator/?context=%28%29&input=DW_OP_addr+0xf00%0ADW_OP_reg0%0ADW_OP_multiloc%0A))
 
-You can only access as many bits are there are available in the
+You can only access as many bits as there are available in the
 smallest of the underlying locations, so location 3's multiloc storage
 has the size of register 0, 32 bits.
 
@@ -143,7 +143,7 @@ address X:
 If the compiler chooses to promote field `b` to `reg1` for some
 section of code, while keeping the memory copy live too, we could
 describe this as a composite with a four-byte memory piece for `a`
-(1), a four-bytes multiloc piece for `b` (2), and another four-byte
+(1), a four-byte multiloc piece for `b` (2), and another four-byte
 memory piece for `c` (3):
 
 Example 2 - composite with multiloc piece
@@ -292,7 +292,7 @@ not clear whether this warrants a new operator.
 1. The intent of this proposal is to add the fundamental building
 blocks first.  `DW_OP_overlay_copy` has a dependency on
 [251120.1](https://dwarfstd.org/issues/251120.1.html) (DW_OP_overlay)
-which this proposal currently does not currently have.
+which this proposal currently does not have.
 
 If however, there is desire to add `DW_OP_overlay_copy`, the model
 introduced by this proposal accomodates it perfectly:
@@ -368,7 +368,7 @@ Add the following non-normative notes after the storage kind list:
 
 > *A consumer may flatten composite storage composed of composite
 > pieces, to avoid nesting in its internal representation.  Whether to
-> flatton or not is purely an implementation choice with no visible
+> flatten or not is purely an implementation choice with no visible
 > semantic difference.  Similarly, a consumer may flatten multiloc
 > storage composed of multiloc locations.*
 
@@ -401,8 +401,9 @@ Section 2.5:
 >
 > DW_OP_multiloc
 >
-> The DW_OP_multiloc operation pops two locations from the stack, and
-> pushes a new multiloc location formed from the two popped locations.
+> The DW_OP_multiloc operation pops two locations from the stack,
+> forms a new multiloc location with an offset of 0 from the two
+> popped locations, and pushes the result on the stack.
 
 ### Section 3.19 multiloc cross-reference
 In Section 3.19 "Location Lists", where it reads:
