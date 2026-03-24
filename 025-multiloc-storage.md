@@ -116,7 +116,7 @@ original locations:
     +-------+
     0       |end-of-multiloc
 
-([click to try example on the dwarf-evaluator playground](https://aktemur.github.io/dwarf-evaluator/?context=%28%29&input=DW_OP_addr+0xf00%0ADW_OP_reg0%0ADW_OP_multiloc%0A))
+([click to try example on the dwarf-evaluator playground](https://intel.github.io/dwarf-evaluator/multiloc/?context=%28%29&input=DW_OP_addr+0xf00%0ADW_OP_reg0%0ADW_OP_multiloc))
 
 You can only access as many bits as there are available in the
 smallest of the underlying locations, so location 3's multiloc storage
@@ -167,7 +167,7 @@ example, with address X being 0xf00:
     DW_OP_addr 0xf08
     DW_OP_piece 4        (3 - a memory location piece)
 
-([click to try example on the dwarf-evaluator playground](https://aktemur.github.io/dwarf-evaluator/?context=%28%29&input=DW_OP_addr+0xf00%0ADW_OP_piece+4%0ADW_OP_addr+0xf04%0ADW_OP_reg1%0ADW_OP_multiloc%0ADW_OP_piece+4%0ADW_OP_addr+0xf08%0ADW_OP_piece+4))
+([click to try example on the dwarf-evaluator playground](https://intel.github.io/dwarf-evaluator/multiloc/?context=%28%28TargetReg+1+%2201234567%22%29%29&input=DW_OP_addr+0xf00%0ADW_OP_piece+4%0ADW_OP_addr+0xf04%0ADW_OP_reg1%0ADW_OP_multiloc%0ADW_OP_piece+4%0ADW_OP_addr+0xf08%0ADW_OP_piece+4))
 
 Example 3 - multiloc formed from composite and memory (DW_OP_piece)
 
@@ -191,7 +191,7 @@ like so:
     DW_OP_addr 0xf00     (4 - the base memory location)
     DW_OP_multiloc       (create multiloc from memory (4) and the {1, 2, 3} composite)
 
-([click to try example on the dwarf-evaluator playground](https://aktemur.github.io/dwarf-evaluator/?context=%28%29&input=DW_OP_addr+0xf00%0ADW_OP_piece+4%0ADW_OP_reg1%0ADW_OP_piece+4%0ADW_OP_addr+0xf08%0ADW_OP_piece+4%0ADW_OP_addr+0xf00%0ADW_OP_multiloc))
+([click to try example on the dwarf-evaluator playground](https://intel.github.io/dwarf-evaluator/multiloc/?context=%28%28TargetReg+1+%2201234567%22%29%29&input=DW_OP_addr+0xf00%0ADW_OP_piece+4%0ADW_OP_reg1%0ADW_OP_piece+4%0ADW_OP_addr+0xf08%0ADW_OP_piece+4%0ADW_OP_addr+0xf00%0ADW_OP_multiloc))
 
 The locations of examples 2 and 3 are isomorphic, because from the
 consumer's perspective, there is no difference -- the rules for
@@ -218,7 +218,7 @@ like so:
       whole base memory storage, but similar enough for the
       illustration.
 
-([click to try example on the dwarf-evaluator playground](https://aktemur.github.io/dwarf-evaluator/?context=%28%28TargetReg+1+%2201234567%22%29%29&input=DW_OP_addr+0xf00%0ADW_OP_dup%0ADW_OP_reg1%0ADW_OP_lit4%0ADW_OP_lit4%0ADW_OP_overlay%0ADW_OP_multiloc))
+([click to try example on the dwarf-evaluator playground](https://intel.github.io/dwarf-evaluator/multiloc/?context=%28%28TargetReg+1+%2201234567%22%29%29&input=DW_OP_addr+0xf00%0ADW_OP_dup%0ADW_OP_reg1%0ADW_OP_lit4%0ADW_OP_lit4%0ADW_OP_overlay%0ADW_OP_multiloc))
 
 ## Nesting
 
