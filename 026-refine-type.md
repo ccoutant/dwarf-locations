@@ -38,7 +38,7 @@ range of a values can fit in a smaller type, the optimizer may choose
 to reduce the width of the type. In other words, a 4 byte int can
 become a 2 byte short or even a single byte char. This optimization is
 particularly useful when applied to vector registers because it can
-double or quadriple the number of lanes. Like loop vectorization where
+double or quadruple the number of lanes. Like loop vectorization where
 the compiler generates both a vectorized code block as well as a block
 to handle the non-vector width remainder, the compiler code generation
 can emit blocks of code which are used when the compiler can prove
@@ -71,13 +71,13 @@ providing more precise type information.
 ### Derived types
 
 One example could be when a compiler knows the type more precisely
-than the variable's type natively indicates. For eample: `BaseV *bv2 =
-new DerivedV;` adding more precise type information could allow the
+than the variable's type natively indicates. For example: `BaseV *bv2
+= new DerivedV;` adding more precise type information could allow the
 consumer to print the full contents of the variable rather than just
-the parts included in the base class. Some consumers can already do
-this by referring to the vtable to identify the derived type but
+the parts included in the base class. Some times consumers can already
+do this by referring to the vtable to identify the derived type but
 having the actual known type which is known by the producer makes this
-simpler.
+simpler and can handle situations when a class doesn't have a vtable.
 
 It also allows a consumer handle situations which are currently not
 handled such as `(gdb) p func(*bv2)` when `int func(Derived arg);`
@@ -309,7 +309,7 @@ Add a new section to Appendix D
 >          unsigned int a, b;
 >        };
 >
->        1$: DW_TaAG_base_type
+>        1$: DW_TAG_base_type
 >          DW_AT_byte_size   : 4
 >          DW_AT_encoding    : 7	(unsigned)
 >          DW_AT_name        : unsigned int
