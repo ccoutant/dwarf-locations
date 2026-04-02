@@ -75,7 +75,7 @@ of roundtripping the multiple locations to
 In addition, this proposal defines a new DWARF expression operator,
 `DW_OP_multiloc`, which pops two locations from the stack and pushes a
 new multiloc location formed from the two locations.  This operator
-can be used as an an alternative to a location list with overlapping
+can be used as an alternative to a location list with overlapping
 PC entries.
 
 Example 1 - multiloc with two simple locations
@@ -116,9 +116,9 @@ original locations:
     +-------+
     0       |end-of-multiloc
 
-([click to try example on the dwarf-evaluator playground](https://aktemur.github.io/dwarf-evaluator/?context=%28%29&input=DW_OP_addr+0xf00%0ADW_OP_reg0%0ADW_OP_multiloc%0A))
+([click to try example on the dwarf-evaluator playground](https://intel.github.io/dwarf-evaluator/multiloc/?context=%28%29&input=DW_OP_addr+0xf00%0ADW_OP_reg0%0ADW_OP_multiloc))
 
-You can only access as many bits are there are available in the
+You can only access as many bits as there are available in the
 smallest of the underlying locations, so location 3's multiloc storage
 has the size of register 0, 32 bits.
 
@@ -143,7 +143,7 @@ address X:
 If the compiler chooses to promote field `b` to `reg1` for some
 section of code, while keeping the memory copy live too, we could
 describe this as a composite with a four-byte memory piece for `a`
-(1), a four-bytes multiloc piece for `b` (2), and another four-byte
+(1), a four-byte multiloc piece for `b` (2), and another four-byte
 memory piece for `c` (3):
 
 Example 2 - composite with multiloc piece
@@ -167,7 +167,7 @@ example, with address X being 0xf00:
     DW_OP_addr 0xf08
     DW_OP_piece 4        (3 - a memory location piece)
 
-([click to try example on the dwarf-evaluator playground](https://aktemur.github.io/dwarf-evaluator/?context=%28%29&input=DW_OP_addr+0xf00%0ADW_OP_piece+4%0ADW_OP_addr+0xf04%0ADW_OP_reg1%0ADW_OP_multiloc%0ADW_OP_piece+4%0ADW_OP_addr+0xf08%0ADW_OP_piece+4))
+([click to try example on the dwarf-evaluator playground](https://intel.github.io/dwarf-evaluator/multiloc/?context=%28%28TargetReg+1+%2201234567%22%29%29&input=DW_OP_addr+0xf00%0ADW_OP_piece+4%0ADW_OP_addr+0xf04%0ADW_OP_reg1%0ADW_OP_multiloc%0ADW_OP_piece+4%0ADW_OP_addr+0xf08%0ADW_OP_piece+4))
 
 Example 3 - multiloc formed from composite and memory (DW_OP_piece)
 
@@ -191,7 +191,7 @@ like so:
     DW_OP_addr 0xf00     (4 - the base memory location)
     DW_OP_multiloc       (create multiloc from memory (4) and the {1, 2, 3} composite)
 
-([click to try example on the dwarf-evaluator playground](https://aktemur.github.io/dwarf-evaluator/?context=%28%29&input=DW_OP_addr+0xf00%0ADW_OP_piece+4%0ADW_OP_reg1%0ADW_OP_piece+4%0ADW_OP_addr+0xf08%0ADW_OP_piece+4%0ADW_OP_addr+0xf00%0ADW_OP_multiloc))
+([click to try example on the dwarf-evaluator playground](https://intel.github.io/dwarf-evaluator/multiloc/?context=%28%28TargetReg+1+%2201234567%22%29%29&input=DW_OP_addr+0xf00%0ADW_OP_piece+4%0ADW_OP_reg1%0ADW_OP_piece+4%0ADW_OP_addr+0xf08%0ADW_OP_piece+4%0ADW_OP_addr+0xf00%0ADW_OP_multiloc))
 
 The locations of examples 2 and 3 are isomorphic, because from the
 consumer's perspective, there is no difference -- the rules for
@@ -218,7 +218,7 @@ like so:
       whole base memory storage, but similar enough for the
       illustration.
 
-([click to try example on the dwarf-evaluator playground](https://aktemur.github.io/dwarf-evaluator/?context=%28%28TargetReg+1+%2201234567%22%29%29&input=DW_OP_addr+0xf00%0ADW_OP_dup%0ADW_OP_reg1%0ADW_OP_lit4%0ADW_OP_lit4%0ADW_OP_overlay%0ADW_OP_multiloc))
+([click to try example on the dwarf-evaluator playground](https://intel.github.io/dwarf-evaluator/multiloc/?context=%28%28TargetReg+1+%2201234567%22%29%29&input=DW_OP_addr+0xf00%0ADW_OP_dup%0ADW_OP_reg1%0ADW_OP_lit4%0ADW_OP_lit4%0ADW_OP_overlay%0ADW_OP_multiloc))
 
 ## Nesting
 
@@ -292,7 +292,7 @@ not clear whether this warrants a new operator.
 1. The intent of this proposal is to add the fundamental building
 blocks first.  `DW_OP_overlay_copy` has a dependency on
 [251120.1](https://dwarfstd.org/issues/251120.1.html) (DW_OP_overlay)
-which this proposal currently does not currently have.
+which this proposal currently does not have.
 
 If however, there is desire to add `DW_OP_overlay_copy`, the model
 introduced by this proposal accomodates it perfectly:
@@ -368,7 +368,7 @@ Add the following non-normative notes after the storage kind list:
 
 > *A consumer may flatten composite storage composed of composite
 > pieces, to avoid nesting in its internal representation.  Whether to
-> flatton or not is purely an implementation choice with no visible
+> flatten or not is purely an implementation choice with no visible
 > semantic difference.  Similarly, a consumer may flatten multiloc
 > storage composed of multiloc locations.*
 
@@ -401,8 +401,9 @@ Section 2.5:
 >
 > DW_OP_multiloc
 >
-> The DW_OP_multiloc operation pops two locations from the stack, and
-> pushes a new multiloc location formed from the two popped locations.
+> The DW_OP_multiloc operation pops two locations from the stack,
+> forms a new multiloc location with an offset of 0 from the two
+> popped locations, and pushes the result on the stack.
 
 ### Section 3.19 multiloc cross-reference
 In Section 3.19 "Location Lists", where it reads:
