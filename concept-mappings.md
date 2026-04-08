@@ -186,7 +186,7 @@ entry like the following:
     DW_OP_piece(2)     # fields b and c
 
 If we imagine the overlay operator from the GPU proposals, or the map operator
-from 250408.1, we could describe this more naturally as:
+from [250408.1][250408.1], we could describe this more naturally as:
 
     DW_OP_addr(&v) # base location for the whole struct
     DW_OP reg0     # location where v.a is mapped
@@ -395,8 +395,8 @@ decay to pointers in this example). We could use a DWARF procedure
 to describe the location of each array, but we run into a
 limitation of the piece and bit-piece operators: they cannot
 take a computed offset as an operand. Instead, we will need
-to rely on one of the proposals to add overlay operators (251120.1),
-mapping operators (250408.1), or new dynamic piece operators (211206.2).
+to rely on one of the proposals to add overlay operators ([251120.1][251120.1]),
+mapping operators ([250408.1][250408.1]), or new dynamic piece operators ([211206.2][211206.2]).
 Using the overlay operators, we could describe the location of
 the array `dst`, while within the vectorized loop body, as follows:
 
@@ -532,7 +532,7 @@ with eight 8-bit values, where it may not be as clear that a `uint_8 temp`
 in lane 0 should only occupy bits 0–7.
 
 This could be simplified and made clearer by introducing subregisters
-(as suggested in Issue 230712.1).
+(as suggested in Issue [230712.1][230712.1]).
 
     DW_OP_regx(v4)      # Vector register 4
     DW_OP_push_lane     # Get current lane as index
@@ -836,7 +836,7 @@ single ULEB inline parameter specifying the kind of mapping.
 A new `DW_OP_transparent` operation is defined to set the
 transparent property on the following explicit mapping operation.
 (This would replace the `DW_OP_copy`, `DW_OP_overlay_copy`,
-and `DW_OP_bit_overlay_copy` operations proposed in 251017.1.)
+and `DW_OP_bit_overlay_copy` operations proposed in [251017.1][251017.1].)
 
 
 ## III. Proposals
@@ -862,3 +862,9 @@ Define the `DW_OP_call*` operators to work only on `DW_TAG_DWARF_procedure` DIEs
 with (new) `DW_AT_DWARF_procedure` attributes.
 
 
+
+[211206.2]: https://dwarfstd.org/issues/211206.2.html
+[230712.1]: https://dwarfstd.org/issues/230712.1.html
+[250408.1]: https://dwarfstd.org/issues/250408.1.html
+[251017.1]: https://dwarfstd.org/issues/251017.1.html
+[251120.1]: https://dwarfstd.org/issues/251120.1.html
