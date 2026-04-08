@@ -643,9 +643,9 @@ unambiguously:
     DW_OP_subreg(16)
     DW_OP_piece(2)
 
-For the little-endian case, the `DW_OP_subreg` would select element 0,
+For the little-endian case, the `DW_OP_subreg` would select register 0,
 counting from the lsb end, and select the lower 16 bits of `reg1`.
-For the big-endian case, it would select element 0, counting from
+For the big-endian case, it would select register 0, counting from
 the msb end, and select the upper 16 bits of `reg1`. The same DWARF
 expression works to describe both cases.
 
