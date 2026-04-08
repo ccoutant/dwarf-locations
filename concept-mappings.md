@@ -848,13 +848,15 @@ The following new concrete proposals would follow from this:
 with the new model given in Part II. Add `DW_OP_mapping`
 and `DW_OP_transparent` operators.
 
-2. Add `DW_OP_register_pair`, `DW_OP_interleave`, and
+2. Add `DW_OP_overlay_stride` operator.
+
+3. Add `DW_OP_register_pair`, `DW_OP_interleave`, and
 `DW_OP_subreg` operators. These new operators would form new
 storage and return a location in that storage.
 
-3. Add `DW_OP_form_implicit_pointer` operator.
+4. Add `DW_OP_form_implicit_pointer` operator.
 
-4. Add `DW_OP_push_location_of` operator. For DIEs with `DW_AT_location`,
+5. Add `DW_OP_push_location_of` operator. For DIEs with `DW_AT_location`,
 it would evaluate the location on a separate stack, then push the resulting location on the caller’s stack.
 For DIEs with `DW_AT_const_value`, it would push an implicit storage location.
 Define the `DW_OP_call*` operators to work only on `DW_TAG_DWARF_procedure` DIEs
