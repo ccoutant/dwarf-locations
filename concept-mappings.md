@@ -637,16 +637,15 @@ With `DW_OP_subreg`, we can now describe the 48-bit variable in Example 6
 unambiguously:
 
     DW_OP_reg0
-    DW_OP_piece(4)
     DW_OP_reg1
+    DW_OP_register_pair  # Form a virtual 64-bit register from reg0 and reg1
     DW_OP_lit0
-    DW_OP_subreg(16)
-    DW_OP_piece(2)
+    DW_OP_subreg(48)
 
 For the little-endian case, the `DW_OP_subreg` would select register 0,
-counting from the lsb end, and select the lower 16 bits of `reg1`.
+counting from the lsb end, and the lower 16 bits of `reg1`.
 For the big-endian case, it would select register 0, counting from
-the msb end, and select the upper 16 bits of `reg1`. The same DWARF
+the msb end, and the upper 16 bits of `reg1`. The same DWARF
 expression works to describe both cases.
 
 
