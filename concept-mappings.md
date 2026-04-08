@@ -804,7 +804,7 @@ This may also apply where single-precision values are converted
 to double-precision when loaded into registers. An ABI may define
 one or more such mappings.
 
-An ABI may define additional kinds mappings as needed.
+An ABI may define additional mapping kinds as needed.
 
 A *compound mapping* consists of an ordered set of mappings,
 where each member of the set maps a range of bits from the data
