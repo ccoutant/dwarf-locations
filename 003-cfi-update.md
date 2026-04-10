@@ -3,10 +3,77 @@
 
 ## BACKGROUND
 
-**Fixme: a much stronger justification is needed**
-Intro:
+### Change CFA to CFL
 
-New Operator:
+Debugging device code running on GPUs needs to be able to unwind the
+stack like other code running on CPUs. However, GPUs have some
+requirements that are different than CPUs. In particular, they have
+multiple address spaces and and can spill registers to them. Some
+architectures of GPUs can even spill registers to other registers
+which are farther away in their memory hierarchy. The fact that GPUs
+use various locations to store previous frames which cannot be
+expressed as a simple address requires the generalization of Call
+Frame Addresses or Cononical Frame Addresses CFA (it is used
+inconsistently in the current standard) into Call Frame Locations,
+CFL, in much the same way that DWARF5's `DW_OP_push_object_address`
+needed to change to `DW_OP_push_object_location` in DWARF6.
+
+While this terminology change has significant typographical impact on
+the standard itself, the amount of change needed to support these
+changes is fairly minimal. Great lengths were made to ensure backward
+compatibility. This proposal has been implemented in the ROCm LLVM
+compiler.
+
+### Row Creation Instructions
+
+There are a few places where complete generalization was intentionally
+not done. For example in Section 7.4.2.1 Row Creation Instructions
+still only reference values which are addresses rather than full
+locations. To be able to support full locations within the rows, a
+couple more row creation instructions would need to be
+introduced. Currently on all GPUs studied while preparing this
+proposal, program text for device code is executed from device
+memory. While this would be a different address space from the
+perspective of the system, no GPU studied needs to reference PC
+addresses outside of this assumed address space. This property of
+which device address space program text is assumed to be in, is a
+characteristic of the GPU's target ABI.
+
+This assumed address space for program text is facilitated by the way
+that fat binaries are currently implemented. The host code's ELF file
+has a section, which contains a complete ELF file for the target
+GPU. Therefore, there is no confusion between the host's .debug_frames
+section and the .debug_frames section for the target GPU in its
+embedded ELF file. If there were an architecture where the host's ELF
+file's .debug_frames section mixed addresses between host code and
+device code, then additional Row Creation Instructions would be need
+to be added to Section 7.4.2.1.
+
+### CFL Definition Instructions
+
+Unlike Row Creation Instructions which deal with program text where
+the address space can be assumed, the Call Frame Location, CFL, can be
+put anywhere in the GPU's storage and therefore the CFL Defintion
+Instructions need a couple new rules to handle locations in other address
+spaces. We added: `DW_CFA_def_aspace_cfa`, `DW_CFA_def_aspace_cfa_sf`
+
+### Register rules
+
+In DWARF5 before Locations were allowed on the stack, Call Frame
+Information needed a way to reference locations other than the values
+that could be put on the stack. It also needed to be determine if the
+entry referred to a value which was a memory location or if that was
+the value. This led to the diversity of Register Rules found in
+section 7.4.2.3. Now that DWARF6 has locations on the stack, many of
+these rules are no longer strictly necessary; they could be
+implemented as DWARF expressions. Replacing the register rules
+exclusively with DWARF Exprressions was not seriously considered; that
+would have broken backward compatibility and probably would not be
+quite as compact. However, to make the association between register
+rules and DWARF expressions more obvious, we included the analogus
+DWARF expression with its register rule.
+
+### New Operator:
 
 **FIXME: Justification for new operator** **Ben: This supposed to
 partially replace DW_OP_entry_value.  This is going to need a strong
@@ -35,43 +102,6 @@ of a saved register than have to generate a loclist to describe the
 same information. This is now possible since [Allow location
 description on the DWARF evaluation stack] allows location
 descriptions on the stack.
-
-Change from CFA to CFL
-
-**FIXME: add**
-
-In much the same way that DWARF5's `DW_OP_push_object_address` needed
-to change to `DW_OP_push_object_location` in DWARF6. Call Frame
-Addresses, CFAs, need to change to Call Frame Locations, CFLs. GPUs
-use various locations to store previous frames which cannot be
-expressed as a simple address.
-
-**Ben: I remember Zoran talking about how Imagination GPUs store their
-stack. I would like a refresher on various ways that GPUs store their
-stack frame so that I can make a stronger case for this.**
-
-**Ben: a considerable portion of the changes are the formal definition
-kind of changes which we didn't universally make in the proposals that
-were ultimately passed. The size of this proposal can be substantially
-reduced if we limit those. It seems like they are only important in a
-few cases**
-
-With the addition of address spaces in General Support for Address
-Spaces https://dwarfstd.org/issues/260211.1.html the CFA Definition
-Instructions need to be properly defined to specify which address
-space they refer to. There alaso needs to be CFA Definition
-Instructions which can reference the address space.
-
-GPUs can spill registers to local GPU memory and so CFI needs to
-support this.
-
-Almost all uses of addresses in DWARF 5 are limited to defining
-location descriptions, or to be dereferenced to read memory. The
-exception is `DW_CFA_val_offset` which uses the address to set the
-value of a register. In order to support address spaces, the CFA DWARF
-expression is defined to be a memory location description. This allows
-it to specify an address space which is used to convert the offset
-address back to an address in that address space.
 
 
 ## PROPOSED CHANGES
@@ -285,9 +315,6 @@ following:
 > current object which are unspecified. The resulting kind is a
 > location descriptionm.
 
-**Ben: it sounds like you are implicitly pushing the CFL. DWARF5
-doesn't do that. Is this a change in behavior. Because it is a change
-in behavior I don't think we should include the following.**
 
 > and an initial stack comprising the location
 > description of the current CFL (see Chapter 3 DWARF Expressions).
@@ -404,6 +431,16 @@ In the last paragraph, change "`DW_CFA_expression` and
 `DW_CFA_val_expression`".
 
 **Ben: add operands to 7.4.2.[1-5]**
+
+In Section 7.4.2.1 Row Creation Instructions add headers like were
+done in operation headers:
+
+
+> 1.  `DW_CFA_set_loc (generic address)`
+> 2.  `DW_CFA_advance_loc (opcode_encoded delta)`
+> 3.  `DW_CFA_advance_loc1 ( ubyte delta)`
+> 4.  `DW_CFA_advance_loc2 ( uhalf delta)`
+> 5.  `DW_CFA_advance_loc4 ( uword delta)`
 
 In Section 7.4.2.2 "CFA Definition Instructions", replace the
 description of the six CFI instructions with the following:
@@ -532,35 +569,82 @@ Add the following CFI instructions:
 >     `DW_CFA_def_aspace_cfa`, except that the second operand is
 >     signed and factored.
 
-In Section 7.4.2.3 Register Rule Instructions, in item 1,
-`DW_CFA_undefined`, change "a register number" to "a register number
-R."  Change "the specified register" to "the register specified by R."
+In Section 7.4.2.3 "Register Rule Instructions
+to:
 
-Make the same change in item 2, `DW_CFA_same_value`.
-
-Replace the text of item 3, `DW_CFA_offset`, with the following:
-
-> The `DW_CFA_offset` instruction takes two operands: a register number
-> R (encoded with the opcode) and an unsigned LEB128 constant
-> representing a factored displacement B. The required action is to
-> change the rule for the register specified by R to be an offset(B *
-> data_alignment_factor) rule.
-
-In item 4, `DW_CFA_offset_extended`, change "a register number and a
-factored offset" with "a register number R and a factored displacement
-B", and add a comma before "except.
-
-In item 5, `DW_CFA_offset_extended_sf`, change "a register number and
-a signed LEB128 factored offset" with "a register number R and a
-signed LEB128 factored displacement B." Change the final two sentences
-to "This instruction is identical to `DW_CFA_offset_extended`, except
-that B is signed."
-
-In item 6, `DW_CFA_val_offset`, change "a register number and a
-factored offset" to "a register number R and a factored displacement
-B."  Change "indicated by the register number to be a val_offset(N)
-rule where..." to "indicated by R to be a val_offset(B *
-data_alignment_factor) rule."
+> 1.  `DW_CFA_undefined ( ULEB R)`
+>
+>     The DW_CFA_undefined instruction takes a single ULEB operand
+>     that represents a register number <span
+>     style="background-color:green">specified by R</span>. The
+>     required action is to set the rule for the specified register to
+>     “undefined.”
+>
+> 2.  `DW_CFA_same_value( ULEB R)`
+>
+>     The DW_CFA_same_value instruction takes a single ULEB operand
+>     that represents a register number<span
+>     style="background-color:green"> specified by R</span>. The
+>     required action is to set the rule for the specified register to
+>     “same value.”
+>
+> 3. `DW_CFA_offset(opcode_encoded R, ULEB B)`
+>
+>     The `DW_CFA_offset` instruction takes two operands: a register
+>     number <span style="background-color: green;">R </span>(encoded
+>     with the opcode) and an ULEB constant representing a factored
+>     <span style="background-color: green;">displacement
+>     B</span>. The required action is to change the rule for the
+>     register <span style="background-color: green;">specified by R
+>     to be an offset(B * data_alignment_factor)</span> rule.
+>
+> 4.  `DW_CFA_offset_extended(ULEB R, ULEB B)`
+>
+>     The `DW_CFA_offset_extended` instruction takes two ULEB operands
+>     representing a register number <span style="background-color:
+>     green;">R </span>and a factored <span style="background-color:
+>     green;">displacement B</span>.
+>
+>     *This instruction is identical to DW_CFA_offset<span
+>     style="background-color: green;">,</span> except for the
+>     encoding and size of the register operand.*
+>
+> 5.  `DW_CFA_offset_extended_sf(ULEB R, signed_LEB128 B)`
+>
+>     The `DW_CFA_offset_extended_sf` instruction takes two operands: an
+>     ULEB value representing a register number <span
+>     style="background-color: green;">R</span> and a <span
+>     style="background-color: green;">LEB</span> factored
+>     <span style="background-color: green;">displacement
+>     B</span>.
+>
+>     *<span style="background-color: green;">This instruction is
+>     identical to DW_CFA_offset_extended, except that B is
+>     signed.</span>*
+>
+> 6.  `DW_CFA_val_offset(ULEB R, ULEB B)`
+>
+>     The `DW_CFA_val_offset` instruction takes two ULEB operands
+>     representing a register number <span style="background-color:
+>     green;">R </span>and a factored <span style="background-color:
+>     green;">displacement B</span>. The required action is to change
+>     the rule for the register indicated by <span
+>     style="background-color: green;">R</span> to be a
+>     val_offset(<span style="background-color: green;">B</span> *
+>     data_alignment_factor) rule.
+>
+> 7. `DW_CFA_val_offset_sf(ULEB R, LEB128 B)`
+>
+>     The `DW_CFA_val_offset_sf` instruction takes two operands: an
+>     <span style="background-color: green;"> ULEB</span> value
+>     representing a register number <span style="background-color:
+>     green;">R</span> and a <span style="background-color:
+>     green;">signed LEB128</span> factored <span
+>     style="background-color: green;">displacement B</span>. <span
+>     style="background-color: green;">
+>
+>     *This instruction is identical to DW_CFA_val_offset, except that
+>     B is signed.</span>*
 
 Replace the text of item 7, `DW_CFA_val_offset_sf`, with the following:
 
