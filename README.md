@@ -28,7 +28,7 @@ Issues in progress:
 * [[017](017-call-frame-entry-registers.txt)] DWARF Operation to Access Call Frame Entry Registers
 * [[021](021-divergent-control-flow.txt)] Support for Divergent Control Flow of SIMT Hardware
 * [[022](022-memory-spaces.txt)] Support for Source Language Memory Spaces
-* [[023](023-Formal-expressions.md)] Add an appendix that gives definitions of expressions more precisely
+* [[023](023-dwarf-evalutor.md)] Add a tool and a web playground to evaluate DWARF expressions
 
 Clarifications and editorial reorganization:
 
