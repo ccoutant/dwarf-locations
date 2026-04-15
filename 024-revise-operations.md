@@ -465,3 +465,19 @@ description as follows:
 >    *stack effects defined by extended operation*
 >
 
+UPDATES
+----------------
+The original punctuation heavy version demonstrating the idea was made
+for a DWARF issue and implemented in markdown was deemed to be too
+ugly but the idea was considered sound.
+
+Cary Coutant contributed
+[op-diagrams.tex](https://dwarfstd.org/issue-260127.1/op-diagrams.tex)
+which includes a LaTeX `\stackdiagram` macro which can be merged into
+the DWARF spec source. This file also includes how to use this macro
+to draw the operation header diagrams for most of the current
+operators.
+
+This TeX file can also be processed stand alone into
+[op-diagrams.pdf](](https://dwarfstd.org/issue-260127.1/op-diagrams.pdf)
+to see what the resulting diagrams are supposed to look like.
