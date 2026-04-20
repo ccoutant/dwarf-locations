@@ -1,0 +1,214 @@
+\documentclass[10pt]{book}
+\usepackage[margin=1in]{geometry}
+\usepackage[usenames]{color} %used for font color
+\usepackage{amssymb} %maths
+\usepackage{amsmath} %maths
+\usepackage[utf8]{inputenc} %useful to type directly diacritic characters
+\usepackage{ellipsis}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta}
+\usetikzlibrary{backgrounds}
+\usetikzlibrary{calc}
+\usetikzlibrary{chains}
+\usetikzlibrary{decorations.pathreplacing}
+\usetikzlibrary{shapes.symbols}
+
+\def\DWOP#1{DW\_OP\_#1}
+
+\def\stackdiagramprologue{
+  \begin{tikzpicture}[
+    every node/.style={
+      node font=\small, align=center, anchor=north west,
+      text height=.8em, text depth=.2em, text width=1.25in,
+      inner sep=4pt, outer ysep=0, minimum height=14pt},
+    stackelement/.style={draw},
+    stackbottom/.style={
+      append after command={
+        \pgfextra
+          \draw (\tikzlastnode.south west) --
+                (\tikzlastnode.north west) --
+                (\tikzlastnode.north east) --
+                (\tikzlastnode.south east);
+        \endpgfextra}}
+  ]
+}
+\def\stackdiagramepilogue{\end{tikzpicture}}
+\def\stackdiagramstart#1{
+  \if#1L\def\XSHIFT{0}\else\def\XSHIFT{2in}\fi
+  \begin{scope}[name prefix=#1, start chain=going above, node distance=0, xshift=\XSHIFT]}
+\def\stackdiagramend{\end{scope}}
+\def\drawstackbottom{\node (N0) [on chain, stackbottom] {\dots};}
+\def\drawstackelement#1#2{\node (N#1) [on chain, stackelement] {#2};}
+\def\drawstackarrow#1-#2.{\draw [-Stealth] (LN#1.east) -- (RN#2.west);}
+\def\drawstackarrows#1{\foreach \A in {#1} {\expandafter\drawstackarrow \A.}}
+\def\stackdiagram#1#2#3{
+  \begin{center}
+  \stackdiagramprologue
+  \stackdiagramstart L
+  \drawstackbottom
+  \foreach \E [count=\N] in {#1} {\drawstackelement{\N}{\E}}
+  \stackdiagramend
+  \stackdiagramstart R
+  \drawstackbottom
+  \foreach \E [count=\N] in {#2} {\drawstackelement{\N}{\E}}
+  \stackdiagramend
+  %\foreach \A in {#3} {\show\A \drawstackarrow \A}
+  \drawstackarrows {#3}
+  \stackdiagramepilogue
+  \end{center}
+}
+
+\begin{document}
+\pagestyle{empty}
+\pagenumbering{gobble}
+
+\setcounter{chapter}{2}
+\chapter{DWARF Expressions}
+
+\section{Stack Operations}
+
+\subsection*{\DWOP{dup}}
+
+\stackdiagram {A} {A, A} {1-1, 1-2}
+
+\subsection*{\DWOP {drop}}
+
+\stackdiagram {A} {} {0-0}
+
+\subsection*{\DWOP{pick} (ubyte N)}
+
+\stackdiagram {$E_N$, \dots, $E_1$, $E_0$} {$E_N$, \dots, $E_1$, $E_0$, $E_N$} {1-1, 2-2, 3-3, 4-4, 1-5}
+
+\subsection*{\DWOP{over}}
+
+\stackdiagram {B, A} {B, A, B} {1-1, 2-2, 1-3}
+
+\subsection*{\DWOP{swap}}
+
+\stackdiagram {B, A} {A, B} {1-2, 2-1}
+
+\subsection*{\DWOP{rot}}
+
+\stackdiagram {C, B, A} {A, C, B} {1-2, 2-3, 3-1}
+
+\section{Literal and Constant Operations}
+
+\stackdiagram {} {\textit{literal}} {0-0}
+
+\section{Register Value Operations}
+
+\subsection*{\DWOP{regval\_type (uleb REG, uleb DIEREF)}}
+
+\stackdiagram {} {\textit{value of REG}} {0-0}
+
+\subsection*{\DWOP{regval\_bits (uleb NBITS)}}
+
+\stackdiagram {\textit{REG}, \textit{bit offset}} {\textit{bits from REG}} {1-1, 2-1}
+
+\section{Arithmetic, Logical, and Relational Operations}
+
+\subsection*{Unary Arithmetic Operations}
+
+\stackdiagram {A} {\textit{op} A} {1-1}
+
+\subsection*{Binary Arithmetic Operations}
+
+\stackdiagram {B, A} {B \textit{op} A} {1-1, 2-1}
+
+\subsection*{Relational Operations}
+
+\stackdiagram {B, A} {B \textit{cmp} A} {1-1, 2-1}
+
+\section{Context Query Operations}
+
+\subsection*{\DWOP{push\_object\_location} \\
+  \DWOP{call\_frame\_cfa}}
+
+\stackdiagram {} {\textit{LOC}} {0-0}
+
+\subsection*{\DWOP{push\_lane}}
+
+\stackdiagram {} {\textit{current\_lane}} {0-0}
+
+\subsection*{\DWOP{form\_tls\_location}}
+
+\stackdiagram {\textit{TLS offset}} {\textit{LOC}} {1-1}
+
+\section{Memory Locations}
+
+\subsection*{\DWOP{addr (address A)} \\
+  \DWOP{addrx (uleb INDEX)} \\
+  \DWOP{fbreg (sleb OFFSET)} \\
+  \DWOP{breg\textit{N} (sleb OFFSET)} \\
+  \DWOP{bregx (uleb REG, sleb OFFSET)}}
+
+\stackdiagram {} {\textit{LOC}} {0-0}
+
+\section{Register Locations}
+
+\subsection*{\DWOP{reg\textit{N}} \\
+  \DWOP{regx (uleb REG)}}
+
+\stackdiagram {} {\textit{LOC}} {0-0}
+
+\section{Undefined Locations}
+
+\subsection*{\DWOP{undefined}}
+
+\stackdiagram {} {\textit{LOC}} {0-0}
+
+\section{Implicit Locations}
+
+\subsection*{\DWOP{implicit\_value (uleb LEN, block VAL)}}
+
+\stackdiagram {} {\textit{LOC}} {0-0}
+
+\subsection*{\DWOP{stack\_value}}
+
+\stackdiagram {\textit{VAL}} {\textit{LOC}} {1-1}
+
+\section{Implicit Pointer Locations}
+
+\subsection*{\DWOP{implicit\_pointer (offset DIEREF, sleb OFFSET)}}
+
+\stackdiagram {} {\textit{LOC}} {0-0}
+
+\section{Composite Locations}
+
+\subsection*{\DWOP{composite}}
+
+\stackdiagram {} {\textit{LOC}} {0-0}
+
+\subsection*{\DWOP{piece (uleb SIZE)} \\
+  \DWOP{bit\_piece (uleb SIZE, uleb OFFSET)}}
+
+\stackdiagram {\textit{BASE\_LOC}, \textit{SUB\_LOC}} {\textit{LOC}} {1-1, 2-1}
+
+\subsection*{\DWOP{overlay} \\
+  \DWOP{overlay\_bits}}
+
+\stackdiagram {\textit{BASE\_LOC}, \textit{SUB\_LOC}, \textit{offset}, \textit{width}} {\textit{LOC}} {1-1, 2-1, 3-1, 4-1}
+
+\section{Dereferencing Operations}
+
+\subsection*{\DWOP{deref} \\
+  \DWOP{deref\_size (ubyte S)} \\
+  \DWOP{deref\_type (ubyte S, uleb DIEREF)}}
+
+\stackdiagram {\textit{loc}} {\textit{val}} {1-1}
+
+\section{Offset Operations}
+
+\subsection*{\DWOP{offset} \\
+  \DWOP{bit\_offset}}
+
+\stackdiagram {\textit{LOC}, \textit{offset}} {\textit{adjusted LOC}} {1-1, 2-1}
+
+\section{Type Conversions}
+
+\subsection*{\DWOP{convert (uleb DIEREF)} \\
+  \DWOP{reinterpret (uleb DIEREF)}}
+
+\stackdiagram {A} {\textit{(T)}A} {1-1}
+
+\end{document}
