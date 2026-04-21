@@ -443,7 +443,7 @@ several iterations of the loop are executed in one pass
 through the loop. An unrolled loop would typically begin
 with several load instructions to load 
 
-Some CPUs have instructions,
+Some CPUs have instructions
 that can treat a 64-bit general register as a vector of 16- or 8-bit
 values, with operations like “parallel add”. When a loop is
 vectorized to take advantage of this, the compiler promotes
@@ -850,7 +850,7 @@ where `i` is promoted to register 3, but is also scaled by a factor of 4.
 This could be described as an explicit mapping, perhaps something like
 this:
 
-    DW_OP_breg3(0)          # Get contents of register 3
+    DW_OP_reg3              # Location is register 3
     DW_OP_scaled_mapping(4)
 
 With this knowledge, the consumer would be able to let a user
