@@ -438,11 +438,6 @@ Part II).
 
 ### Array slice mapped to registers
 
-One common loop optimization is to unroll a loop so that
-several iterations of the loop are executed in one pass
-through the loop. An unrolled loop would typically begin
-with several load instructions to load 
-
 Some CPUs have instructions
 that can treat a 64-bit general register as a vector of 16- or 8-bit
 values, with operations like “parallel add”. When a loop is
@@ -460,6 +455,15 @@ the location of each such array using a composite location
 where the slice that is currently in the vector register is
 marked as such, and the rest of the array, both before and
 after, remains in its original location (typically memory).
+
+(Even on scalar architectures, it’s common to unroll a loop so
+that several iterations of the loop are executed in one pass
+through the loop. An unrolled loop would typically begin with
+several load instructions to load the slice of the array to be
+operated on, then perform the operations, then possibly store
+them back. By unrolling, the compiler can schedule the
+instructions more effectively to minimize stalls due to cache
+misses and other latencies.)
 
 We have an example of this in Section D.18, SIMD Lane Example,
 with a loop unroll factor of 4 (i.e., slice of 4 elements at a
