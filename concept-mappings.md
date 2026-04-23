@@ -766,33 +766,13 @@ the answer makes a big difference: In one case, the value is in bits 8-23,
 but in the other case, the actual value is in bits 16-31, with zeros
 or sign extension in bits 8-15.
 
-Now consider the following:
+Now consider what happens behind the scenes when the debugger
+accesses a field of a structure. If `x` is a struct with a field
+at byte offset 1, the type entry might have a
+`DW_AT_data_member_location` attribute with the following
+location expression:
 
-    DW_OP_call(ref to x)    # returns location of register 0
-    DW_OP_lit1
-    DW_OP_offset
-
-In the first case, the offset is used to modify the register location
-where `x` is stored, but in the second, the offset is (likely) meant
-to offset *into* the value of `x`; i.e., we want to set the offset to point to
-bit 8 of `x`.
-
-There’s a problem with this: `DW_OP_call*` isn’t currently
-specified to work this way — it’s simply a DWARF procedure call,
-where the `DW_AT_location` expression of the referenced DIE is
-executed as if it were simply part of the calling expression, so this
-sequence would be indistinguishable from the first case. We really
-have two kinds of calls in practice: one where we want to simply
-call a DWARF procedure using the current stack, and a second
-(currently unspecified) where we want to obtain the location of
-some object and push it on the stack.
-
-Suppose we had the second form as a new `DW_OP_push_location_of` operator.
-This operation would evaluate the `DW_AT_location` attribute of the
-referenced DIE, on its own evaluation stack, and then push the resulting
-location onto the caller’s stack. Now we could write the following:
-
-    DW_OP_push_location_of(ref to x)
+    [Implicit DW_OP_push_object_location]
     DW_OP_lit1
     DW_OP_offset
 
@@ -988,14 +968,14 @@ opaque.
 
 There are also several mapping modes:
 
-- Bit-for-bit.
+- *Bit-for-bit*.
 The bits of the object are mapped onto consecutive bits of the
 underlying storage, starting at the bit position specified by
 the location.
 This is the default for memory storage, vector register storage,
 and implicit storage.
 
-- LSB-aligned.
+- *LSB-aligned*.
 The underlying storage is divided into “pre” and “post” pieces
 divided at the bit position of the location within the storage.
 (For example, if the target location is bit position 8 in a 32-bit register,
@@ -1009,7 +989,7 @@ the higher-order bits are either zero- or sign-filled,
 depending on whether the data object or data member is a signed integer.
 This is the default for general register storage.
 
-- MSB-aligned.
+- *MSB-aligned*.
 As above, the underlying storage is divided into “pre” and “post” pieces
 divided at the bit position of the location within the storage.
 The bits of the object are mapped onto the “post” piece
@@ -1018,7 +998,7 @@ with the most-significant bit of the “post” piece.
 If the “post” piece is larger than the mapped bits of the object,
 the lower-order bits are zero filled.
 
-- Floating-point.
+- *Floating point*.
 The bits of the object may have a different representation
 in a floating-point register than when stored in memory,
 but the value is preserved (to the extent possible).
@@ -1028,7 +1008,7 @@ storage, on architectures where the usual floating-point load and store
 instructions convert the floating-point value to an internal
 representation that is different from its memory format.
 
-- Implicit pointer.
+- *Implicit pointer*.
 An implicit pointer is not representable as a normal pointer.
 Implicit pointer storage, therefore, is an implementation-dependent
 internal representation in the consumer, so the bits of the object
@@ -1068,17 +1048,11 @@ storage and return a location in that storage.
 
 4. Add `DW_OP_form_implicit_pointer` operator.
 
-5. Add `DW_OP_push_location_of` operator. For DIEs with `DW_AT_location`,
-it would evaluate the location on a separate stack, then push the resulting location on the caller’s stack.
-For DIEs with `DW_AT_const_value`, it would push an implicit storage location.
-Define the `DW_OP_call*` operators to work only on `DW_TAG_DWARF_procedure` DIEs
-with (new) `DW_AT_DWARF_procedure` attributes.
-
-6. Change `DW_OP_deref` to yield a location, and allow it to
+5. Change `DW_OP_deref` to yield a location, and allow it to
 dereference an implicit pointer location, yielding the secondary
 location.
 
-7. Add `DW_OP_scaled_mapping` operator.
+6. Add `DW_OP_scaled_mapping` operator.
 
 
 [arnez]: https://gcc.gnu.org/legacy-ml/gcc/2016-01/msg00109.html
