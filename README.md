@@ -20,6 +20,8 @@ Issues submitted to the DWARF committee:
 * [[002](002-clarifications-loc.txt)] Clarifications for Location Descriptions (DWARF Issue [230120.2][230120.2])
 * [[013](013-generalize-address-spaces.md)] General Support for Address Spaces ([Original text](013-generalize-address-spaces.orig.txt))
 * [[016](016-overlay-composite-location-descriptions.md)] DWARF Operation to Create Runtime Overlay Composite Location Description (DWARF Issue [251120.1][251120.1])
+* [[013](013-generalize-address-spaces.md)] General Support for Address Spaces
+* Standardize Operation Headings (DWARF Issue [260127.1][260127.1])
 
 Issues in progress:
 
@@ -56,3 +58,4 @@ Independent issues not part of this series:
 [211206.1]: https://dwarfstd.org/issues/211206.1.html
 [230413.1]: https://dwarfstd.org/issues/230413.1.html
 [251120.1]: https://dwarfstd.org/issues/251120.1.html
+[260127.1]: https://dwarfstd.org/issues/260127.1.html
