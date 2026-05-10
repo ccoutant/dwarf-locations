@@ -36,8 +36,8 @@ With:
 
 > A DWARF expression is encoded as a stream of operations, each
 > operation consisting of an opcode followed by zero or more inline
-> parameters. The number of inline parameters is implied by the
-> opcode. It may also receive operands from the stack and make use of
+> operands. The number of inline operands is implied by the opcode. It
+> may also receive parameters from the stack and make use of
 > information from its evaluation context.
 
 > The description of each operation begins with a heading that shows
