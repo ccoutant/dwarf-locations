@@ -199,9 +199,9 @@ Table 2.2: Attribute names
 | :---- | :---- |
 | `DW_AT_address_space` | Architecture specific address space (see 2.12 "Address Spaces") |
 
-Add the following after Section 2.11 "Address Classes":
+Remove the entire Section 2.11 "Address Classes" and replace it with:
 
->    2.12 Address Spaces
+>    2.11 Address Spaces
 >
 >    DWARF address spaces correspond to target architecture specific
 >    linearly addressable memory areas. They are used in DWARF
@@ -229,10 +229,12 @@ Add the following after Section 2.11 "Address Classes":
 >    scratch pad memory represented by a different DWARF address space
 >    than the default for the source language memory space.*
 >
->    Although DWARF address space identifiers are target architecture
->    specific, `DW_ASPACE_default` is a common address space supported
->    by all target architectures, and defined as the target
->    architecture default address space.
+>    Each address space is assigned positive integral number by the
+>    ABI committee for that target architecture.  Although DWARF
+>    address space identifiers are target architecture specific,
+>    `DW_ASPACE_default` is a common address space supported by all
+>    target architectures, and defined as the target architecture's
+>    default address space.
 >
 >    DWARF address space identifiers are used by:
 >
@@ -244,8 +246,8 @@ Add the following after Section 2.11 "Address Classes":
 In Section 3.7 "Memory Locations", add the following at the end of the
 first paragraph:
 
->    `DW_ASPACE_default` is defined as the target architecture default
->    address space.  See 2.12 Address Spaces.
+>    `DW_ASPACE_default` is the name for the default address space
+>    identifier.
 
 After the definition of `DW_OP_addrx` add:
 
@@ -285,17 +287,18 @@ After the definition of `DW_OP_addrx` add:
 >    *`DW_OP_addr(X)` is a more compact form of `DW_OP_lit0;
 >    DW_OP_constNu(X); DW_OP_mem`*
 >
->    The DWARF expression is ill-formed if AS is not one of the values
->    defined by the target architecture's ABI.
+>    The address identifier value AS must be one of the values defined
+>    by the architecture's ABI.
 
 After the definition of `DW_OP_bregx` add:
 
->    7. `DW_OP_aspace_bregx` ([ULEB128] R, [LEB128] B)
+>    7. `DW_OP_aspace_bregx` ([ULEB] R, [SLEB] B)
+>
 >        <[integral] AS> → <[memory location] A >
 >
->    `DW_OP_aspace_bregx` has two operands. The first is an unsigned
->    LEB128 integer that represents a register number R. The second is
->    a signed LEB128 integer that represents a byte displacement B. It
+>    `DW_OP_aspace_bregx` has two operands. The first is an ULEB
+>    integer that represents a register number R. The second is a
+>    SLEB integer that represents a byte displacement B. It
 >    pops one stack entry that is required to be an integral type
 >    value that represents a target architecture specific address
 >    space identifier AS.
@@ -304,10 +307,11 @@ After the definition of `DW_OP_bregx` add:
 >    as the register number, B is used as the byte displacement, and
 >    AS is used as the address space identifier.
 >
->    The DWARF expression is ill-formed if AS is not one of the values
->    defined by the target architecture. Target architectures are
->    encouraged to define DW_ASPACE_* constants for their address
->    spaces.
+>    The address identifier value AS must be one of the values defined
+>    by the architecture's ABI.
+
+>    *Target architectures are encouraged to
+>    define DW_ASPACE_\* constants for their address spaces.*
 
 In section 3.13 rename `DW_OP_xderef*` to `DW_OP_aspace_deref*` and
 note that `DW_OP_xderef*` is still available as an alias.
@@ -367,15 +371,15 @@ Encodings":
 >    | Operation | Code | Number of Operands | Notes |
 >    | :---- | :---- | :---- | :---- |
 >    | `DW_OP_mem`                 | TBA | 0 |  |
->    | `DW_OP_aspace_bregx` | TBA | 2 | ULEB128 register number, LEB128 byte displacement |
+>    | `DW_OP_aspace_bregx` | TBA | 2 | ULEB register number, SLEB byte displacement |
 
 After Section 8.13 "Address Class Encodings" add the following
 section:
 
 >    8.x Address Space Encodings
 >
->    The value of the common address space encoding
->    `DW_ASPACE_default` is 0.
+>    "The value `DW_ASPACE_default is` 0 which identifies the default
+>    address space."
 >
 
 In Section 8.31 "Type Signature Computation", Table 8.32 "Attributes
