@@ -6,14 +6,161 @@ There are situations where the compiler changes the type of variable
 temporarily due to optimization or relocation. There is currently no
 way for this to be communicated from producers to consumers.
 
-### Float promotion
+### Register promotion
 
-If a variable is declared a double and is given location in memory
-that variable will be a normal 64b IEEE double floating point
+If a variable's type is shorter than the register than it is currently
+being promoted to, the DWARF spec currently doeesn’t specify what to
+do. It has been customary and has been usually correct to assume that
+the value is right-aligned in the register; i.e., the
+least-significant bits are aligned. This models the behavior of a
+typical load instruction. However most architectures do not just have
+one general load instruction, they have various load instructions and
+the producer is using a specific one. These various load instructions
+have different semantics. The particular load instruction will specify
+the width of data copied into the register and whether sign extension
+happens or zero filling of the upper bits will happen. The producer
+simply needs an unambigious way to communicate the precise semantics of
+particular load instruction that it used and the represntation of the
+resulting value when it is stored in the register.
+
+The current situation where the specific semantics of the load
+operation and the resulting data representation are not communicated
+leads to several ambiguities. Several of which are presented in [Issue
+260422.1: An Improved Model for Locations and
+Storage](https://dwarfstd.org/issues/260422.1.html)
+
+#### Ambiguity about the size of the register
+
+Many architectures have evolved over the years and the size of the
+registers has changed. The ABIs for these platform rarely define a new
+register number for a register which has grown in size. One very
+common example are the general purpose registers on x86_64 like the
+accumulator register:
+
+    +-------------------------------------------------------------------------+
+    | ........ ........ ........ ........ ........ ........ ........ ........ |
+    +-------------------------------------------------------------------------+
+                                                            <--AH--> <--AL-->
+                                                            <-------AX------>
+                                           <--------------EAX--------------->
+      <----------------------------------RAX-------------------------------->
+
+When a variable is mapped to DWARF `reg0`, the accumulator register,
+the debugger must make an assumption based on the size of the variable
+(as given by its type) and on its knowledge of how the compiler would
+generate code to load the variable into the register.
+
+#### Ambiguity about upper bits
+
+When the general assumption is that a value is extended to fill the
+entire register, it can cause confusion about what happens to the
+upper bits. For example 260422.1 presented an example where when a
+member of a structure is promoted to a register.
+
+Consider the structure type:
+
+    struct s {
+        uint16_t a;
+        uint8_t b;
+        uint8_t c;
+    } v;
+
+If `v.a`, is promoted to a register over a certain pc range, the
+variable `v` might be mapped as shown in Example 3.
+
+
+                                  <-------a-------> <---b--> <---c-->
+    Value:                        ........ ........ ........ ........
+                                  |||||||| |||||||| |||||||| ||||||||
+              +-------------------------------------+ |||||| ||||||||
+              | <----------------a----------------> | |||||| ||||||||
+    reg0:     | 00000000 00000000 ........ ........ | |||||| ||||||||
+              +-------------------------------------+ |||||| ||||||||
+                                                    |||||||| ||||||||
+                                +-------------------------------------+
+                                | <----(hidden)---> <---b--> <---c--> |
+    Memory:                     | ........ ........ xxxxxxxx xxxxxxxx |
+                                +-------------------------------------+
+                                  low addresses   ->   high addresses
+
+    Example 3(a): Data member placed in a wider register (big-endian)
+
+                                  <---c--> <---b--> <-------a------->
+    Value:                        ........ ........ ........ ........
+                                  |||||||| |||||||| |||||||| ||||||||
+                                +-------------------------------------+
+                                | <----------------a----------------> |
+    reg0:                       | 00000000 00000000 ........ ........ |
+                                +-------------------------------------+
+                                  |||||||| ||||||||
+                                +-------------------------------------+
+                                | <---c--> <---b--> <----(hidden)---> |
+    Memory:                     | ........ ........ xxxxxxxx xxxxxxxx |
+                                +-------------------------------------+
+                                  high addresses   <-   low addresses
+
+    Example 3(b): Data member placed in a wider register (little-endian)
+
+Since the a member is residing in a larger register than its type,
+arithmatic operations can concievably lead to intermediat values whose
+value is larger than the declared type. How would a consumer present
+that? Neither way of constructing composite storage would allow the
+consumer to present the full intermeidate value without masking
+potentially important bits. While this would likely be undefined
+behavior in a language standard, it is not uncommon for there to be
+bugs that unknowingly rely on behavior such as this. If the consumer
+then masks the behavior it would make discovering the root of these
+bugs exceedingly difficult. Both:
+
+    DW_OP_reg0
+    DW_OP_piece(2)     # field a
+    DW_OP_addr(&v + 2)
+    DW_OP_piece(2)     # fields b and c
+
+and
+
+    DW_OP_addr(&v) # base location for the whole struct
+    DW_OP reg0     # location where v.a is mapped
+    DW_OP_lit0     # offset within base location
+    DW_OP_lit2     # size of mapping
+    DW_OP_overlay  # overlay reg0 on top of memory base location
+
+would mask bits outside the range of uint16_t which might be the
+source of the bug.
+
+#### Packed registers
+
+There is also ambiguity when a the target ISA allows the use of
+different bits within a register as descrete values. A historic but
+widespread example is x86_64 where AH and AL are both addressable
+within Register 0, the accumulator register. A consumer cannot simply
+assume that the full RAX register is being used when a location refers
+to Register 0. If the value happens to be signed, the opcode which is
+used would determine if the value is sign extended to the full width
+of the register or if it was constrained to just the lower 8
+bits. While this is a historic example and modern compilers are
+unlikely to use AL and AH simultaneously for different values due to
+their limited range, the rise of AI has found a lot of utility in low
+precision floating point numbers and smaller integers and so current
+GPU's ISAs frequently pack discrete values into portions of
+registers. This is how nvidia, AMD, and intel all handle FP4 and INT4
+types. This sub-register view is highly related to the now withdrawn
+proposal [Issue 230712.1: Register Segment Name
+Type](https://dwarfstd.org/issues/230712.1.html)
+
+#### Float promotion
+
+A slightly more complicated version of the same problem is if a
+variable is declared a double and is given location in memory that
+variable will be a normal 64b IEEE double floating point
 number. However, if due to optimization that variable is moved into a
 80b extended precision register for a block of PCs. If a consumer
 stops within that range of PCs and asks to print that variable, the
 location will point to 80b register rather than a 64b IEEE double.
+
+This situation is a bit more complicated than normal register
+promotion because not only does the width of the type change, the bit
+position of fields within the the type changes.
 
 Current versions of GDB handle this situation with special case code
 which demotes the 80b register's value back to the 64b base type. This
@@ -29,6 +176,10 @@ DW_OP_regval_type so long as the variable is in a register. However,
 if one of these extended floating point registers representing a
 smaller type is spilled to memory without conversion back to a 64b
 double then the problem still exists.
+
+It should be noted that in cases such as this both the normal 64 bit
+floating point and the extended precision floating point number would
+both be base types defined by the target ABI.
 
 ### Type width reduction optimization
 
@@ -91,9 +242,70 @@ compiler knows that object pointed to by generic is an int.
 
 ## Proposed fix
 
-Add a new operator `DW_OP_refine_type` which tells the consumer that
-object at the location specified should be interpreted as the
-following type.
+Add a new context operator `DW_OP_refine_type` to Section 3.6 which
+tells the consumer that context object at the location specified
+should be interpreted as the following type. This operator does not
+affect the type of locations that may be on the stack. It changes the
+type of the Current Object defined in Section 3.1 point 9.
+
+It resolves the ambiguity about the size of the register. If the
+producer intends for the variable to extended to be the full size of
+the register, it can communicate that fact by updating the context's
+Current Object's type within the location list's expression that
+covers the range of PCs when the variable is in a register.
+
+For example if v is a int16_t and the compiler promotes it to reg0
+which has 64 bits and expects it to be sign extended it would use the
+expression:
+
+    DW_OP_reg0
+	DW_OP_refine_type <die for int64_t>
+
+This technique also removes the ambiguity what happens to the upper
+bits.
+
+It can also be applied to aggregates as well as scalar values with
+some added complexity. The example given above where a member of the
+structure is promoted to a register could be handled like this:
+
+    struct s {
+        uint16_t a;
+        uint8_t b;
+        uint8_t c;
+    } v;
+
+would be replaced by a new artificial type:
+
+    struct __s_a_promoted {
+        uint32_t a;
+        uint8_t b;
+        uint8_t c;
+    };
+
+then the expression for its location while a was promoted to reg0
+would be:
+
+    DW_OP_refine_type <DIE for __s_a_promoted>
+    DW_OP reg0     # location where v.a is mapped
+    DW_OP_addr(&v) # base location for the whole struct
+	DW_OP_lit2
+	DW_OP_offset   # the original offset for b within the structure
+    DW_OP_lit4     # offset within base location
+    DW_OP_lit2     # size of mapping
+    DW_OP_overlay  # overlay reg0 on top of memory base location
+
+The consumer would know how to present this without masking
+potenitally improtant bits.
+
+Having the producer explicitly communicate when it expects to expand
+and zero extension and when it does not also helps resolve another
+ambiguity pointed out by 260422.1 in Example 4. The crux of that
+example is that the offset within the register for the fields which
+are promoted may be diffent depending the particular load instruction
+selected by the compiler and how many bytes were copied by that
+instruction. Simple assumptions about zero extension
+of discrete values to the full width of a register are no longer
+sufficient to know where bytes will land within the register.
 
 Float promotion - While the producer could use `DW_OP_regval_type`
 pointing to the extended precision float type when the value is in a
@@ -117,111 +329,43 @@ not be able to satisfy the user's request or would require a manual
 cast to accomplish the user's request.
 
 An advantage of this approach is that it factors well. Any portion of
-a DWARF expression can change the type. This includes portions which
-are called from other DWARF expressions.
+a DWARF expression can change the effective type. This includes
+portions which are called from other DWARF expressions.
 
 Some members of the GPU team were concerned that this would force all
 DWARF expressions to have a type and that this type was not limited to
 base types. Many DWARF operations are currently only defined for base
 types to allow the implementaiton of consumers to be more practically
-feasable. Since the `DW_OP_refine_type` operator is only defined for
-locations, there is no problem with backward compatibility with
-DWARF5. Furthermore, operators which are currently limited to values
-and base types do not need to be changed.
-
-## Alternatives considered
-
-### Redefine DW_OP_reinterpret
-
-Remove the restrictions on `DW_OP_reinterpret` that requires the type
-to be a base type and the one that specifies that "The type of the
-operand and result type must have the same size in bits". Then specify
-that when the top of the stack is a location, then the object pointed
-to by that location is understood to have changed type.
-
-It was thought that this change would be backward compatible with
-DWARF5 and earlier because all previous uses of DW_OP_reinterpret
-would be subject to the bit size limitations. However, we discovered
-an incompatibilty.
-
-    DW_OP_addr 0xf00
-	DW_OP_reinterpret <type>
-
-In DWARF 5 `DW_OP_reinterpret` would pop a generic-type 0xf00 value
-and reinterpret it as `type`. However, in DWARF6 with locations on the
-stack `DW_OP_addr` pushes a location. Then the object at that location
-is interpreted as a new type. In one case 0xf00 is treated as an
-object which has the specified type. In the other case, whatever is
-found at 0xf00 is understood to have the specified type. It was this
-behavior that hilighted the problem with confusion between the type of
-a value on the stack and the type of an object pointed to by a
-location on the stack.
-
-### Type lists
-
-An other alternative that we considered was to create a type list
-similar to a location list except instead of providing locations it
-provided reference to type DIEs.
-
-In most of the examples that we considered, we realized that the
-change in type was highly correlated with changes in locations. For
-example moving a double to an extended precision floating point
-register changes both its location and type. We dropped this approach
-when we considered the overhad of having to encode the bounds of the
-range of PCs for both the type and location's bounds. We felt that
-there were very few cases where the location would stay the same but
-the type of the object would change.
-
-### Annotate location list entries
-
-A refinement of the type list approach that we also seriously
-considered is to to annotate location list entries with type
-information for that location. We would do this by prefixing entries
-with `DW_LLE_refined_type` followed by a reference to the type DIE
-then the normal location list entry.
-
-    DW_LLE_refined_type( DIE reference to new type)
-    DW_LLE_start_end[PC1 .. PC2) DW_OP_reg0
-
-For variables which do not have a location list we would also add
-`DW_AT_refined_type`.
-
-One disadvatage of this approach is that the type of an expression can
-only be refined at the end of evaluating a location expression. This
-would prevent the type change from being factored into portions of
-expressions which are called. It was limitations similar to this which
-led to locations on the stack, therefore some members of the GPU team
-were concerned by that limitation. However, this approach was favored
-by a minority of the GPU team and so this approach is included in its
-entirety as a alternative for the committee to consider.
+feasable. This proposal does not force locations to have
+types. Locations continue to be typeless. This changes the context's
+Current Object's type.
 
 ## PROPOSAL
 
-In section 3.4 after the description of DW_OP_regval_type add the
-following non-nomaltive paragraph:
+Rename section 3.6 from "Context Query Operations" to "Context
+Operations"
 
->    *When the compiler changes the type of a variable and its
->    location is stored in a register, this operation can be used to
->    inform the consumer that its type has changed. One such example
->    would be when a double float is promoted to an extended precision
->    floating point number by copying it to an extended precision
->    floating point register.*
-
-In section 3.16 Type Conversions
-
-After DW_OP_reinterpret add a new operator:
+In section 3.6 add an operation after `DW_OP_push_lane`
 
 >    DW_OP_refine_type([ULEB] DIE offset for type)
 >
->    <[location] A > → <[location] A with specified type>
+>    `DW_OP_refine_type` changes the effective type of the current
+>    object of the context (See section 3.1 pg. 49). This has the
+>    effect informing the consumer that the type has been changed by
+>    the compiler. It takes one operand, which is an ULEB integer that
+>    represents the offset of a debugging information entry for a type
+>    in the current compilation unit.
 >
->    The `DW_OP_refine_type` operation pops the location from the top
->    stack entry. It then changes the apparent type of the object
->    found at that location, in effect informing the consumer that the
->    type has been changed by the compiler. It takes one operand,
->    which is an ULEB integer that represents the offset of a
->    debugging information entry for a type in the current compilation
->    unit.
+>    This operator cannot be used in cases where the DWARF expression
+>    doesn't have a current object in its context such as when
+>    evaluating expressions restoring a register as part of CFI.
+
+In section 7.4.2 add another bullet point below the one concerning
+`DW_OP_push_object_location` which says:
+
+>    * `DW_OP_refine_type` is not meaningful in an operand of these
+>      instructions because there is no object context whose type can
+>      be changed.
 
 Add a new section to Appendix D
 
@@ -353,162 +497,6 @@ Add a new section to Appendix D
 >                DW_OP_addr 0x100
 >                DW_OP_reg1
 >                DW_OP_lit0 DW_OP_lit1
->                DW_OP_overlay DW_OP_refine_type <class __foo_refined_1>
+>                DW_OP_overlay
+>                DW_OP_refine_type <class __foo_refined_1>
 >
-
-## Alternative proposal
-
-To the end of Section 2.6 "Types of Program Entities", add the
-following paragraph:
-
->    A debugging information entry with a `DW_AT_type` attribute may
->    optionally have a `DW_AT_refined_type` attribute to specify a
->    runtime type that is different from the declared type.
->
->    *Refined type information may be provided, for example, when the
->    producer was able to find out that an object has a particular
->    type that is a subtype of the declared type throughout the
->    lifetime of the object, such as a pointer variable declared as a
->    pointer to a base class always pointing to a derived class
->    instance at runtime.  Refined type information may also be
->    provided to describe type changes due to optimizations, such as a
->    64-bit variable being narrowed to 32-bit as a result of value
->    range analysis.*
->
->    If an object has a refined type during a certain range of PCs
->    rather than its whole lifetime, a `DW_LLE_refined_type` entry can
->    be used in the location list of the object, instead of a
->    `DW_AT_refined_type` attribute.  See Section 3.19 "Location
->    Lists".
-
-In Section 3.19 "Location Lists", before the bullet item "End-of-list", add
-the following new bullet item:
-
->    * Refined type.  If the object whose location is being described
->      has a type that is different from its declared type for a
->      particular address range, the object is said to have a refined
->      type.  This kind of entry describes the refined type of the
->      object within the address range specified by the subsequent
->      location expression.  (Also see `DW_AT_refined_type`, Section
->      2.6.)
-
-To the end of the paragraph
-
->    A location list consists of a sequence of zero or more bounded
->    location expression or base address entries, optionally followed
->    by a default location entry, and terminated by an end-of-list
->    entry.
-
-add the following:
-
->    Bounded or default location entries may optionally have
->    preceeding refined type entries.
-
-After the "target address operand" bullet item, add the following new
-bullet item:
-
->    * A *refined type* operand that is a `reference` to a debugging
->      information entry describing a type.
-
-After the `DW_LLE_include_loclistx` bullet item, add the following new
-bullet item:
-
->    8. *DW_LLE_refined_type*
->
->       This is a form of *refined type* entry that has one operand,
->       which is a `reference` to a debugging information entry that
->       describes a type.  The referenced type is then the refined
->       (i.e.  runtime) type of the object within the address range
->       specified by the subsequent location expression entry, which
->       may be bounded or default.
-
-In Table 8.5 "Attribute encodings", add a new row:
-
->    DW_AT_refined_type | 0x... | `reference`
-
-In Table 8.10 "Location list entry encoding values", add a new row:
-
->    DW_LLE_refined_type | 0x0b
-
-In Table A.1 "Attributes by tag value", add `DW_AT_refined_type` as
-an applicable attribute to the following TAG values:
-
->    DW_TAG_formal_parameter
->    DW_TAG_subprogram
->    DW_TAG_variable
-
-Add new example section to the appendix:
-
->    D.N Refined Type Examples
->
->    Consider a C++-like program as in Figure D.X where a pointer
->    always points to a derived instance.
->
->        Base *bp = new Derived;
->
->    A possible DWARF description is in D.X.
->
->        1$: DW_TAG_variable
->                DW_AT_name("bp")
->                DW_AT_type(reference to 2$ "Base *")
->                DW_AT_refined_type(reference to 3$ "Derived *")
->                DW_AT_location(...)
->
->        2$: DW_TAG_pointer_type
->                DW_AT_type(reference to $4 "Base")
->        3$: DW_TAG_pointer_type
->                DW_AT_type(reference to $5 "Derived")
->        4$: DW_TAG_structure_type
->                DW_AT_name("Base")
->                ...
->        5$: DW_TAG_structure_type
->                DW_AT_name("Derived")
->                ...
->
->    Consider another case where the pointee type is known in certain
->    PC ranges only:
->
->        Base *bp = ...;
->        ...
->        if (...) {
->            bp = new Derived;
->            ...
->        } else {
->            bp = new DerivedTwo;
->            ...
->        }
->        ...
->
->    Refined type information can be given in a location list, as
->    shown in Figure D.X.
->
->        1$: DW_TAG_variable
->                DW_AT_name("bp")
->                DW_AT_type(reference to 2$ "Base *")
->                DW_AT_location(location list $9)
->
->        2$: DW_TAG_pointer_type
->                DW_AT_type(reference to $5 "Base")
->        3$: DW_TAG_pointer_type
->                DW_AT_type(reference to $6 "Derived")
->        4$: DW_TAG_pointer_type
->                DW_AT_type(reference to $7 "DerivedTwo")
->        5$: DW_TAG_structure_type
->                DW_AT_name("Base")
->                ...
->        6$: DW_TAG_structure_type
->                DW_AT_name("Derived")
->                ...
->        7$: DW_TAG_structure_type
->                DW_AT_name("DerivedTwo")
->                ...
->
->        ! .debug_loclists section.
->        $9: DW_LLE_refined_type(reference to $3 "Derived *")
->            DW_LLE_start_end[PC1 .. PC2) ! Then-block range.
->                ...
->            DW_LLE_refined_type(reference to $4 "DerivedTwo *")
->            DW_LLE_start_end[PC3 .. PC4) ! Else-block range.
->                ...
->            ...
->            DW_LLE_end_of_list
