@@ -14,14 +14,12 @@ While the system's normal address space is universally accessible and
 therefore context independent memory, GPU memory is often context
 dependent. The definition of this context has already been accepted
 into the DWARF6 standard with issue [241011.1 Expression Evaluation
-Context](https://dwarfstd.org/issues/241011.1.html). Unlike system
+Context][242011.1]. Unlike system
 memory where an address like 0x1000 refers to the same location
 independent of the evaluation context, GPU memory pools can be local
 to a GPU's processing unit and every processing unit may have its own
 memory pool. A couple of examples of this are: [Intel's Shared Local
-Memory](https://www.intel.com/content/www/us/en/docs/oneapi/optimization-guide-gpu/2025-2/shared-local-memory.html)
-and [AMD's
-LDS](https://rocm.docs.amd.com/projects/HIP/en/develop/understand/hardware_implementation.html#local-data-share-lds)
+Memory][shared-local-mem] and [AMD's LDS][lds].
 Thus, within a specific address space, the address 0x1000 may
 reference different bits depending on which context it is evaluated
 from. This is very similar to registers where every processor has its
@@ -30,6 +28,10 @@ consumer should refer to. More formally when a pool of memory is
 context dependent each address space defines a locality scope and
 locations within that address space are bound to a particular instance
 of storage with that scope.
+
+[242011.1]: https://dwarfstd.org/issues/241011.1.html
+[shared-local-mem]: https://www.intel.com/content/www/us/en/docs/oneapi/optimization-guide-gpu/2025-2/shared-local-memory.html
+[lds]: https://rocm.docs.amd.com/projects/HIP/en/develop/understand/hardware_implementation.html#local-data-share-lds
 
 There is no requirement that a particular set of bits is only
 accessible through only one address space. In fact, it is common for a
@@ -132,11 +134,9 @@ the address to be relocated when it is supplied using `DW_OP_constx`.
 `DW_OP_mem` can be a thought of as a more general form of `DW_OP_addr`
 with `DW_OP_addr(X)` being a short hand form of:
 
-```
-DW_OP_lit0 ; DW_AS_default is by definition 0
-DW_OP_const<N>u X
-DW_OP_mem
-```
+    DW_OP_lit0 ; DW_AS_default is by definition 0
+    DW_OP_const<N>u X
+    DW_OP_mem
 
 The address space being a stack parameter may be less obvious but at
 least one language, OpenCL, allows the address space to be computed
@@ -199,9 +199,9 @@ Table 2.2: Attribute names
 | :---- | :---- |
 | `DW_AT_address_space` | Architecture specific address space (see 2.12 "Address Spaces") |
 
-Add the following after Section 2.11 "Address Classes":
+Remove the entire Section 2.11 "Address Classes" and replace it with:
 
->    2.12 Address Spaces
+>    2.11 Address Spaces
 >
 >    DWARF address spaces correspond to target architecture specific
 >    linearly addressable memory areas. They are used in DWARF
@@ -229,10 +229,12 @@ Add the following after Section 2.11 "Address Classes":
 >    scratch pad memory represented by a different DWARF address space
 >    than the default for the source language memory space.*
 >
->    Although DWARF address space identifiers are target architecture
->    specific, `DW_ASPACE_default` is a common address space supported
->    by all target architectures, and defined as the target
->    architecture default address space.
+>    Each address space is assigned a positive integral number by the
+>    ABI committee for that target architecture.  Although DWARF
+>    address space identifiers are target architecture specific,
+>    `DW_ASPACE_default` is a common address space supported by all
+>    target architectures, and defined as the target architecture's
+>    default address space.
 >
 >    DWARF address space identifiers are used by:
 >
@@ -244,72 +246,76 @@ Add the following after Section 2.11 "Address Classes":
 In Section 3.7 "Memory Locations", add the following at the end of the
 first paragraph:
 
->    `DW_ASPACE_default` is defined as the target architecture default
->    address space.  See 2.12 Address Spaces.
+>    `DW_ASPACE_default` is the name for the default address space
+>    identifier.
 
 After the definition of `DW_OP_addrx` add:
 
 >    3. `DW_OP_mem`
->       <[integral] A> <[integral] AS> → <[memory location] L>
 >
->    `DW_OP_mem` pops top two stack entries. The first must be an
+>        <[integral] AS> <[integral] A> → <[memory location] L>
+>
+>        `DW_OP_mem` pops top two stack entries, an offset A and an
+>    address space identifier AS. The offset A must be an
+>    integral value which represents the offset into the
+>    address space AS. The address space AS must be an
 >    integral type value that represents a target architecture
->    specific address space identifier AS. The second is also an
->    integral type which represents the address A as the offset into
->    that address space.
+>    specific address space identifier.
 >
->    It pushes a memory location L within the address space AS whose
->    offset is A potentially modified by the following rules.
+>        It pushes a memory location L within the address space AS whose
+>    offset is A, potentially modified by the following rules.
 >
->    In the case where the address size used within the address space
+>        In the case where the address size used within the address space
 >    AS is smaller than the size of A, the address is truncated to the
 >    size of the address size used within AS.
 >
->    In the case where the address size used within the address space
+>        In the case where the address size used within the address space
 >    AS is larger than the size of A, the address is zero extended to
 >    the size of the address size used within AS.
 >
->    If AS is an address space that is specific to context elements,
+>        If AS is an address space that is specific to context elements,
 >    then the pushed location L corresponds to the location storage
 >    associated with the current context when the `DW_OP_mem`
 >    operation is evaluated, not the context when the location
 >    returned by the evaluation of `DW_OP_mem` is used.
 >
->    *For example, if AS is for per thread storage, then the location
+>        *For example, if AS is for per thread storage, then the location
 >    storage corresponds to the current thread. Therefore if the
 >    location is accessed by an operation, the location storage
 >    selected when the location was created is accessed, and not the
 >    location storage associated with the current context of the
 >    access operation.*
 >
->    *`DW_OP_addr(X)` is a more compact form of `DW_OP_lit0;
->    DW_OP_constNu(X); DW_OP_mem`*
+>        *`DW_OP_addr(X)` is a more compact form of `DW_OP_lit0;
+>    DW_OP_constNu(X); DW_OP_mem`.*
 >
->    The DWARF expression is ill-formed if AS is not one of the values
->    defined by the target architecture's ABI.
+>        The address identifier value AS must be one of the values defined
+>    by the architecture's ABI.
 
 After the definition of `DW_OP_bregx` add:
 
->    7. `DW_OP_aspace_bregx` ([ULEB128] R, [LEB128] B)
+>    7. `DW_OP_aspace_bregx` ([ULEB] R, [SLEB] B)
+>
 >        <[integral] AS> → <[memory location] A >
 >
->    `DW_OP_aspace_bregx` has two operands. The first is an unsigned
->    LEB128 integer that represents a register number R. The second is
->    a signed LEB128 integer that represents a byte displacement B. It
+>        `DW_OP_aspace_bregx` has two immediate operands. The first is a ULEB
+>    integer that represents a register number R. The second is a
+>    SLEB integer that represents a byte displacement B. It
 >    pops one stack entry that is required to be an integral type
 >    value that represents a target architecture specific address
 >    space identifier AS.
 >
->    The action is the same as for `DW_OP_breg`, except that R is used
+>        The action is the same as for `DW_OP_breg`, except that R is used
 >    as the register number, B is used as the byte displacement, and
 >    AS is used as the address space identifier.
 >
->    The DWARF expression is ill-formed if AS is not one of the values
->    defined by the target architecture. Target architectures are
->    encouraged to define DW_ASPACE_* constants for their address
->    spaces.
+>        The address identifier value AS must be one of the values defined
+>    by the architecture's ABI.
+>
+>        *Target architectures are encouraged to
+>    define `DW_ASPACE_*` constants for their address spaces.*
 
-In section 3.13 rename `DW_OP_xderef*` to `DW_OP_aspace_deref*` and
+In section 3.13, rename `DW_OP_xderef*` to `DW_OP_aspace_deref*` and
 note that `DW_OP_xderef*` is still available as an alias.
 
 In Section 6.3 "Type Modifier Entries", after the paragraph starting
@@ -348,8 +354,8 @@ In Section 7.1.1.1 "Contents of the Name Index", replace the bullet:
 with:
 
 >    * `DW_TAG_variable` debugging information entries with a
->       `DW_AT_location` attribute that includes a `DW_OP_addr`,
->       `DW_OP_mem`, or `DW_OP_form_tls_address` operator are
+>       `DW_AT_location` attribute that includes a `DW_OP_addr`<ins>,
+>       `DW_OP_mem`,</ins> or `DW_OP_form_tls_address` operator are
 >       included; otherwise, they are excluded.
 
 In Section 8.5.4 "Attribute Encodings", add the following row to Table
@@ -367,22 +373,21 @@ Encodings":
 >    | Operation | Code | Number of Operands | Notes |
 >    | :---- | :---- | :---- | :---- |
 >    | `DW_OP_mem`                 | TBA | 0 |  |
->    | `DW_OP_aspace_bregx` | TBA | 2 | ULEB128 register number, LEB128 byte displacement |
+>    | `DW_OP_aspace_bregx` | TBA | 2 | ULEB register number, SLEB byte displacement |
 
 After Section 8.13 "Address Class Encodings" add the following
 section:
 
 >    8.x Address Space Encodings
 >
->    The value of the common address space encoding
->    `DW_ASPACE_default` is 0.
->
+>    The value `DW_ASPACE_default` is 0, which identifies the default
+>    address space.
 
 In Section 8.31 "Type Signature Computation", Table 8.32 "Attributes
 used in type signature computation", add the following attribute in
 alphabetical order to the list:
 
-`DW_AT_address_space`
+> `DW_AT_address_space`
 
 In Appendix A "Attributes by Tag Value (Informative)", add the
 following to Table A.1 Attributes by tag value":
