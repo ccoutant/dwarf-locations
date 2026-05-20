@@ -253,16 +253,17 @@ After the definition of `DW_OP_addrx` add:
 
 >    3. `DW_OP_mem`
 >
->        <[integral] A> <[integral] AS> → <[memory location] L>
+>        <[integral] AS> <[integral] A> → <[memory location] L>
 >
->        `DW_OP_mem` pops top two stack entries. The first must be an
+>        `DW_OP_mem` pops top two stack entries, an offset A and an
+>    address space identifier AS. The offset A must be an
+>    integral value which represents the offset into the
+>    address space AS. The address space AS must be an
 >    integral type value that represents a target architecture
->    specific address space identifier AS. The second is also an
->    integral type which represents the address A as the offset into
->    that address space.
+>    specific address space identifier.
 >
 >        It pushes a memory location L within the address space AS whose
->    offset is A potentially modified by the following rules.
+>    offset is A, potentially modified by the following rules.
 >
 >        In the case where the address size used within the address space
 >    AS is smaller than the size of A, the address is truncated to the
@@ -297,7 +298,7 @@ After the definition of `DW_OP_bregx` add:
 >
 >        <[integral] AS> → <[memory location] A >
 >
->        `DW_OP_aspace_bregx` has two operands. The first is a ULEB
+>        `DW_OP_aspace_bregx` has two immediate operands. The first is a ULEB
 >    integer that represents a register number R. The second is a
 >    SLEB integer that represents a byte displacement B. It
 >    pops one stack entry that is required to be an integral type
