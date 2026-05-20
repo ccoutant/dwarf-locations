@@ -314,17 +314,28 @@ Replace the contents of the preamble to the old Section 2.5 with:
 > size of an address in the default address space on the
 > target machine, and unspecified signedness.
 >
-> An implicit conversion between a memory location and a value
-> may happen during the execution of any operation or when
-> evaluation of the expression is completed. If a location is
-> expected, but the result is a value, the value is implicitly
-> treated as a memory address in the default address space,
-> and converted to a memory location. If a value is expected,
-> and the result is an addressable memory location (i.e., if
-> the offset is a multiple of the byte or word size) in the
-> default address space, the address is implicitly converted
-> to a value of the generic type.
 
+> An implicit conversion between a memory location and a value may
+> happen during the execution of any operation or when evaluation of
+> the expression is completed. If a location is expected, but the
+> result is a value, the value is implicitly treated as a memory
+> address in the default address space, and converted to a memory
+> location as long as the value would make sense as an address in the
+> default address space.
+
+> *Some examples of cases where a value would not make sense as an
+> address are when the value exceeds the size of a pointer in the
+> default address space. Like if you have a 64b value with the upper
+> 32b non-zero on a 32b platform. Or if the value is a signed negative
+> number. Conversions in cases such as this should be considered
+> unspecified behavior which could lead to unpredictable results.
+
+> Conversely if a value is expected, and the result is an addressable
+> memory location (i.e., if the offset is a multiple of the byte or
+> word size) in the default address space, the address is implicitly
+> converted to a value of the generic type. Conversion of locations
+> not in the default address space should be considered unspecified
+> behavior which could lead to unexpected results.
 
 ### Section 3.1 DWARF Expression Evaluation Context [was 2.5.1]
 
