@@ -253,7 +253,7 @@ After the definition of `DW_OP_addrx` add:
 
 >    3. `DW_OP_mem`
 >
->        <[integral] AS> <[integral] A> → <[memory location] L>
+>       ![DW_OP_mem](../images/issue-260127-1/op-mem2.png)
 >
 >        `DW_OP_mem` pops top two stack entries, an offset A and an
 >    address space identifier AS. The offset A must be an
@@ -296,7 +296,7 @@ After the definition of `DW_OP_bregx` add:
 
 >    7. `DW_OP_aspace_bregx` ([ULEB] R, [SLEB] B)
 >
->        <[integral] AS> → <[memory location] A >
+>       ![DW_OP_aspace_bregx](../images/issue-260127-1/op-aspace-bregx.png)
 >
 >        `DW_OP_aspace_bregx` has two immediate operands. The first is a ULEB
 >    integer that represents a register number R. The second is a
@@ -399,3 +399,10 @@ Table A.1: Attributes by tag value
 >    | `DW_TAG_pointer_type` | `DW_AT_address_space` |
 >    | `DW_TAG_reference_type` | `DW_AT_address_space` |
 >    | `DW_TAG_rvalue_reference_type` | `DW_AT_address_space` |
+
+---
+
+2026-04-13: Revised based on suggestions from Ron B.
+
+2026-05-19: Further [revisions][diff1]: Remove completely old
+Section 2.11 on Address Classes.
