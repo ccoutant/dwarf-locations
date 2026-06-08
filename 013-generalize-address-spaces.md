@@ -199,9 +199,9 @@ Table 2.2: Attribute names
 | :---- | :---- |
 | `DW_AT_address_space` | Architecture specific address space (see 2.12 "Address Spaces") |
 
-Remove the entire Section 2.11 "Address Classes" and replace it with:
+After Section 2.11 "Address Classes" add:
 
->    2.11 Address Spaces
+>    2.12 Address Spaces
 >
 >    DWARF address spaces correspond to target architecture specific
 >    linearly addressable memory areas. They are used in DWARF
@@ -294,7 +294,7 @@ After the definition of `DW_OP_addrx` add:
 
 After the definition of `DW_OP_bregx` add:
 
->    7. `DW_OP_aspace_bregx` ([ULEB] R, [SLEB] B)
+>    7. `DW_OP_aspace_bregx` ( udata R, sdata B)
 >
 >       ![DW_OP_aspace_bregx](../images/issue-260127-1/op-aspace-bregx.png)
 >
@@ -305,15 +305,14 @@ After the definition of `DW_OP_bregx` add:
 >    value that represents a target architecture specific address
 >    space identifier AS.
 >
->        The action is the same as for `DW_OP_breg`, except that R is used
->    as the register number, B is used as the byte displacement, and
->    AS is used as the address space identifier.
+>    The action is the same as for `DW_OP_bregx`, except that AS is
+>    used as the address space identifier.
 >
->        The address identifier value AS must be one of the values defined
+>    The address identifier value AS must be one of the values defined
 >    by the architecture's ABI.
 >
->        *Target architectures are encouraged to
->    define `DW_ASPACE_*` constants for their address spaces.*
+>    *Target architectures are encouraged to define `DW_ASPACE_*`
+>    constants for their address spaces.*
 
 In section 3.13, rename `DW_OP_xderef*` to `DW_OP_aspace_deref*` and
 note that `DW_OP_xderef*` is still available as an alias.
