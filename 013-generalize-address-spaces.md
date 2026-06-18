@@ -243,6 +243,34 @@ After Section 2.11 "Address Classes" add:
 >    * The DWARF operations: `DW_OP_mem`, `DW_OP_aspace_bregx` and
 >    `DW_OP_aspace_deref*`.
 
+In Section 3.1 DWARF Expression Evaluation Context in point 5 Current
+thread change the second paragraph to:
+
+>    The current thread identifies a current thread of execution. By
+>    extension, the current thread is also used by consumers to
+>    identify which processor within a multi-processor target, a
+>    thread is executing on. The processor that a thread is executing
+>    on determines which instance of a register to refer to, and when
+>    a target has address spaces which are local a particular
+>    processor, it defines which instance of that address space it
+>    should refer to.
+>
+>    When debugging a multi-threaded program, the current thread may
+>    be selected by a user command that focuses on a specific thread,
+>    or it may be selected automatically when the running thread stops
+>    at a breakpoint.
+
+Then after the last paragraph add:
+
+>    Om a multi-processor target a current thread is required to
+>    identify which instance of a register any register operation is
+>    referring to.
+>
+>    On multi-processor targets which support address spaces which are
+>    local to a processor, a current thread is required to identify
+>    the instance of the address space that a memory operation refers
+>    to.
+
 In Section 3.7 "Memory Locations", add the following at the end of the
 first paragraph:
 
@@ -262,19 +290,6 @@ After the definition of `DW_OP_addrx` add:
 >    AS. The address space AS must be an integral type value that
 >    represents a target architecture specific address space
 >    identifier.
->
->        If AS is an address space that is specific to context elements,
->    then the pushed location L corresponds to the location storage
->    associated with the current context when the `DW_OP_mem`
->    operation is evaluated, not the context when the location
->    returned by the evaluation of `DW_OP_mem` is used.
->
->        *For example, if AS is for per thread storage, then the location
->    storage corresponds to the current thread. Therefore if the
->    location is accessed by an operation, the location storage
->    selected when the location was created is accessed, and not the
->    location storage associated with the current context of the
->    access operation.*
 >
 >        *`DW_OP_addr(X)` is a more compact form of `DW_OP_lit0;
 >    DW_OP_constNu(X); DW_OP_mem`.*
@@ -306,6 +321,51 @@ After the definition of `DW_OP_bregx` add:
 
 In section 3.13, rename `DW_OP_xderef*` to `DW_OP_aspace_deref*` and
 note that `DW_OP_xderef*` is still available as an alias.
+
+Change the description of `DW_OP_aspace_deref` to
+
+>    `DW_OP_aspace_deref` pops top two stack entries, an address A and
+>    an address space identifier AS. The address A must be an integral
+>    value which represents the offset into the address space AS. The
+>    address space AS must be an integral type value that represents a
+>    target architecture specific address space identifier. A data
+>    item whose size is the size of the generic type is retrieved from
+>    the memory location L whose address space AS and whose address is
+>    A.
+
+Change the description of `DW_OP_aspace_deref_size` to:
+
+>    `DW_OP_aspace_deref_size` takes a single 1-byte unsigned integral
+>    operand that specifies the size S, in bytes, of the value to be
+>    retrieved. It pops the top two stack entries, an address A and an
+>    address space identifier AS. The address A must be an integral
+>    value which represents the offset into the address space AS. The
+>    address space AS must be an integral type value that represents a
+>    target architecture specific address space
+>    identifier. `DW_OP_aspace_deref_size` behaves like
+>    `DW_OP_aspace_deref` except a data item whose size is S rather
+>    than the size of a generic type is retrieved from the memory
+>    location L whose address space AS and whose address is A.
+
+Change the description of `DW_OP_aspace_deref_size` to:
+
+>    `DW_OP_aspace_deref_type` takes two operands. The first operand
+>    is a 1-byte unsigned integer that specifies the byte size S of
+>    the type given by the second operand. The second operand is an
+>    ULEB integer that represents the offset of a debugging
+>    information entry in the current compilation unit, which must be
+>    a DW_TAG_base_type entry that provides the type T of the value to
+>    be retrieved. The size S must be the same as the byte size of the
+>    base type represented by the type T. It pops the top two stack
+>    entries, an address A and an address space identifier AS. The
+>    address A must be an integral value which represents the offset
+>    into the address space AS. The address space AS must be an
+>    integral type value that represents a target architecture
+>    specific address space identifier. `DW_OP_aspace_deref_type`
+>    behaves like `DW_OP_aspace_deref` except a data item whose size
+>    is S rather than the size of a generic type is retrieved from the
+>    memory location L whose address space AS and whose address is A
+>    and pushed onto the stack as a value of type T.
 
 In Section 6.3 "Type Modifier Entries", after the paragraph starting
 "A modified type entry describing a pointer or reference type...", add
