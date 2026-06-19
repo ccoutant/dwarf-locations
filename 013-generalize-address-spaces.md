@@ -199,49 +199,20 @@ Table 2.2: Attribute names
 | :---- | :---- |
 | `DW_AT_address_space` | Architecture specific address space (see 2.12 "Address Spaces") |
 
-After Section 2.11 "Address Classes" add:
+In Section 2.11 "Address Classes and Address Spaces", add the following
+paragraphs at the end of the section:
 
->    2.12 Address Spaces
->
->    DWARF address spaces correspond to target architecture specific
->    linearly addressable memory areas. They are used in DWARF
->    location expressions to describe in which target
->    architecture specific memory area data resides.
->
->    *Target architecture specific DWARF address spaces may correspond
->    to hardware supported facilities such as memory utilizing base
->    address registers, scratch pad memory, and memory with special
->    interleaving.  The size of addresses in these address spaces is
->    not necessarily the same as the size of addresses in the default
->    address space. Their access and allocation may be hardware
->    managed with each thread or group of threads having access to
->    independent storage. For these reasons they may have properties
->    that do not allow them to be viewed as part of the unified global
->    virtual address space accessible by all threads.*
->
->    *It is target architecture specific whether multiple DWARF
->    address spaces are supported and how source language memory
->    spaces map to target architecture specific DWARF address
->    spaces. A target architecture may map multiple source language
->    memory spaces to the same target architecture specific DWARF
->    address spaces. Optimization may determine that variable lifetime
->    and access pattern allows them to be allocated in faster
->    scratch pad memory represented by a different DWARF address space
->    than the default for the source language memory space.*
->
->    Each address space is assigned a positive integral number by the
->    ABI committee for that target architecture.  Although DWARF
->    address space identifiers are target architecture specific,
->    `DW_ASPACE_default` is a common address space supported by all
->    target architectures, and defined as the target architecture's
->    default address space.
->
->    DWARF address space identifiers are used by:
->
->    * The `DW_AT_address_space` attribute.
->
->    * The DWARF operations: `DW_OP_mem`, `DW_OP_aspace_bregx` and
->    `DW_OP_aspace_deref*`.
+> Any debugging information entry representing a pointer or
+> reference type may also have a `DW_AT_address_space` attribute,
+> whose value is a non-negative integer constant which identifies
+> the address space to which the pointer refers. The value
+> `DW_ASPACE_default` identifies the default address space; other
+> values and their uses are assigned by the ABI committee for the
+> target.
+> 
+> Address space identifiers are also used by the DWARF
+> operations `DW_OP_mem` (see Section 3.7), `DW_OP_aspace_bregx` (see
+> Section 3.7), and `DW_OP_aspace_deref*` (see Section 3.13).
 
 In Section 3.1 DWARF Expression Evaluation Context in point 5 Current
 thread change the second paragraph to:
@@ -299,7 +270,7 @@ After the definition of `DW_OP_addrx` add:
 
 After the definition of `DW_OP_bregx` add:
 
->    7. `DW_OP_aspace_bregx` ( udata R, sdata B)
+>    7. `DW_OP_aspace_bregx` (udata R, sdata B)
 >
 >       ![DW_OP_aspace_bregx](../images/issue-260127-1/op-aspace-bregx.png)
 >
@@ -310,13 +281,13 @@ After the definition of `DW_OP_bregx` add:
 >    value that represents a target architecture specific address
 >    space identifier AS.
 >
->    The action is the same as for `DW_OP_bregx`, except that AS is
+>        The action is the same as for `DW_OP_bregx`, except that AS is
 >    used as the address space identifier.
 >
->    The address identifier value AS must be one of the values defined
+>        The address identifier value AS must be one of the values defined
 >    by the architecture's ABI.
 >
->    *Target architectures are encouraged to define `DW_ASPACE_*`
+>        *Target architectures are encouraged to define `DW_ASPACE_*`
 >    constants for their address spaces.*
 
 In section 3.13, rename `DW_OP_xderef*` to `DW_OP_aspace_deref*` and
@@ -443,3 +414,17 @@ Table A.1: Attributes by tag value
 
 2026-05-19: Further [revisions][diff1]: Remove completely old
 Section 2.11 on Address Classes.
+
+2026-06-16: [Revised][diff2] based on 6/8/26 meeting.
+Restored Section 2.11 Address Classes.
+Fixed definition of `DW_OP_aspace_bregx`.
+
+2026-06-18: [Revised][diff3] to address discussion since 6/8/26 meeting.
+Now depends on [260617.1][260617.1].
+Removed addition of Section 2.12; added extra paragraphs to Section 2.11.
+Added text to Section 3.1 DWARF Expression Evaluation Context, "current thread".
+Rewrote description of `DW_OP_mem`; removed discussion of context and truncation.
+Added new descriptions for `DW_OP_aspace_deref*`.
+Shortened new text in Section 6.3 Type Modifier Entries.
+
+[260617.1]: https://dwarfstd.org/issues/260617.1.html
