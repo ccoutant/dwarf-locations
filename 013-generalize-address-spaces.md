@@ -199,8 +199,8 @@ Table 2.2: Attribute names
 | :---- | :---- |
 | `DW_AT_address_space` | Architecture specific address space (see 2.12 "Address Spaces") |
 
-In Section 2.11 "Address Classes and Address Spaces", add the following
-paragraphs at the end of the section:
+In Section 2.11 "Address Classes and Address Spaces", remove the last
+paragraph and replace it with the following paragraphs:
 
 > Any debugging information entry representing a pointer or
 > reference type may also have a `DW_AT_address_space` attribute,
@@ -233,7 +233,7 @@ thread change the second paragraph to:
 
 Then after the last paragraph add:
 
->    Om a multi-processor target a current thread is required to
+>    On a multi-processor target a current thread is required to
 >    identify which instance of a register any register operation is
 >    referring to.
 >
