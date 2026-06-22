@@ -170,7 +170,7 @@ Having address spaces within the location also makes it available to
 consumers and therefore developers. This can also be an aid to
 programmers who are seeking to optimize their code.
 
-Since memory locations are an abstraction of storage. The same set of
+Since memory locations are an abstraction of storage, the same set of
 operations can operate on memory locations independent of their
 underlying storage. Therefore, operations like `DW_OP_deref*` can be
 used on any memory locations even those referring to different address
@@ -222,7 +222,7 @@ thread change the second paragraph to:
 >    identify which processor within a multi-processor target, a
 >    thread is executing on. The processor that a thread is executing
 >    on determines which instance of a register to refer to, and when
->    a target has address spaces which are local a particular
+>    a target has address spaces which are local to a particular
 >    processor, it defines which instance of that address space it
 >    should refer to.
 >
@@ -237,10 +237,10 @@ Then after the last paragraph add:
 >    identify which instance of a register any register operation is
 >    referring to.
 >
->    On multi-processor targets which support address spaces which are
->    local to a processor, a current thread is required to identify
->    the instance of the address space that a memory operation refers
->    to.
+>    On multi-processor targets that support address spaces which are
+>    local to a processor or a thread, a current thread is required to
+>    identify the instance of the address space that a memory
+>    operation refers to.
 
 In Section 3.7 "Memory Locations", add the following at the end of the
 first paragraph:
@@ -265,8 +265,8 @@ After the definition of `DW_OP_addrx` add:
 >        *`DW_OP_addr(X)` is a more compact form of `DW_OP_lit0;
 >    DW_OP_constNu(X); DW_OP_mem`.*
 >
->        The address identifier value AS must be one of the values defined
->    by the architecture's ABI.
+>        The address space identifier value AS must be one of the
+>    values defined by the architecture's ABI.
 
 After the definition of `DW_OP_bregx` add:
 
@@ -284,8 +284,8 @@ After the definition of `DW_OP_bregx` add:
 >        The action is the same as for `DW_OP_bregx`, except that AS is
 >    used as the address space identifier.
 >
->        The address identifier value AS must be one of the values defined
->    by the architecture's ABI.
+>        The address space identifier value AS must be one of the
+>    values defined by the architecture's ABI.
 >
 >        *Target architectures are encouraged to define `DW_ASPACE_*`
 >    constants for their address spaces.*
@@ -301,8 +301,8 @@ Change the description of `DW_OP_aspace_deref` to
 >    address space AS must be an integral type value that represents a
 >    target architecture specific address space identifier. A data
 >    item whose size is the size of the generic type is retrieved from
->    the memory location L whose address space AS and whose address is
->    A.
+>    the memory location L whose address space is AS and whose address
+>    is A.
 
 Change the description of `DW_OP_aspace_deref_size` to:
 
@@ -316,7 +316,7 @@ Change the description of `DW_OP_aspace_deref_size` to:
 >    identifier. `DW_OP_aspace_deref_size` behaves like
 >    `DW_OP_aspace_deref` except a data item whose size is S rather
 >    than the size of a generic type is retrieved from the memory
->    location L whose address space AS and whose address is A.
+>    location L whose address space is AS and whose address is A.
 
 Change the description of `DW_OP_aspace_deref_size` to:
 
@@ -335,8 +335,8 @@ Change the description of `DW_OP_aspace_deref_size` to:
 >    specific address space identifier. `DW_OP_aspace_deref_type`
 >    behaves like `DW_OP_aspace_deref` except a data item whose size
 >    is S rather than the size of a generic type is retrieved from the
->    memory location L whose address space AS and whose address is A
->    and pushed onto the stack as a value of type T.
+>    memory location L whose address space is AS and whose address is
+>    A and pushed onto the stack as a value of type T.
 
 In Section 6.3 "Type Modifier Entries", after the paragraph starting
 "A modified type entry describing a pointer or reference type...", add
