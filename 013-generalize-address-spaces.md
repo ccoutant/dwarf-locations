@@ -134,7 +134,7 @@ the address to be relocated when it is supplied using `DW_OP_constx`.
 `DW_OP_mem` can be a thought of as a more general form of `DW_OP_addr`
 with `DW_OP_addr(X)` being a short hand form of:
 
-    DW_OP_lit0 ; DW_AS_default is by definition 0
+    DW_OP_lit0 ; DW_ASPACE_default is by definition 0
     DW_OP_const<N>u X
     DW_OP_mem
 
@@ -256,16 +256,16 @@ After the definition of `DW_OP_addrx` add:
 >       ![DW_OP_mem](../images/issue-260127-1/op-mem2.png)
 >
 >        `DW_OP_mem` pops top two stack entries, an address A and an
->    address space identifier AS. The address A must be an integral
->    value which represents a valid offset into the address space
->    AS. The address space AS must be an integral type value that
->    represents a target architecture specific address space
->    identifier.
+>    address space identifier ASPACE. The address A must be an
+>    integral value which represents a valid offset into the address
+>    space ASPACE. The address space ASPACE must be an integral type
+>    value that represents a target architecture specific address
+>    space identifier.
 >
 >        *`DW_OP_addr(X)` is a more compact form of `DW_OP_lit0;
 >    DW_OP_constNu(X); DW_OP_mem`.*
 >
->        The address space identifier value AS must be one of the
+>        The address space identifier value ASPACE must be one of the
 >    values defined by the architecture's ABI.
 
 After the definition of `DW_OP_bregx` add:
@@ -274,17 +274,17 @@ After the definition of `DW_OP_bregx` add:
 >
 >       ![DW_OP_aspace_bregx](../images/issue-260127-1/op-aspace-bregx.png)
 >
->        `DW_OP_aspace_bregx` has two immediate operands. The first is a ULEB
->    integer that represents a register number R. The second is a
->    SLEB integer that represents a byte displacement B. It
->    pops one stack entry that is required to be an integral type
->    value that represents a target architecture specific address
->    space identifier AS.
+>        `DW_OP_aspace_bregx` has two immediate operands. The first is
+>    a ULEB integer that represents a register number R. The second is
+>    a SLEB integer that represents a byte displacement B. It pops one
+>    stack entry that is required to be an integral type value that
+>    represents a target architecture specific address space
+>    identifier ASPACE.
 >
->        The action is the same as for `DW_OP_bregx`, except that AS is
+>        The action is the same as for `DW_OP_bregx`, except that ASPACE is
 >    used as the address space identifier.
 >
->        The address space identifier value AS must be one of the
+>        The address space identifier value ASPACE must be one of the
 >    values defined by the architecture's ABI.
 >
 >        *Target architectures are encouraged to define `DW_ASPACE_*`
@@ -300,30 +300,30 @@ description of the operand used in `DW_OP_deref_size`.
 Change the description of `DW_OP_aspace_deref` to
 
 >    `DW_OP_aspace_deref` pops top two stack entries, an address A and
->    an address space identifier AS. The address A must be an integral
->    value which represents the offset into the address space AS. The
->    address space AS must be an integral type value that represents a
->    target architecture specific address space identifier. A data
->    item whose size is the size of the generic type is retrieved from
->    the memory location L whose address space is AS and whose address
->    is A.
+>    an address space identifier ASPACE. The address A must be an
+>    integral value which represents the offset into the address space
+>    ASPACE. The address space ASPACE must be an integral type value
+>    that represents a target architecture specific address space
+>    identifier. A data item whose size is the size of the generic
+>    type is retrieved from the memory location L whose address space
+>    is ASPACE and whose address is A.
 
 Change the description of `DW_OP_aspace_deref_size` to:
 
 >    `DW_OP_aspace_deref_size` takes a single 1-byte unsigned integral
 >    operand that specifies the size S, in bytes, of the value to be
 >    retrieved. It pops the top two stack entries, an address A and an
->    address space identifier AS. The address A must be an integral
->    value which represents the offset into the address space AS. The
->    address space AS must be an integral type value that represents a
->    target architecture specific address space
+>    address space identifier ASPACE. The address A must be an
+>    integral value which represents the offset into the address space
+>    ASPACE. The address space ASPACE must be an integral type value
+>    that represents a target architecture specific address space
 >    identifier. `DW_OP_aspace_deref_size` behaves like
 >    `DW_OP_aspace_deref` except a data item whose size is S rather
 >    than the size of a generic type is retrieved from the memory
->    location L whose address space is AS and whose address is A. The
->    data retrieved is zero extended to the size of an address on the
->    target machine before being pushed onto the expression stack
->    together with the generic type.
+>    location L whose address space is ASPACE and whose address is
+>    A. The data retrieved is zero extended to the size of an address
+>    on the target machine before being pushed onto the expression
+>    stack together with the generic type.
 
 Change the description of `DW_OP_aspace_deref_size` to:
 
@@ -336,15 +336,15 @@ Change the description of `DW_OP_aspace_deref_size` to:
 >    of the value to be retrieved. The size S must be the same as the
 >    byte size of the base type represented by the type T. It pops the
 >    top two stack entries, an address A and an address space
->    identifier AS. The address A must be an integral value which
->    represents the offset into the address space AS. The address
->    space AS must be an integral type value that represents a target
->    architecture specific address space
+>    identifier ASPACE. The address A must be an integral value which
+>    represents the offset into the address space ASPACE. The address
+>    space ASPACE must be an integral type value that represents a
+>    target architecture specific address space
 >    identifier. `DW_OP_aspace_deref_type` behaves like
 >    `DW_OP_aspace_deref` except a data item whose size is S rather
 >    than the size of a generic type is retrieved from the memory
->    location L whose address space is AS and whose address is A and
->    pushed onto the stack as a value of type T.
+>    location L whose address space is ASPACE and whose address is A
+>    and pushed onto the stack as a value of type T.
 
 In Section 6.3 "Type Modifier Entries", after the paragraph starting
 "A modified type entry describing a pointer or reference type...", add
@@ -353,12 +353,12 @@ the following paragraph:
 >    A modified type entry describing a pointer or reference type
 >    (using `DW_TAG_pointer_type`, `DW_TAG_reference_type` or
 >    `DW_TAG_rvalue_reference_type`) may have a `DW_AT_address_space`
->    attribute with a constant value AS representing an architecture
->    specific DWARF address space (see 2.12 "Address Spaces"). If
->    omitted, this defaults to `DW_ASPACE_default`. The address space
->    of a memory location which is not in the default address space is
->    set as if the expression `DW_OP_constu` AS; `DW_OP_mem` were
->    evaluated for that instance of the variable.
+>    attribute with a constant value ASPACE representing an
+>    architecture specific DWARF address space (see 2.12 "Address
+>    Spaces"). If omitted, this defaults to `DW_ASPACE_default`. The
+>    address space of a memory location which is not in the default
+>    address space is set as if the expression `DW_OP_constu` ASPACE;
+>    `DW_OP_mem` were evaluated for that instance of the variable.
 
 In Section 7.1.1.1 "Contents of the Name Index", replace the bullet:
 
