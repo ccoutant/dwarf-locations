@@ -237,10 +237,10 @@ Then after the last paragraph add:
 >    identify which instance of a register any register operation is
 >    referring to.
 >
->    On multi-processor targets that support address spaces which are
->    local to a processor or a thread, a current thread is required to
->    identify the instance of the address space that a memory
->    operation refers to.
+>    On multi-processor targets that support address spaces that are
+>    local to a processor or a thread, a current thread may be
+>    required to identify the instance of the address space that a
+>    memory operation refers to.
 
 In Section 3.7 "Memory Locations", add the following at the end of the
 first paragraph:
@@ -316,7 +316,10 @@ Change the description of `DW_OP_aspace_deref_size` to:
 >    identifier. `DW_OP_aspace_deref_size` behaves like
 >    `DW_OP_aspace_deref` except a data item whose size is S rather
 >    than the size of a generic type is retrieved from the memory
->    location L whose address space is AS and whose address is A.
+>    location L whose address space is AS and whose address is A. The
+>    data retrieved is zero extended to the size of an address on the
+>    target machine before being pushed onto the expression stack
+>    together with the generic type.
 
 Change the description of `DW_OP_aspace_deref_size` to:
 
