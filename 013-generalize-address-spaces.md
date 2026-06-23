@@ -293,6 +293,10 @@ After the definition of `DW_OP_bregx` add:
 In section 3.13, rename `DW_OP_xderef*` to `DW_OP_aspace_deref*` and
 note that `DW_OP_xderef*` is still available as an alias.
 
+As a minor editorial clarification change "1-byte unsigned integer" in
+`DW_OP_deref_type` to "1-byte unsigned integral operand" to match the
+description of the operand used in `DW_OP_deref_size`.
+
 Change the description of `DW_OP_aspace_deref` to
 
 >    `DW_OP_aspace_deref` pops top two stack entries, an address A and
@@ -324,22 +328,23 @@ Change the description of `DW_OP_aspace_deref_size` to:
 Change the description of `DW_OP_aspace_deref_size` to:
 
 >    `DW_OP_aspace_deref_type` takes two operands. The first operand
->    is a 1-byte unsigned integer that specifies the byte size S of
->    the type given by the second operand. The second operand is an
->    ULEB integer that represents the offset of a debugging
->    information entry in the current compilation unit, which must be
->    a DW_TAG_base_type entry that provides the type T of the value to
->    be retrieved. The size S must be the same as the byte size of the
->    base type represented by the type T. It pops the top two stack
->    entries, an address A and an address space identifier AS. The
->    address A must be an integral value which represents the offset
->    into the address space AS. The address space AS must be an
->    integral type value that represents a target architecture
->    specific address space identifier. `DW_OP_aspace_deref_type`
->    behaves like `DW_OP_aspace_deref` except a data item whose size
->    is S rather than the size of a generic type is retrieved from the
->    memory location L whose address space is AS and whose address is
->    A and pushed onto the stack as a value of type T.
+>    is a 1-byte unsigned integral operand that specifies the byte
+>    size S of the type given by the second operand. The second
+>    operand is an ULEB integer that represents the offset of a
+>    debugging information entry in the current compilation unit,
+>    which must be a DW_TAG_base_type entry that provides the type T
+>    of the value to be retrieved. The size S must be the same as the
+>    byte size of the base type represented by the type T. It pops the
+>    top two stack entries, an address A and an address space
+>    identifier AS. The address A must be an integral value which
+>    represents the offset into the address space AS. The address
+>    space AS must be an integral type value that represents a target
+>    architecture specific address space
+>    identifier. `DW_OP_aspace_deref_type` behaves like
+>    `DW_OP_aspace_deref` except a data item whose size is S rather
+>    than the size of a generic type is retrieved from the memory
+>    location L whose address space is AS and whose address is A and
+>    pushed onto the stack as a value of type T.
 
 In Section 6.3 "Type Modifier Entries", after the paragraph starting
 "A modified type entry describing a pointer or reference type...", add
