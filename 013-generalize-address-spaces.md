@@ -62,7 +62,7 @@ define how it relates to address spaces. For example,
 contexts implicitly push an address on the stack before evaluating an
 expression. For example, the `DW_AT_use_location` attribute of the
 `DW_TAG_ptr_to_member_type`. The expression belongs to a source
-language type which may apply to objects allocated in different kinds
+language type that may apply to objects allocated in different kinds
 of storage. Therefore, it is important that an expression that uses
 the location can do so without regard to what kind of storage it
 specifies. As it applies to memory location this means that a simple
@@ -103,12 +103,12 @@ address spaces by swizzling pointers, it cannot be assumed that this
 is a universal hardware design. Different GPU designs could have a
 completely separate connection to a particular pool of memory and have
 a completely different numbering system to reference it. On the other
-hand there is nothing in this design which precludes hardware from
+hand, there is nothing in this design that precludes hardware from
 using swizzled pointers to implement address spaces.
 
 If address spaces were implemented by a consumer by swizzling
 pointers, then there would likely need to be reserved ranges of
-addresses defined in the ABI which could interfere with other
+addresses defined in the ABI that could interfere with other
 addresses in the system memory. That would require the consumer to
 have special treatment for such values. Furthermore, purely swizzled
 pointers do not capture the semantic differences of address spaces
@@ -178,7 +178,7 @@ spaces. Consequently, the `DW_OP_xderef*` operations are unnecessary,
 except as a more compact way to encode a non-default address space
 address followed by dereferencing it. Therefore we propose renaming
 those operators to `DW_OP_aspace_deref*` to be consistent with the
-other operators which refer to address spaces and making the old
+other operators that refer to address spaces and making the old
 `DW_OP_xderef` names aliases.
 
 ### Scope of proposal
@@ -199,20 +199,10 @@ Table 2.2: Attribute names
 | :---- | :---- |
 | `DW_AT_address_space` | Architecture specific address space (see 2.12 "Address Spaces") |
 
-In Section 2.11 "Address Classes and Address Spaces", remove the last
-paragraph and replace it with the following paragraphs:
+In Section 2.11 "Address Classes and Address Spaces"
 
-> Any debugging information entry representing a pointer or
-> reference type may also have a `DW_AT_address_space` attribute,
-> whose value is a non-negative integer constant which identifies
-> the address space to which the pointer refers. The value
-> `DW_ASPACE_default` identifies the default address space; other
-> values and their uses are assigned by the ABI committee for the
-> target.
-> 
-> Address space identifiers are also used by the DWARF
-> operations `DW_OP_mem` (see Section 3.7), `DW_OP_aspace_bregx` (see
-> Section 3.7), and `DW_OP_aspace_deref*` (see Section 3.13).
+Replace `DW_ADDR_none` with `DW_ACLASS_default` noting that
+`DW_ADDR_none` will continue to be available as an alias.
 
 In Section 3.1 DWARF Expression Evaluation Context in point 5 Current
 thread change the second paragraph to:
@@ -222,7 +212,7 @@ thread change the second paragraph to:
 >    identify which processor within a multi-processor target, a
 >    thread is executing on. The processor that a thread is executing
 >    on determines which instance of a register to refer to, and when
->    a target has address spaces which are local to a particular
+>    a target has address spaces that are local to a particular
 >    processor, it defines which instance of that address space it
 >    should refer to.
 >
@@ -257,7 +247,7 @@ After the definition of `DW_OP_addrx` add:
 >
 >        `DW_OP_mem` pops top two stack entries, an address A and an
 >    address space identifier ASPACE. The address A must be an
->    integral value which represents a valid offset into the address
+>    integral value that represents a valid offset into the address
 >    space ASPACE. The address space ASPACE must be an integral type
 >    value that represents a target architecture specific address
 >    space identifier.
@@ -281,8 +271,8 @@ After the definition of `DW_OP_bregx` add:
 >    represents a target architecture specific address space
 >    identifier ASPACE.
 >
->        The action is the same as for `DW_OP_bregx`, except that ASPACE is
->    used as the address space identifier.
+>        The action is the same as for `DW_OP_bregx`, except that
+>    ASPACE is used as the address space identifier.
 >
 >        The address space identifier value ASPACE must be one of the
 >    values defined by the architecture's ABI.
@@ -301,7 +291,7 @@ Change the description of `DW_OP_aspace_deref` to
 
 >    `DW_OP_aspace_deref` pops top two stack entries, an address A and
 >    an address space identifier ASPACE. The address A must be an
->    integral value which represents the offset into the address space
+>    integral value that represents the offset into the address space
 >    ASPACE. The address space ASPACE must be an integral type value
 >    that represents a target architecture specific address space
 >    identifier. A data item whose size is the size of the generic
@@ -314,7 +304,7 @@ Change the description of `DW_OP_aspace_deref_size` to:
 >    operand that specifies the size S, in bytes, of the value to be
 >    retrieved. It pops the top two stack entries, an address A and an
 >    address space identifier ASPACE. The address A must be an
->    integral value which represents the offset into the address space
+>    integral value that represents the offset into the address space
 >    ASPACE. The address space ASPACE must be an integral type value
 >    that represents a target architecture specific address space
 >    identifier. `DW_OP_aspace_deref_size` behaves like
@@ -325,7 +315,7 @@ Change the description of `DW_OP_aspace_deref_size` to:
 >    on the target machine before being pushed onto the expression
 >    stack together with the generic type.
 
-Change the description of `DW_OP_aspace_deref_size` to:
+Change the description of `DW_OP_aspace_deref_type` to:
 
 >    `DW_OP_aspace_deref_type` takes two operands. The first operand
 >    is a 1-byte unsigned integral operand that specifies the byte
@@ -336,7 +326,7 @@ Change the description of `DW_OP_aspace_deref_size` to:
 >    of the value to be retrieved. The size S must be the same as the
 >    byte size of the base type represented by the type T. It pops the
 >    top two stack entries, an address A and an address space
->    identifier ASPACE. The address A must be an integral value which
+>    identifier ASPACE. The address A must be an integral value that
 >    represents the offset into the address space ASPACE. The address
 >    space ASPACE must be an integral type value that represents a
 >    target architecture specific address space
@@ -354,11 +344,9 @@ the following paragraph:
 >    (using `DW_TAG_pointer_type`, `DW_TAG_reference_type` or
 >    `DW_TAG_rvalue_reference_type`) may have a `DW_AT_address_space`
 >    attribute with a constant value ASPACE representing an
->    architecture specific DWARF address space (see 2.12 "Address
->    Spaces"). If omitted, this defaults to `DW_ASPACE_default`. The
->    address space of a memory location which is not in the default
->    address space is set as if the expression `DW_OP_constu` ASPACE;
->    `DW_OP_mem` were evaluated for that instance of the variable.
+>    architecture specific DWARF address space (see 2.11 "Address
+>    Classes and Adress Spaces"). If omitted, this defaults to
+>    `DW_ASPACE_default`.
 
 In Section 7.1.1.1 "Contents of the Name Index", replace the bullet:
 
@@ -370,8 +358,8 @@ In Section 7.1.1.1 "Contents of the Name Index", replace the bullet:
 with:
 
 >    * `DW_TAG_variable` debugging information entries with a
->       `DW_AT_location` attribute that includes a `DW_OP_addr`<ins>,
->       `DW_OP_mem`,</ins> or `DW_OP_form_tls_address` operator are
+>       `DW_AT_location` attribute that includes a `DW_OP_addr`,
+>       `DW_OP_mem` or `DW_OP_form_tls_address` operator are
 >       included; otherwise, they are excluded.
 
 In Section 8.5.4 "Attribute Encodings", add the following row to Table
@@ -391,13 +379,17 @@ Encodings":
 >    | `DW_OP_mem`                 | TBA | 0 |  |
 >    | `DW_OP_aspace_bregx` | TBA | 2 | ULEB register number, SLEB byte displacement |
 
+In Section 8.13 Address Class Encodings, change `DW_ADDR_none` to
+`DW_ACLASS_default` with a footnote stating that `DW_ADDR_none` will
+continue to be an alias for `DW_ACLASS_default`
+
 After Section 8.13 "Address Class Encodings" add the following
 section:
 
 >    8.x Address Space Encodings
 >
->    The value `DW_ASPACE_default` is 0, which identifies the default
->    address space.
+>    The value that identifies the default address space,
+>    `DW_ASPACE_default`, is 0.
 
 In Section 8.31 "Type Signature Computation", Table 8.32 "Attributes
 used in type signature computation", add the following attribute in
