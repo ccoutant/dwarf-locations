@@ -191,7 +191,7 @@ changes will be presented in a subsequent proposal.
 ## PROPOSAL
 
 In Section 2.2 "Attribute Types", add the following row to Table 2.2
-"Attribute names":
+	"Attribute names":
 
 Table 2.2: Attribute names
 
@@ -228,9 +228,9 @@ Then after the last paragraph add:
 >    referring to.
 >
 >    On multi-processor targets that support address spaces that are
->    local to a processor or a thread, a current thread may be
->    required to identify the instance of the address space that a
->    memory operation refers to.
+>    local to a processor, a thread, or a lane, a current thread
+>    and/or a current lane may be required to identify the instance of
+>    the address space that a memory operation refers to.
 
 In Section 3.7 "Memory Locations", add the following at the end of the
 first paragraph:
