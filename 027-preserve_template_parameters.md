@@ -16,7 +16,7 @@ using a generic template parameter or a hardcoded concrete type.
 **Proposed Solution**
 
 To resolve this limitation when there is only one instantiation of the
-template within the CU, the template instantiation can be expaned
+template within the CU, the template instantiation can be expanded
 inline. However, when there are many instantiations of the template
 embedding the template instantiation inside the class where it is used
 could bloat the DWARF. To resolve this problem without bloating the
@@ -26,7 +26,9 @@ represent dependent nested template instantiations. By artificially
 treating the dependent nested instantiation as a template alias, the
 alias entry can point directly to the underlying top-level concrete
 instantiation, while owning child entries that describe its own
-template actual parameters.
+template actual parameters. Since this is not a C++ source language
+template alias, this use of `DW_TAG_template_alias` should be
+annotated with a `DW_AT_artificial` attribute.
 
 In both cases this allows the nested template's
 `DW_TAG_template_type_parameter` to bind directly to the enclosing
@@ -48,12 +50,12 @@ attribute describing the actual type by which the formal is replaced":
 >    enclosing template. However, if the template instantiation also
 >    exists outside of the enclosing template instantiation, then the
 >    nested template instantiation may be represented using a
->    `DW_TAG_template_alias` entry. The alias entry refers to the
->    concrete instantiation of the nested template, In both cases the
->    `DW_AT_type` attribute of the nested template's
->    `DW_TAG_template_type_parameter` entry references the
->    corresponding `DW_TAG_template_type_parameter` entry of the
->    enclosing template.
+>    `DW_TAG_template_alias` entry with a `DW_AT_artificial`
+>    attribute. The alias entry refers to the concrete instantiation
+>    of the nested template, In both cases the `DW_AT_type` attribute
+>    of the nested template's `DW_TAG_template_type_parameter` entry
+>    references the corresponding `DW_TAG_template_type_parameter`
+>    entry of the enclosing template.
 
 In Section 4.3.7 Function Template Instantiations, insert a new bullet
 point to the list of exceptions under Section 4.3.7:
@@ -62,9 +64,9 @@ point to the list of exceptions under Section 4.3.7:
 >    enclosing template instantiation and its actual parameter is a
 >    template parameter of the enclosing template, the nested template
 >    instantiation may be represented as a nested template type
->    instantiation or as a `DW_TAG_template_alias` entry that
->    references the concrete instantiation, as described in Section
->    2.22.
+>    instantiation or as a `DW_TAG_template_alias` entry with a
+>    `DW_AT_artificial` attribute that references the concrete
+>    instantiation, as described in Section 2.22.
 
 In Section 6.7.10 Class Template Instantiations, insert a new bullet
 point to the list of exceptions under Section 6.7.10 cross-referencing
@@ -74,9 +76,9 @@ the changes:
 >    another template instantiation and its actual parameter is a
 >    template parameter of the enclosing template, the nested template
 >    instantiation may be represented as nested template type
->    instantiation or as a `DW_TAG_template_alias` entry that
->    references the concrete instantiation, as described in Section
->    2.22.
+>    instantiation or as a `DW_TAG_template_alias` entry with a
+>    `DW_AT_artificial` attribute that references the concrete
+>    instantiation, as described in Section 2.22.
 
 In Section 6.17 Template Alias Entries, Insert the following
 non-normative paragraph after the first non-normative paragraph in
@@ -89,7 +91,9 @@ Section 6.17:
 >    instantiation as a template alias allows the producer to preserve
 >    the source-level linkage to the enclosing template parameters
 >    without structurally duplicating the entire concrete
->    instantiation of the nested type.*
+>    instantiation of the nested type. Since this use of
+>    `DW_TAG_template_alias` is is not a C++ source language alias, it
+>    should be identified with a `DW_AT_artificial` attribute.*
 
 In Appendix D.11 Template Examples
 
@@ -148,6 +152,7 @@ DWARF description figure TBD
 23$:   DW_TAG_template_alias
          DW_AT_name("t1")
          DW_AT_type(reference to 10$)        ! points to the top-level t1<int>
+		 DW_AT_artificial
 24$:     DW_TAG_template_type_parameter
            DW_AT_name("U")
            DW_AT_type(reference to 21$)      ! points to enclosing parameter "T"
