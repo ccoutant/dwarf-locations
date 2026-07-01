@@ -296,7 +296,8 @@ Change the description of `DW_OP_aspace_deref` to
 >    that represents a target architecture specific address space
 >    identifier. A data item whose size is the size of the generic
 >    type is retrieved from the memory location L whose address space
->    is ASPACE and whose address is A.
+>    is ASPACE and whose address is A. The retrieved data is pushed
+>    onto the stack as a value of generic type.
 
 Change the description of `DW_OP_aspace_deref_size` to:
 
@@ -311,9 +312,8 @@ Change the description of `DW_OP_aspace_deref_size` to:
 >    `DW_OP_aspace_deref` except a data item whose size is S rather
 >    than the size of a generic type is retrieved from the memory
 >    location L whose address space is ASPACE and whose address is
->    A. The data retrieved is zero extended to the size of an address
->    on the target machine before being pushed onto the expression
->    stack together with the generic type.
+>    A. The data retrieved is zero extended to the size of an generic
+>    type, and pushed onto the stack as a value of the generic type.
 
 Change the description of `DW_OP_aspace_deref_type` to:
 
