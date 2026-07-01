@@ -98,13 +98,15 @@ an address in a completely separate address space.
 
 ### Address spaces are not just swizzled pointers
 
-While some hardware's memory controllers may implement different
-address spaces by swizzling pointers, it cannot be assumed that this
-is a universal hardware design. Different GPU designs could have a
-completely separate connection to a particular pool of memory and have
-a completely different numbering system to reference it. On the other
-hand, there is nothing in this design that precludes hardware from
-using swizzled pointers to implement address spaces.
+While some target's memory controllers may implement different address
+spaces by what is sometimes called "swizzling pointers" (e.g., using
+otherwise unused bits of the address to encode the address spaces), it
+cannot be assumed that this is a universal hardware design. Different
+GPU designs could have a completely separate connection to a
+particular pool of memory and have a completely different numbering
+system to reference it. On the other hand, there is nothing in this
+design that precludes hardware from using swizzled pointers to
+implement address spaces.
 
 If address spaces were implemented by a consumer by swizzling
 pointers, then there would likely need to be reserved ranges of
