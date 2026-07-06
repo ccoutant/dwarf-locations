@@ -193,7 +193,7 @@ changes will be presented in a subsequent proposal.
 ## PROPOSAL
 
 In Section 2.2 "Attribute Types", add the following row to Table 2.2
-	"Attribute names":
+"Attribute names":
 
 Table 2.2: Attribute names
 
@@ -201,10 +201,20 @@ Table 2.2: Attribute names
 | :---- | :---- |
 | `DW_AT_address_space` | Architecture specific address space (see 2.12 "Address Spaces") |
 
-In Section 2.11 "Address Classes and Address Spaces"
+In Section 2.11 "Address Classes and Address Spaces", remove the last
+paragraph and replace it with the following paragraphs:
 
-Replace `DW_ADDR_none` with `DW_ACLASS_default` noting that
-`DW_ADDR_none` will continue to be available as an alias.
+> Any debugging information entry representing a pointer or
+> reference type may also have a `DW_AT_address_space` attribute,
+> whose value is a non-negative integer constant which identifies
+> the address space to which the pointer refers. The value
+> `DW_ASPACE_default` identifies the default address space; other
+> values and their uses are assigned by the ABI committee for the
+> target.
+> 
+> Address space identifiers are also used by the DWARF
+> operations `DW_OP_mem` (see Section 3.7), `DW_OP_aspace_bregx` (see
+> Section 3.7), and `DW_OP_aspace_deref*` (see Section 3.13).
 
 In Section 3.1 DWARF Expression Evaluation Context in point 5 Current
 thread change the second paragraph to:
