@@ -211,38 +211,78 @@ paragraph and replace it with the following paragraphs:
 > `DW_ASPACE_default` identifies the default address space; other
 > values and their uses are assigned by the ABI committee for the
 > target.
-> 
+>
 > Address space identifiers are also used by the DWARF
 > operations `DW_OP_mem` (see Section 3.7), `DW_OP_aspace_bregx` (see
 > Section 3.7), and `DW_OP_aspace_deref*` (see Section 3.13).
 
-In Section 3.1 DWARF Expression Evaluation Context in point 5 Current
-thread change the second paragraph to:
+In Section 3.1 DWARF Expression Evaluation Context
 
->    The current thread identifies a current thread of execution. By
+In point 5 "Current thread", change text following that point to:
+
+>    *Many programming environments support the concept of independent
+>    threads of execution, where the process and its address space are
+>    shared among the threads, but each thread has its own stack,
+>    program counter, and possibly its own block of memory for
+>    thread-local storage (TLS). These threads may be implemented in
+>    user-space or with kernel threads, or by a combination of the
+>    two.*
+>
+>    The current thread identifies a current thread of execution. When
+>    debugging a multi-threaded program, the current thread may be
+>    selected by a user command that focuses on a specific thread, or
+>    it may be selected automatically when the running thread stops at
+>    a breakpoint.
+>
+>    *If there is no current process (or an image of a process, as
+>    from a core file), there is no current thread.*
+>
+>    On a multi-processor target a current thread is required to
+>    identify which instance of a register any register operation is
+>    referring to.
+>
+>    *The current thread identifies a current thread of execution. By
 >    extension, the current thread is also used by consumers to
 >    identify which processor within a multi-processor target, a
 >    thread is executing on. The processor that a thread is executing
 >    on determines which instance of a register to refer to, and when
 >    a target has address spaces that are local to a particular
 >    processor, it defines which instance of that address space it
->    should refer to.
->
->    When debugging a multi-threaded program, the current thread may
->    be selected by a user command that focuses on a specific thread,
->    or it may be selected automatically when the running thread stops
->    at a breakpoint.
-
-Then after the last paragraph add:
-
->    On a multi-processor target a current thread is required to
->    identify which instance of a register any register operation is
->    referring to.
+>    should refer to.*
 >
 >    On multi-processor targets that support address spaces that are
->    local to a processor, a thread, or a lane, a current thread
->    and/or a current lane may be required to identify the instance of
->    the address space that a memory operation refers to.
+>    local to a processor or a thread, a current thread may be
+>    required to identify the instance of the address space that a
+>    memory operation refers to.
+>
+>    *When debugging a multi-threaded program, the current thread may
+>    be selected by a user command that focuses on a specific thread,
+>    or it may be selected automatically when the running thread stops
+>    at a breakpoint.*
+>
+>    A current thread is required for the DW_OP_form_tls_location
+>    operation (see Section 3.2 on page 49) which provides access to
+>    thread-local storage.
+
+In point 7, "Current lane", replace the third paragraph with:
+
+>    The current lane is a SIMD/SIMT lane identifier. This applies to
+>    source languages with scalar code that is vectorized by the
+>    compiler using a SIMD/SIMT execution model. These implementations
+>    map vectorized operations to SIMD/SIMT lanes of execution (see
+>    Section 4.3.5.4 on page 102).
+>
+>    On SIMD/SIMT targets that support address spaces that are local
+>    to a particular lane, a current lane may be required to identify
+>    the instance of the address space that a memory operation refers
+>    to.
+>
+>    *When debugging a SIMD/SIMT program, the current lane is
+>    typically selected by a user command that focuses on a specific
+>    lane.*
+>
+>    *If there is no current process (or an image of a process, as
+>    from a core file), there is no current lane.*
 
 In Section 3.7 "Memory Locations", add the following at the end of the
 first paragraph:
