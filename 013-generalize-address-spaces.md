@@ -259,7 +259,7 @@ the paragraph describing implicit conversion just before Section 3.1.
 >    for backward compatability with previous versions of DWARF where
 >    it was common to treat a VALUE as a memory address. Since this
 >    conversion between a LOCATION and a VALUE assumes the location is
->    a memory location and strips stips the memory location of of its
+>    a memory location and strips the memory location of its
 >    qualifying address space, this implicit conversion is limited to
 >    memory locations in the default address space.*
 
