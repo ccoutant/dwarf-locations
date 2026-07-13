@@ -238,7 +238,19 @@ Table 2.2: Attribute names
 | `DW_AT_address_space` | Architecture specific address space (see 2.12 "Address Spaces") |
 
 In Section 2.11 "Address Classes and Address Spaces", remove the last
-paragraph and replace it with the following paragraphs:
+three paragraphs and replace them with the following paragraphs:
+
+> Any debugging information entry representing a pointer or reference
+> type may have a `DW_AT_address_class` attribute, whose value is an
+> integer constant. The set of permissible values is specific to each
+> target architecture. The value `DW_ACLASS_default`, however, is common to
+> all encodings, and means that no address class has been specified.
+>
+> *Address classes are used when the consumer needs to use a
+> non-default instruction when applying the value of the location. For
+> example: an Address class can also be used in the case of tagged
+> pointer where a a special HW instruction must be used to access the
+> address within a location.*
 
 > Any debugging information entry representing a pointer or
 > reference type may also have a `DW_AT_address_space` attribute,
@@ -247,6 +259,27 @@ paragraph and replace it with the following paragraphs:
 > `DW_ASPACE_default` identifies the default address space; other
 > values and their uses are assigned by the ABI committee for the
 > target.
+>
+> On multi-processor targets that support address spaces that are
+> local to a processor or a thread, a current thread may be required
+> to identify the instance of the address space that a memory
+> operation refers to. Likewise on vectorized processors with address
+> spaces that are local to a lane, a current lane may be required to
+> identify the instance of the address space that a memory operation
+> refers to.
+>
+> *Address spaces are most generally used when the addressing is
+> distinct from the default address space and the value is not
+> sufficient for the consumer to unambigiously identify the location
+> of the object. They are often used when the memory has some
+> contextual locality. For example, every compute unit within a GPU
+> may have its own local storage. A consumer may need to refer the
+> current thread or lane to identify which instance of the address
+> space to refer to.*
+
+> Address spaces are not guaranteed to be independent of one another;
+> for example, one address space might provide an alternate addressing
+> scheme for the same memory as another address space.
 >
 > Address space identifiers are also used by the DWARF
 > operations `DW_OP_mem` (see Section 3.7), `DW_OP_aspace_bregx` (see
