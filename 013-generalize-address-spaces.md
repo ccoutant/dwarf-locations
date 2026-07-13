@@ -248,9 +248,9 @@ three paragraphs and replace them with the following paragraphs:
 >
 > *Address classes are used when the consumer needs to use a
 > non-default instruction when applying the value of the location. For
-> example: an Address class can also be used in the case of tagged
-> pointer where a a special HW instruction must be used to access the
-> address within a location.*
+> example: an Address class can be used in the case of tagged pointer
+> where a a special HW instruction must be used to access the address
+> within a location.*
 
 > Any debugging information entry representing a pointer or
 > reference type may also have a `DW_AT_address_space` attribute,
