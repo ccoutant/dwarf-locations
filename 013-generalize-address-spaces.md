@@ -146,9 +146,45 @@ and so it was determined that it was best to make this a stack
 parameter as well.
 
 Implicit conversion back to a value is limited only to the default
-address space to maintain compatibility with DWARF 5. This approach
-of extending memory location to support address spaces, allows all
-existing DWARF 5 expressions to have the identical semantics.
+address space to maintain compatibility with DWARF 5. A very common
+idiom in previous versions of DWARF would be:
+
+    DW_OP_addr 0xf00
+    DW_OP_lit1
+    DW_OP_plus
+
+In previous versions DWARF, `DW_OP_addr` pushed a generic-type stack
+value. In DWARF 6, `DW_OP_addr` pushes a location. `DW_OP_plus` pops
+two VALUEs from the stack.  If we didn't have the backward
+compatability rule, this common DWARF expression would be invalid in
+DWARF 6.
+
+A similar problem arises with `DW_OP_push_object_address`:
+
+    DW_OP_push_object_address  # pushes generic-type value in DWARF 5
+    DW_OP_lit1
+    DW_OP_plus
+
+In DWARF 6:
+
+    DW_OP_push_object_location # pushes location in DWARF 6
+    DW_OP_lit1
+    DW_OP_plus
+
+Still works, provided the object location is global memory, which was
+the only case possible in DWARF 5. This approach of extending memory
+location to support address spaces, allows all existing DWARF 5
+expressions to have the identical semantics. However the correct DWARF
+6 expression that does not rely on implicit conversion would be:
+
+    DW_OP_push_object_location
+    DW_OP_lit1
+    DW_OP_offset
+
+Unlike `DW_OP_plus` which pops two VALUEs, `DW_OP_offset` pops a
+LOCATION and a VALUE. Therefore the expression still works even if the
+object location is another address space rather than in global memory
+or even if the object's location is not in memory at all.
 
 Having the address space included as part of the memory location as
 opposed to being separate value, fixes one of the problems with
@@ -215,6 +251,17 @@ paragraph and replace it with the following paragraphs:
 > Address space identifiers are also used by the DWARF
 > operations `DW_OP_mem` (see Section 3.7), `DW_OP_aspace_bregx` (see
 > Section 3.7), and `DW_OP_aspace_deref*` (see Section 3.13).
+
+In Section 3 DWARF Expressions insert the following paragraph after
+the paragraph describing implicit conversion just before Section 3.1.
+
+>    *Implicit conversion between a location and a value is provided
+>    for backward compatability with previous versions of DWARF where
+>    it was common to treat a VALUE as a memory address. Since this
+>    conversion between a LOCATION and a VALUE assumes the location is
+>    a memory location and strips stips the memory location of of its
+>    qualifying address space, this implicit conversion is limited to
+>    memory locations in the default address space.*
 
 In Section 3.1 DWARF Expression Evaluation Context
 
