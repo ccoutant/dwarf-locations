@@ -275,8 +275,7 @@ Revise the rest of 2.11 as follows:
 > space. <del>The size of any other address space is not necessarily the
 > same as the size of the default address space.</del>*
 
-> <ins>*Address spaces are used when the addressing is independent or
-> distinct and when the value of the address is not sufficient to
+> <ins>*Address spaces are used when the value of the address is not sufficient to
 > unambiguously identify the storage being referenced. They are often
 > used when the memory has some contextual locality.
 > For example, every compute unit within a GPU may have its own local
