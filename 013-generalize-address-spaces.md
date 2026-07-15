@@ -237,8 +237,54 @@ Table 2.2: Attribute names
 | :---- | :---- |
 | `DW_AT_address_space` | Architecture specific address space (see 2.12 "Address Spaces") |
 
-In Section 2.11 "Address Classes and Address Spaces", remove the last
-three paragraphs and replace them with the following paragraphs:
+In Section 2.11 "Address Classes and Address Spaces"
+
+Add an additional point to the list of "Examples of alternate address
+classes"
+
+> Tagged Pointers, where unused bits are repurposed to store other
+> infromation.
+
+Replace the paragraph:
+
+> Some systems may also support more than one memory address
+> space. There is always a default address space, and the default size
+> of a pointer corresponds to the size of the default address
+> space. The size of any other address space is not necessarily the
+> same as the size of the default address space.
+
+With:
+
+> Some systems may also support more than one memory address
+> space. There is always a default address space, and the default size
+> of a pointer corresponds to the size of the default address
+> space. 
+>
+> Address spaces are used when the addressing is independent or
+> distinct and when the value of the address is not sufficient to
+> unambiguously identify the storage being referenced. They are often
+> used when the memory has some contextual locality. 
+>
+> *For example, every compute unit within a GPU may have its own local
+> storage. A consumer may need to refer the current thread or lane to
+> identify which instance of the address space to refer to.*
+>
+> The size of any alternative address space is not necessarily the
+> same as the size of the default address space. Consequently, the
+> size of a pointer into an alternative address space is not
+> necessarily the same size as a pointer into the target's default
+> address space.
+>
+> Even though the addressing is independent or distinct, the storage
+> referred to by different address spaces are not guaranteed to be
+> independent of one another. 
+>
+> *For example, one address space might provide an alternate
+> addressing scheme for the same storage as another address space.*
+>
+
+Remove the last three paragraphs and replace them with the following
+paragraphs:
 
 > Any debugging information entry representing a pointer or reference
 > type may have a `DW_AT_address_class` attribute, whose value is an
@@ -246,12 +292,6 @@ three paragraphs and replace them with the following paragraphs:
 > target architecture. The value `DW_ACLASS_default`, however, is common to
 > all encodings, and means that no address class has been specified.
 >
-> *Address classes are used when the consumer needs to use a
-> non-default instruction when applying the value of the location. For
-> example: an Address class can be used in the case of tagged pointer
-> where a a special HW instruction must be used to access the address
-> within a location.*
-
 > Any debugging information entry representing a pointer or
 > reference type may also have a `DW_AT_address_space` attribute,
 > whose value is a non-negative integer constant which identifies
@@ -267,19 +307,6 @@ three paragraphs and replace them with the following paragraphs:
 > spaces that are local to a lane, a current lane may be required to
 > identify the instance of the address space that a memory operation
 > refers to.
->
-> *Address spaces are most generally used when the addressing is
-> distinct from the default address space and the value is not
-> sufficient for the consumer to unambigiously identify the location
-> of the object. They are often used when the memory has some
-> contextual locality. For example, every compute unit within a GPU
-> may have its own local storage. A consumer may need to refer the
-> current thread or lane to identify which instance of the address
-> space to refer to.*
-
-> Address spaces are not guaranteed to be independent of one another;
-> for example, one address space might provide an alternate addressing
-> scheme for the same memory as another address space.
 >
 > Address space identifiers are also used by the DWARF
 > operations `DW_OP_mem` (see Section 3.7), `DW_OP_aspace_bregx` (see
