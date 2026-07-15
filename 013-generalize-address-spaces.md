@@ -288,11 +288,10 @@ Revise the rest of 2.11 as follows:
 > necessarily the same size as a pointer into the target's default
 > address space.*</ins>
 >
-> <ins>*Even though the addressing is independent or distinct, the storage
-> referred to by different address spaces are not guaranteed to be
-> independent of one another.
-> For example, one address space might provide an alternate
-> addressing scheme for the same storage as another address space.*</ins>
+> <ins>*The storage referred to by different address spaces are
+> not guaranteed to be independent of one another. For example,
+> one address space might provide an alternate addressing scheme
+> for the same storage as another address space.*</ins>
 >
 > *Examples of alternate address spaces include:*
 >
