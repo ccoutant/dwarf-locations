@@ -258,12 +258,12 @@ With:
 > Some systems may also support more than one memory address
 > space. There is always a default address space, and the default size
 > of a pointer corresponds to the size of the default address
-> space. 
+> space.
 >
 > Address spaces are used when the addressing is independent or
 > distinct and when the value of the address is not sufficient to
 > unambiguously identify the storage being referenced. They are often
-> used when the memory has some contextual locality. 
+> used when the memory has some contextual locality.
 >
 > *For example, every compute unit within a GPU may have its own local
 > storage. A consumer may need to refer the current thread or lane to
@@ -277,7 +277,7 @@ With:
 >
 > Even though the addressing is independent or distinct, the storage
 > referred to by different address spaces are not guaranteed to be
-> independent of one another. 
+> independent of one another.
 >
 > *For example, one address space might provide an alternate
 > addressing scheme for the same storage as another address space.*
