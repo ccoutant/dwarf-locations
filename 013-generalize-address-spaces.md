@@ -241,39 +241,39 @@ In Section 2.11 "Address Classes and Address Spaces",
 add an additional point to the list of "Examples of alternate address
 classes":
 
-> Some systems support different classes of addresses. The address
+> *Some systems support different classes of addresses. The address
 > class may affect the representation of a pointer and how it is
 > dereferenced. Normally, a pointer is represented as an address in
 > the default memory address space, where the memory can be
 > accessed by standard load and store instruction. On some systems
 > with segmented memory models or global virtual address spaces, an
 > alternative pointer representation may consist of a separate
-> segment identifier and an offset within that segment.
+> segment identifier and an offset within that segment.*
 >
-> Examples of alternate address classes include:
+> *Examples of alternate address classes include:*
 >
-> - x86 “far” pointers, which consist of a 16-bit segment identifier
+> - *x86 “far” pointers, which consist of a 16-bit segment identifier
 > and either a 16- or 32-bit offset within the segment.
 > Dereferencing a far pointer requires moving the segment
 > identifier to a free segment register and using a segment
-> override for the memory access.
+> override for the memory access.*
 >
-> - PA-RISC “long” pointers, which consist of a 32-bit segment
+> - *PA-RISC “long” pointers, which consist of a 32-bit segment
 > (termed “space” in PA-RISC documentation) identifier and a 32-bit
 > offset. Dereferencing a long pointer requires moving the space
 > identifier to a free space register and using the explicit space
-> register number on the load or store instruction.
+> register number on the load or store instruction.*
 >
-> - <ins>Tagged Pointers, where unused bits are repurposed to store other
-> information.</ins>
+> - <ins>*Tagged Pointers, where unused bits are repurposed to store other
+> information.*</ins>
 
 Revise the rest of 2.11 as follows:
 
-> Some systems may also support more than one memory address
+> *Some systems may also support more than one memory address
 > space. There is always a default address space, and the default size
 > of a pointer corresponds to the size of the default address
 > space. <del>The size of any other address space is not necessarily the
-> same as the size of the default address space.</del>
+> same as the size of the default address space.</del>*
 
 > <ins>*Address spaces are used when the addressing is independent or
 > distinct and when the value of the address is not sufficient to
