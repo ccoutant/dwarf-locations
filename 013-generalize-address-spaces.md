@@ -237,68 +237,95 @@ Table 2.2: Attribute names
 | :---- | :---- |
 | `DW_AT_address_space` | Architecture specific address space (see 2.12 "Address Spaces") |
 
-In Section 2.11 "Address Classes and Address Spaces"
+In Section 2.11 "Address Classes and Address Spaces",
+add an additional point to the list of "Examples of alternate address
+classes":
 
-Add an additional point to the list of "Examples of alternate address
-classes"
-
-> Tagged Pointers, where unused bits are repurposed to store other
-> infromation.
-
-Replace the paragraph:
-
-> Some systems may also support more than one memory address
-> space. There is always a default address space, and the default size
-> of a pointer corresponds to the size of the default address
-> space. The size of any other address space is not necessarily the
-> same as the size of the default address space.
-
-With:
-
-> Some systems may also support more than one memory address
-> space. There is always a default address space, and the default size
-> of a pointer corresponds to the size of the default address
-> space.
+> Some systems support different classes of addresses. The address
+> class may affect the representation of a pointer and how it is
+> dereferenced. Normally, a pointer is represented as an address in
+> the default memory address space, where the memory can be
+> accessed by standard load and store instruction. On some systems
+> with segmented memory models or global virtual address spaces, an
+> alternative pointer representation may consist of a separate
+> segment identifier and an offset within that segment.
 >
-> Address spaces are used when the addressing is independent or
+> Examples of alternate address classes include:
+>
+> x86 “far” pointers, which consist of a 16-bit segment identifier
+> and either a 16- or 32-bit offset within the segment.
+> Dereferencing a far pointer requires moving the segment
+> identifier to a free segment register and using a segment
+> override for the memory access.
+>
+> PA-RISC “long” pointers, which consist of a 32-bit segment
+> (termed “space” in PA-RISC documentation) identifier and a 32-bit
+> offset. Dereferencing a long pointer requires moving the space
+> identifier to a free space register and using the explicit space
+> register number on the load or store instruction.
+>
+> <ins>Tagged Pointers, where unused bits are repurposed to store other
+> information.</ins>
+
+Revise the rest of 2.11 as follows:
+
+> Some systems may also support more than one memory address
+> space. There is always a default address space, and the default size
+> of a pointer corresponds to the size of the default address
+> space. <del>The size of any other address space is not necessarily the
+> same as the size of the default address space.</del>
+
+> <ins>*Address spaces are used when the addressing is independent or
 > distinct and when the value of the address is not sufficient to
 > unambiguously identify the storage being referenced. They are often
 > used when the memory has some contextual locality.
->
-> *For example, every compute unit within a GPU may have its own local
+> For example, every compute unit within a GPU may have its own local
 > storage. A consumer may need to refer the current thread or lane to
-> identify which instance of the address space to refer to.*
+> identify which instance of the address space to refer to.*</ins>
 >
-> The size of any alternative address space is not necessarily the
+> <ins>*The size of any alternative address space is not necessarily the
 > same as the size of the default address space. Consequently, the
 > size of a pointer into an alternative address space is not
 > necessarily the same size as a pointer into the target's default
-> address space.
+> address space.*</ins>
 >
-> Even though the addressing is independent or distinct, the storage
+> <ins>*Even though the addressing is independent or distinct, the storage
 > referred to by different address spaces are not guaranteed to be
 > independent of one another.
+> For example, one address space might provide an alternate
+> addressing scheme for the same storage as another address space.*</ins>
 >
-> *For example, one address space might provide an alternate
-> addressing scheme for the same storage as another address space.*
+> *Examples of alternate address spaces include:*
 >
-
-Remove the last three paragraphs and replace them with the following
-paragraphs:
-
-> Any debugging information entry representing a pointer or reference
+> - *”Harvard” architectures with separate code and data spaces.*
+>
+> - *Embedded systems with a separate address space for flash memory.*
+>
+> - *Heterogeneous systems with local memory spaces for each GPU,
+> or where large register files are mapped to their own address
+> space.*
+>
+> Any debugging information entry representing a pointer or
+> reference type may have a DW_AT_address_class attribute, whose
+> value is an integer constant. The set of permissible values is
+> specific to each target architecture. The value <del>DW_ADDR_none</del>
+> <ins>DW_ACLASS_default</ins>, however, is common to all encodings, and means
+> that no address class has been specified (that is, the pointer or
+> reference type uses the standard encoding of an address on the
+> target architecture).
+>
+> <ins>Any debugging information entry representing a pointer or reference
 > type may have a `DW_AT_address_class` attribute, whose value is an
 > integer constant. The set of permissible values is specific to each
 > target architecture. The value `DW_ACLASS_default`, however, is common to
-> all encodings, and means that no address class has been specified.
+> all encodings, and means that no address class has been specified.</ins>
 >
-> Any debugging information entry representing a pointer or
+> <ins>Any debugging information entry representing a pointer or
 > reference type may also have a `DW_AT_address_space` attribute,
-> whose value is a non-negative integer constant which identifies
+> whose value is a non-negative integer constant that identifies
 > the address space to which the pointer refers. The value
 > `DW_ASPACE_default` identifies the default address space; other
-> values and their uses are assigned by the ABI committee for the
-> target.
+> values and their uses are defined by the ABI.</ins>
 >
 > On multi-processor targets that support address spaces that are
 > local to a processor or a thread, a current thread may be required
@@ -308,9 +335,10 @@ paragraphs:
 > identify the instance of the address space that a memory operation
 > refers to.
 >
-> Address space identifiers are also used by the DWARF
-> operations `DW_OP_mem` (see Section 3.7), `DW_OP_aspace_bregx` (see
-> Section 3.7), and `DW_OP_aspace_deref*` (see Section 3.13).
+> Address space identifiers are <ins>also</ins> used by the
+> <del>DW_OP_xderef* operations</del>
+> <ins>DWARF operations `DW_OP_mem` (see Section 3.7), `DW_OP_aspace_bregx` (see
+> Section 3.7), and `DW_OP_aspace_deref*`</ins> (see Section 3.13).
 
 In Section 3 DWARF Expressions insert the following paragraph after
 the paragraph describing implicit conversion just before Section 3.1.
@@ -323,9 +351,8 @@ the paragraph describing implicit conversion just before Section 3.1.
 >    qualifying address space, this implicit conversion is limited to
 >    memory locations in the default address space.*
 
-In Section 3.1 DWARF Expression Evaluation Context
-
-In point 5 "Current thread", change text following that point to:
+In Section 3.1 DWARF Expression Evaluation Context,
+change point 5 "Current thread" as follows:
 
 >    *Many programming environments support the concept of independent
 >    threads of execution, where the process and its address space are
@@ -344,34 +371,34 @@ In point 5 "Current thread", change text following that point to:
 >    *If there is no current process (or an image of a process, as
 >    from a core file), there is no current thread.*
 >
->    On a multi-processor target a current thread is required to
+>    <ins>On a multi-processor target a current thread is required to
 >    identify which instance of a register any register operation is
->    referring to.
+>    referring to.</ins>
 >
->    *The current thread identifies a current thread of execution. By
+>    <ins>*The current thread identifies a current thread of execution. By
 >    extension, the current thread is also used by consumers to
 >    identify which processor within a multi-processor target, a
 >    thread is executing on. The processor that a thread is executing
 >    on determines which instance of a register to refer to, and when
 >    a target has address spaces that are local to a particular
 >    processor, it defines which instance of that address space it
->    should refer to.*
+>    should refer to.*</ins>
 >
->    On multi-processor targets that support address spaces that are
+>    <ins>On multi-processor targets that support address spaces that are
 >    local to a processor or a thread, a current thread may be
 >    required to identify the instance of the address space that a
->    memory operation refers to.
+>    memory operation refers to.</ins>
 >
->    *When debugging a multi-threaded program, the current thread may
+>    <ins>*When debugging a multi-threaded program, the current thread may
 >    be selected by a user command that focuses on a specific thread,
 >    or it may be selected automatically when the running thread stops
->    at a breakpoint.*
+>    at a breakpoint.*</ins>
 >
 >    A current thread is required for the DW_OP_form_tls_location
 >    operation (see Section 3.2 on page 49) which provides access to
 >    thread-local storage.
 
-In point 7, "Current lane", replace the third paragraph with:
+In point 7, "Current lane", replace the third paragraph as follows:
 
 >    The current lane is a SIMD/SIMT lane identifier. This applies to
 >    source languages with scalar code that is vectorized by the
@@ -379,24 +406,31 @@ In point 7, "Current lane", replace the third paragraph with:
 >    map vectorized operations to SIMD/SIMT lanes of execution (see
 >    Section 4.3.5.4 on page 102).
 >
->    On SIMD/SIMT targets that support address spaces that are local
+>    <ins>On SIMD/SIMT targets that support address spaces that are local
 >    to a particular lane, a current lane may be required to identify
 >    the instance of the address space that a memory operation refers
->    to.
+>    to.</ins>
 >
+>    <ins>[Change to non-normative]</ins>
 >    *When debugging a SIMD/SIMT program, the current lane is
 >    typically selected by a user command that focuses on a specific
 >    lane.*
->
->    *If there is no current process (or an image of a process, as
->    from a core file), there is no current lane.*
+
+And add the following paragraph:
+
+>    <ins>If there is no current process (or an image of a process, as
+>    from a core file), there is no current lane.</ins>
 
 In Section 3.7 "Memory Locations", add the following at the end of the
 first paragraph:
 
->    If not specified, the storage associated with a memory location
+>    A memory location represents the location of a piece or all of an
+>    object or other entity in memory. On architectures that support
+>    multiple address spaces, a memory location identifies storage
+>    associated with the address space.
+>    <ins>If not specified, the storage associated with a memory location
 >    defaults to `DW_ASPACE_default`, the name for the default
->    address space.
+>    address space.</ins>
 
 After the definition of `DW_OP_addrx` add:
 
@@ -407,7 +441,7 @@ After the definition of `DW_OP_addrx` add:
 >        `DW_OP_mem` pops top two stack entries, an address A and an
 >    address space identifier ASPACE. The address A must be an
 >    integral value that represents a valid offset into the address
->    space ASPACE. The address space ASPACE must be an integral type
+>    space ASPACE. The address space ASPACE must be an integral
 >    value that represents a target architecture specific address
 >    space identifier.
 >
@@ -585,5 +619,10 @@ Added text to Section 3.1 DWARF Expression Evaluation Context, "current thread".
 Rewrote description of `DW_OP_mem`; removed discussion of context and truncation.
 Added new descriptions for `DW_OP_aspace_deref*`.
 Shortened new text in Section 6.3 Type Modifier Entries.
+
+2026-07-02: [Revised][diff4] to address discussion in 6/22/26 meeting.
+
+2026-07-15: [Revised][diff5] to address discussion in 7/6/26 meeting
+and subsequent email discussions.
 
 [260617.1]: https://dwarfstd.org/issues/260617.1.html
