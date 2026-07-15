@@ -252,19 +252,19 @@ classes":
 >
 > Examples of alternate address classes include:
 >
-> x86 “far” pointers, which consist of a 16-bit segment identifier
+> - x86 “far” pointers, which consist of a 16-bit segment identifier
 > and either a 16- or 32-bit offset within the segment.
 > Dereferencing a far pointer requires moving the segment
 > identifier to a free segment register and using a segment
 > override for the memory access.
 >
-> PA-RISC “long” pointers, which consist of a 32-bit segment
+> - PA-RISC “long” pointers, which consist of a 32-bit segment
 > (termed “space” in PA-RISC documentation) identifier and a 32-bit
 > offset. Dereferencing a long pointer requires moving the space
 > identifier to a free space register and using the explicit space
 > register number on the load or store instruction.
 >
-> <ins>Tagged Pointers, where unused bits are repurposed to store other
+> - <ins>Tagged Pointers, where unused bits are repurposed to store other
 > information.</ins>
 
 Revise the rest of 2.11 as follows:
@@ -354,6 +354,8 @@ the paragraph describing implicit conversion just before Section 3.1.
 In Section 3.1 DWARF Expression Evaluation Context,
 change point 5 "Current thread" as follows:
 
+> 5\. Current thread
+>
 >    *Many programming environments support the concept of independent
 >    threads of execution, where the process and its address space are
 >    shared among the threads, but each thread has its own stack,
@@ -368,8 +370,9 @@ change point 5 "Current thread" as follows:
 >    it may be selected automatically when the running thread stops at
 >    a breakpoint.
 >
->    *If there is no current process (or an image of a process, as
->    from a core file), there is no current thread.*
+>    <ins>[Make this normative]</ins>
+>    If there is no current process (or an image of a process, as
+>    from a core file), there is no current thread.
 >
 >    <ins>On a multi-processor target a current thread is required to
 >    identify which instance of a register any register operation is
