@@ -146,9 +146,45 @@ and so it was determined that it was best to make this a stack
 parameter as well.
 
 Implicit conversion back to a value is limited only to the default
-address space to maintain compatibility with DWARF 5. This approach
-of extending memory location to support address spaces, allows all
-existing DWARF 5 expressions to have the identical semantics.
+address space to maintain compatibility with DWARF 5. A very common
+idiom in previous versions of DWARF would be:
+
+    DW_OP_addr 0xf00
+    DW_OP_lit1
+    DW_OP_plus
+
+In previous versions DWARF, `DW_OP_addr` pushed a generic-type stack
+value. In DWARF 6, `DW_OP_addr` pushes a location. `DW_OP_plus` pops
+two VALUEs from the stack.  If we didn't have the backward
+compatability rule, this common DWARF expression would be invalid in
+DWARF 6.
+
+A similar problem arises with `DW_OP_push_object_address`:
+
+    DW_OP_push_object_address  # pushes generic-type value in DWARF 5
+    DW_OP_lit1
+    DW_OP_plus
+
+In DWARF 6:
+
+    DW_OP_push_object_location # pushes location in DWARF 6
+    DW_OP_lit1
+    DW_OP_plus
+
+Still works, provided the object location is global memory, which was
+the only case possible in DWARF 5. This approach of extending memory
+location to support address spaces, allows all existing DWARF 5
+expressions to have the identical semantics. However the correct DWARF
+6 expression that does not rely on implicit conversion would be:
+
+    DW_OP_push_object_location
+    DW_OP_lit1
+    DW_OP_offset
+
+Unlike `DW_OP_plus` which pops two VALUEs, `DW_OP_offset` pops a
+LOCATION and a VALUE. Therefore the expression still works even if the
+object location is another address space rather than in global memory
+or even if the object's location is not in memory at all.
 
 Having the address space included as part of the memory location as
 opposed to being separate value, fixes one of the problems with
@@ -201,9 +237,61 @@ Table 2.2: Attribute names
 | :---- | :---- |
 | `DW_AT_address_space` | Architecture specific address space (see 2.12 "Address Spaces") |
 
-In Section 2.11 "Address Classes and Address Spaces", remove the last
-paragraph and replace it with the following paragraphs:
+In Section 2.11 "Address Classes and Address Spaces"
 
+Add an additional point to the list of "Examples of alternate address
+classes"
+
+> Tagged Pointers, where unused bits are repurposed to store other
+> infromation.
+
+Replace the paragraph:
+
+> Some systems may also support more than one memory address
+> space. There is always a default address space, and the default size
+> of a pointer corresponds to the size of the default address
+> space. The size of any other address space is not necessarily the
+> same as the size of the default address space.
+
+With:
+
+> Some systems may also support more than one memory address
+> space. There is always a default address space, and the default size
+> of a pointer corresponds to the size of the default address
+> space.
+>
+> Address spaces are used when the addressing is independent or
+> distinct and when the value of the address is not sufficient to
+> unambiguously identify the storage being referenced. They are often
+> used when the memory has some contextual locality.
+>
+> *For example, every compute unit within a GPU may have its own local
+> storage. A consumer may need to refer the current thread or lane to
+> identify which instance of the address space to refer to.*
+>
+> The size of any alternative address space is not necessarily the
+> same as the size of the default address space. Consequently, the
+> size of a pointer into an alternative address space is not
+> necessarily the same size as a pointer into the target's default
+> address space.
+>
+> Even though the addressing is independent or distinct, the storage
+> referred to by different address spaces are not guaranteed to be
+> independent of one another.
+>
+> *For example, one address space might provide an alternate
+> addressing scheme for the same storage as another address space.*
+>
+
+Remove the last three paragraphs and replace them with the following
+paragraphs:
+
+> Any debugging information entry representing a pointer or reference
+> type may have a `DW_AT_address_class` attribute, whose value is an
+> integer constant. The set of permissible values is specific to each
+> target architecture. The value `DW_ACLASS_default`, however, is common to
+> all encodings, and means that no address class has been specified.
+>
 > Any debugging information entry representing a pointer or
 > reference type may also have a `DW_AT_address_space` attribute,
 > whose value is a non-negative integer constant which identifies
@@ -211,38 +299,97 @@ paragraph and replace it with the following paragraphs:
 > `DW_ASPACE_default` identifies the default address space; other
 > values and their uses are assigned by the ABI committee for the
 > target.
-> 
+>
+> On multi-processor targets that support address spaces that are
+> local to a processor or a thread, a current thread may be required
+> to identify the instance of the address space that a memory
+> operation refers to. Likewise on vectorized processors with address
+> spaces that are local to a lane, a current lane may be required to
+> identify the instance of the address space that a memory operation
+> refers to.
+>
 > Address space identifiers are also used by the DWARF
 > operations `DW_OP_mem` (see Section 3.7), `DW_OP_aspace_bregx` (see
 > Section 3.7), and `DW_OP_aspace_deref*` (see Section 3.13).
 
-In Section 3.1 DWARF Expression Evaluation Context in point 5 Current
-thread change the second paragraph to:
+In Section 3 DWARF Expressions insert the following paragraph after
+the paragraph describing implicit conversion just before Section 3.1.
 
->    The current thread identifies a current thread of execution. By
+>    *Implicit conversion between a location and a value is provided
+>    for backward compatability with previous versions of DWARF where
+>    it was common to treat a VALUE as a memory address. Since this
+>    conversion between a LOCATION and a VALUE assumes the location is
+>    a memory location and strips the memory location of its
+>    qualifying address space, this implicit conversion is limited to
+>    memory locations in the default address space.*
+
+In Section 3.1 DWARF Expression Evaluation Context
+
+In point 5 "Current thread", change text following that point to:
+
+>    *Many programming environments support the concept of independent
+>    threads of execution, where the process and its address space are
+>    shared among the threads, but each thread has its own stack,
+>    program counter, and possibly its own block of memory for
+>    thread-local storage (TLS). These threads may be implemented in
+>    user-space or with kernel threads, or by a combination of the
+>    two.*
+>
+>    The current thread identifies a current thread of execution. When
+>    debugging a multi-threaded program, the current thread may be
+>    selected by a user command that focuses on a specific thread, or
+>    it may be selected automatically when the running thread stops at
+>    a breakpoint.
+>
+>    *If there is no current process (or an image of a process, as
+>    from a core file), there is no current thread.*
+>
+>    On a multi-processor target a current thread is required to
+>    identify which instance of a register any register operation is
+>    referring to.
+>
+>    *The current thread identifies a current thread of execution. By
 >    extension, the current thread is also used by consumers to
 >    identify which processor within a multi-processor target, a
 >    thread is executing on. The processor that a thread is executing
 >    on determines which instance of a register to refer to, and when
 >    a target has address spaces that are local to a particular
 >    processor, it defines which instance of that address space it
->    should refer to.
->
->    When debugging a multi-threaded program, the current thread may
->    be selected by a user command that focuses on a specific thread,
->    or it may be selected automatically when the running thread stops
->    at a breakpoint.
-
-Then after the last paragraph add:
-
->    On a multi-processor target a current thread is required to
->    identify which instance of a register any register operation is
->    referring to.
+>    should refer to.*
 >
 >    On multi-processor targets that support address spaces that are
->    local to a processor, a thread, or a lane, a current thread
->    and/or a current lane may be required to identify the instance of
->    the address space that a memory operation refers to.
+>    local to a processor or a thread, a current thread may be
+>    required to identify the instance of the address space that a
+>    memory operation refers to.
+>
+>    *When debugging a multi-threaded program, the current thread may
+>    be selected by a user command that focuses on a specific thread,
+>    or it may be selected automatically when the running thread stops
+>    at a breakpoint.*
+>
+>    A current thread is required for the DW_OP_form_tls_location
+>    operation (see Section 3.2 on page 49) which provides access to
+>    thread-local storage.
+
+In point 7, "Current lane", replace the third paragraph with:
+
+>    The current lane is a SIMD/SIMT lane identifier. This applies to
+>    source languages with scalar code that is vectorized by the
+>    compiler using a SIMD/SIMT execution model. These implementations
+>    map vectorized operations to SIMD/SIMT lanes of execution (see
+>    Section 4.3.5.4 on page 102).
+>
+>    On SIMD/SIMT targets that support address spaces that are local
+>    to a particular lane, a current lane may be required to identify
+>    the instance of the address space that a memory operation refers
+>    to.
+>
+>    *When debugging a SIMD/SIMT program, the current lane is
+>    typically selected by a user command that focuses on a specific
+>    lane.*
+>
+>    *If there is no current process (or an image of a process, as
+>    from a core file), there is no current lane.*
 
 In Section 3.7 "Memory Locations", add the following at the end of the
 first paragraph:
