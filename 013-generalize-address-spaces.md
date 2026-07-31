@@ -237,6 +237,28 @@ Table 2.2: Attribute names
 | :---- | :---- |
 | `DW_AT_address_space` | Architecture specific address space (see 2.12 "Address Spaces") |
 
+In Section 2.5 "Values and Locations" when describing memory locations:
+
+> Memory. Corresponds to the target architecture memory address
+> spaces. <ins>Each target architecture defines how to map an address
+> value to a DWARF memory storage offset.</ins> There is always a
+> default address space, and the target architecture may define
+> additional address spaces. Each memory storage block is the size of
+> the corresponding address space.  An address is the offset of an
+> addressable unit (byte or word) in a memory address space.
+>
+> [move from below] *The offset can be thought of as a byte or word
+> address combined with a bit offset within the byte or word.*
+>
+> [make non-normative] *On some systems, an address may be signed, and
+> a negative address is converted to a positive byte or word offset
+> formed by biasing it by the size of the address space (for example,
+> in a 232 byte address space, using two’s complement arithmetic, the
+> address -0x8000 is equivalent to a byte offset of 0xffff8000).*
+>
+> <ins> *In general architectures that use tag bits will mask out the
+> tags bits to make a storage unit address.*</ins>
+
 In Section 2.11 "Address Classes and Address Spaces",
 add an additional point to the list of "Examples of alternate address
 classes":
@@ -275,12 +297,13 @@ Revise the rest of 2.11 as follows:
 > space. <del>The size of any other address space is not necessarily the
 > same as the size of the default address space.</del>*
 
-> <ins>*Address spaces are used when the value of the address is not sufficient to
-> unambiguously identify the storage being referenced. They are often
-> used when the memory has some contextual locality.
-> For example, every compute unit within a GPU may have its own local
-> storage. A consumer may need to refer the current thread or lane to
-> identify which instance of the address space to refer to.*</ins>
+> <ins>*Address spaces are used when the value of the address is not
+> sufficient to unambiguously identify the storage being
+> referenced. They are often used when the memory has some contextual
+> locality.  For example, every compute unit within a GPU may have its
+> own local storage. A consumer may need to refer the current thread
+> or lane to identify which instance of the address space to refer
+> to.*</ins>
 >
 > <ins>*The size of any alternative address space is not necessarily the
 > same as the size of the default address space. Consequently, the
@@ -376,24 +399,21 @@ change point 5 "Current thread" as follows:
 >    identify which instance of a register any register operation is
 >    referring to.</ins>
 >
->    <ins>*The current thread identifies a current thread of execution. By
->    extension, the current thread is also used by consumers to
->    identify which processor within a multi-processor target, a
->    thread is executing on. The processor that a thread is executing
->    on determines which instance of a register to refer to, and when
->    a target has address spaces that are local to a particular
->    processor, it defines which instance of that address space it
->    should refer to.*</ins>
->
 >    <ins>On multi-processor targets that support address spaces that are
 >    local to a processor or a thread, a current thread may be
 >    required to identify the instance of the address space that a
 >    memory operation refers to.</ins>
 >
->    <ins>*When debugging a multi-threaded program, the current thread may
->    be selected by a user command that focuses on a specific thread,
->    or it may be selected automatically when the running thread stops
->    at a breakpoint.*</ins>
+>    <ins>*When debugging a multi-threaded program, the current thread
+>    may be selected by a user command that focuses on a specific
+>    thread, or it may be selected automatically when the running
+>    thread stops at a breakpoint. The current thread is then used by
+>    the consumers to identify which processor within a
+>    multi-processor target that a thread is executing on. The
+>    processor then determines which instance of a register to refer
+>    to and when a target has address spaces that are local to a
+>    particular processor, it defines which instance of that address
+>    space it should refer to.*</ins>
 >
 >    A current thread is required for the DW_OP_form_tls_location
 >    operation (see Section 3.2 on page 49) which provides access to
@@ -422,6 +442,41 @@ And add the following paragraph:
 >    <ins>If there is no current process (or an image of a process, as
 >    from a core file), there is no current lane.</ins>
 
+In Section 3.6 "Context Query Operations"
+
+In the non-normative section of the description of
+`DW_OP_push_object_location` change "address" to "location" in the
+sentence:
+
+> *This object may correspond to an independent variable described by
+> its own debugging information entry or it may be a component of an
+> array, structure, or class whose <del>address</del>
+> <ins>location</ins> has been dynamically determined by an earlier
+> step during user expression evaluation.*
+
+In the non-normative section of the description of
+`DW_OP_form_tls_location` change "address" to "location" as follows:
+
+> *Some implementations of C, C++, Fortran, and other languages,
+> support a thread-local storage class. Variables with this storage
+> class have distinct values and addresses in distinct threads, much
+> as automatic variables have distinct values and <del>addresses</del>
+> <ins>location</ins> in each function invocation. Typically, there is
+> a single block of storage containing all thread-local variables
+> declared in the main executable, and a separate block for the
+> variables declared in each shared library. Each thread-local
+> variable can then be accessed in its block using an identifier. This
+> identifier is typically an offset into the block and pushed onto the
+> DWARF stack by one of the `DW_OP_const<n><x>` operations prior to
+> the `DW_OP_form_tls_location` operation. Computing the
+> <del>address</del> <ins>location</ins> of the appropriate block can
+> be complex (in some cases, the compiler emits a function call to do
+> it), and difficult to describe using ordinary DWARF location
+> expressions. Instead of forcing complex thread-local storage
+> calculations into the DWARF expressions, the DW_OP_form_tls_location
+> allows the consumer to perform the computation based on the run-time
+> environment.*
+
 In Section 3.7 "Memory Locations", add the following at the end of the
 first paragraph:
 
@@ -429,9 +484,10 @@ first paragraph:
 >    object or other entity in memory. On architectures that support
 >    multiple address spaces, a memory location identifies storage
 >    associated with the address space.
->    <ins>If not specified, the storage associated with a memory location
->    defaults to `DW_ASPACE_default`, the name for the default
->    address space.</ins>
+>    <ins>All memory locations include an address space. If not
+>    otherwise specified the storage associated with a memory location
+>    defaults to `DW_ASPACE_default`, the name for the default address
+>    space.</ins>
 
 After the definition of `DW_OP_addrx` add:
 
@@ -439,7 +495,7 @@ After the definition of `DW_OP_addrx` add:
 >
 >       ![DW_OP_mem](../images/issue-260127-1/op-mem2.png)
 >
->        `DW_OP_mem` pops top two stack entries, an address A and an
+>        `DW_OP_mem` pops top two stack entries, an offset A and an
 >    address space identifier ASPACE. The address A must be an
 >    integral value that represents a valid offset into the address
 >    space ASPACE. The address space ASPACE must be an integral
