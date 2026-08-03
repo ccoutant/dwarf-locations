@@ -375,21 +375,13 @@ change point 5 "Current thread" as follows:
 >    user-space or with kernel threads, or by a combination of the
 >    two.*
 >
->    <span style="background: yellow;">[Change to non-normative]</span>
->    *The current thread identifies a current thread of execution.*
->    <ins>*By extension, the current thread is also used by consumers
->    to identify which processor within a multi-processor target,
->    a thread is executing on. The processor that a thread is
->    executing on determines which instance of a register to
->    refer to, and when a target has address spaces that are
->    local to a particular processor, it defines which instance
->    of that address space it should refer to.*</ins>
+>    <del>The current thread identifies a current thread of execution.</del>
 >
 >    <span style="background: yellow;">[Move this sentence down]</span>
->    <del>*When debugging a multi-threaded program, the current thread
+>    <del>When debugging a multi-threaded program, the current thread
 >    may be selected by a user command that focuses on a specific
 >    thread, or it may be selected automatically when the running
->    thread stops at a breakpoint.*</del>
+>    thread stops at a breakpoint.</del>
 >
 >    <span style="background: yellow;">[Change to normative]</span>
 >    If there is no current process (or an image of a process, as
@@ -408,13 +400,13 @@ change point 5 "Current thread" as follows:
 >    *When debugging a multi-threaded program, the current thread
 >    may be selected by a user command that focuses on a specific
 >    thread, or it may be selected automatically when the running
->    thread stops at a breakpoint. The current thread is then used by
+>    thread stops at a breakpoint. <ins>The current thread is then used by
 >    the consumers to identify which processor within a
 >    multi-processor target that a thread is executing on. The
 >    processor then determines which instance of a register to refer
 >    to and when a target has address spaces that are local to a
 >    particular processor, it defines which instance of that address
->    space it should refer to.*
+>    space it should refer to.</ins>*
 >
 >    A current thread is required for the `DW_OP_form_tls_location`
 >    operation (see Section 3.2 on page 49) which provides access to
@@ -462,7 +454,7 @@ In the non-normative section of the description of
 > support a thread-local storage class. Variables with this storage
 > class have distinct values and addresses in distinct threads, much
 > as automatic variables have distinct values and <del>addresses</del>
-> <ins>location</ins> in each function invocation. Typically, there is
+> <ins>locations</ins> in each function invocation. Typically, there is
 > a single block of storage containing all thread-local variables
 > declared in the main executable, and a separate block for the
 > variables declared in each shared library. Each thread-local
@@ -478,26 +470,14 @@ In the non-normative section of the description of
 > allows the consumer to perform the computation based on the run-time
 > environment.*
 
-In Section 3.7 "Memory Locations", add the following at the end of the
-first paragraph:
-
->    A memory location represents the location of a piece or all of an
->    object or other entity in memory. On architectures that support
->    multiple address spaces, a memory location identifies storage
->    associated with the address space.
->    <ins>All memory locations include an address space. If not
->    otherwise specified the storage associated with a memory location
->    defaults to `DW_ASPACE_default`, the name for the default address
->    space.</ins>
-
 After the definition of `DW_OP_addrx` add:
 
 >    3. `DW_OP_mem`
 >
 >       ![DW_OP_mem](../images/issue-260127-1/op-mem2.png)
 >
->        `DW_OP_mem` pops top two stack entries, an offset ADDR and an
->    address space identifier ASPACE. The offset ADDR must be an
+>        `DW_OP_mem` pops top two stack entries, an address ADDR and an
+>    address space identifier ASPACE. The address ADDR must be an
 >    integral value that represents a valid offset into the address
 >    space ASPACE. The address space ASPACE must be an integral
 >    value that represents a target architecture specific address
@@ -525,9 +505,18 @@ After the definition of `DW_OP_bregx` add:
 In section 3.13, rename `DW_OP_xderef*` to `DW_OP_aspace_deref*` and
 note that `DW_OP_xderef*` is still available as an alias.
 
-Change the description of `DW_OP_aspace_deref` to
+Replace the description of `DW_OP_aspace_deref`:
 
->    `DW_OP_aspace_deref` pops top two stack entries, an address ADDR and
+> <del>The `DW_OP_xderef` operation provides an extended dereference mechanism.
+> The entry at the top of the stack is treated as an address. The second stack
+> entry is treated as an “address space identifier” for those architectures that
+> support multiple address spaces. Both of these entries must have integral
+> types. The top two stack entries are popped, and a data item is retrieved
+> through an implementation-defined address calculation and pushed as the
+> new stack top together with the generic type. The size of the data retrieved
+> from the dereferenced address is the size of the generic type.</del>
+
+>    <ins>`DW_OP_aspace_deref` pops top two stack entries, an address ADDR and
 >    an address space identifier ASPACE. The address ADDR must be an
 >    integral value that represents the offset into the address space
 >    ASPACE. The address space ASPACE must be an integral type value
@@ -535,11 +524,25 @@ Change the description of `DW_OP_aspace_deref` to
 >    identifier. A data item whose size is the size of the generic
 >    type is retrieved from the memory location L whose address space
 >    is ASPACE and whose address is ADDR. The retrieved data is pushed
->    onto the stack as a value of generic type.
+>    onto the stack as a value of generic type.</ins>
 
-Change the description of `DW_OP_aspace_deref_size` to:
+Replace the description of `DW_OP_aspace_deref_size`:
 
->    `DW_OP_aspace_deref_size` takes a single 1-byte unsigned integral
+> <del>The `DW_OP_xderef_size` operation behaves like the `DW_OP_xderef`
+> operation. The entry at the top of the stack is treated as an address. The
+> second stack entry is treated as an “address space identifier” for those
+> architectures that support multiple address spaces. Both of these entries must
+> have integral types. The top two stack entries are popped, and a data item is
+> retrieved through an implementation-defined address calculation and
+> pushed as the new stack top. In the `DW_OP_xderef_size` operation, however,
+> the size in bytes of the data retrieved from the dereferenced address is
+> specified by the single operand. This operand is a 1-byte unsigned integral
+> constant whose value may not be larger than the size of an address on the
+> target machine. The data retrieved is zero extended to the size of an address
+> on the target machine before being pushed onto the expression stack together
+> with the generic type.</del>
+
+>    <ins>`DW_OP_aspace_deref_size` takes a single 1-byte unsigned integral
 >    operand that specifies the size S, in bytes, of the value to be
 >    retrieved. It pops the top two stack entries, an address ADDR and an
 >    address space identifier ASPACE. The address ADDR must be an
@@ -551,11 +554,23 @@ Change the description of `DW_OP_aspace_deref_size` to:
 >    than the size of a generic type is retrieved from the memory
 >    location L whose address space is ASPACE and whose address is
 >    ADDR. The data retrieved is zero extended to the size of an generic
->    type, and pushed onto the stack as a value of the generic type.
+>    type, and pushed onto the stack as a value of the generic type.</ins>
 
-Change the description of `DW_OP_aspace_deref_type` to:
+Replace the description of `DW_OP_aspace_deref_type`:
 
->    `DW_OP_aspace_deref_type` takes two operands. The first operand
+> <del>The `DW_OP_xderef_type` operation behaves like the `DW_OP_xderef_size`
+> operation: it pops the top two stack entries, treats them as an address and an
+> “address space identifier” for those architectures that support multiple
+> address spaces, and pushes the value retrieved. In the `DW_OP_xderef_type`
+> operation, the size in bytes of the data retrieved from the dereferenced
+> address is specified by the first operand. This operand is a 1-byte unsigned
+> integral constant whose value is the same as the size of the base type
+> referenced by the second operand. The second operand is an ULEB integer
+> that represents the offset of a debugging information entry in the current
+> compilation unit, which must be a `DW_TAG_base_type` entry that provides
+> the type of the data pushed.</del>
+
+>    <ins>`DW_OP_aspace_deref_type` takes two operands. The first operand
 >    is a 1-byte unsigned integral operand that specifies the byte
 >    size S of the type given by the second operand. The second
 >    operand is an ULEB integer that represents the offset of a
@@ -572,32 +587,26 @@ Change the description of `DW_OP_aspace_deref_type` to:
 >    `DW_OP_aspace_deref` except a data item whose size is S rather
 >    than the size of a generic type is retrieved from the memory
 >    location L whose address space is ASPACE and whose address is ADDR
->    and pushed onto the stack as a value of type T.
+>    and pushed onto the stack as a value of type T.</ins>
 
 In Section 6.3 "Type Modifier Entries", after the paragraph starting
 "A modified type entry describing a pointer or reference type...", add
 the following paragraph:
 
->    A modified type entry describing a pointer or reference type
+>    <ins>A modified type entry describing a pointer or reference type
 >    (using `DW_TAG_pointer_type`, `DW_TAG_reference_type` or
 >    `DW_TAG_rvalue_reference_type`) may have a `DW_AT_address_space`
 >    attribute with a constant value ASPACE representing an
 >    architecture specific DWARF address space (see 2.11 "Address
 >    Classes and Adress Spaces"). If omitted, this defaults to
->    `DW_ASPACE_default`.
+>    `DW_ASPACE_default`.</ins>
 
-In Section 7.1.1.1 "Contents of the Name Index", replace the bullet:
+In Section 7.1.1.1 "Contents of the Name Index", add `DW_OP_mem` to
+the `DW_TAG_variable` bullet:
 
->    * `DW_TAG_variable` debugging information entries with a
->      `DW_AT_location` attribute that includes a `DW_OP_addr` or
->      `DW_OP_form_tls_address` operator are included; otherwise, they
->      are excluded.
-
-with:
-
->    * `DW_TAG_variable` debugging information entries with a
->       `DW_AT_location` attribute that includes a `DW_OP_addr`,
->       `DW_OP_mem` or `DW_OP_form_tls_address` operator are
+>    *  `DW_TAG_variable` debugging information entries with a
+>       `DW_AT_location` attribute that includes a `DW_OP_addr`<ins>,
+>       `DW_OP_mem`,</ins> or `DW_OP_form_tls_address` operator are
 >       included; otherwise, they are excluded.
 
 In Section 8.5.4 "Attribute Encodings", add the following row to Table
@@ -685,6 +694,15 @@ Updated address vs. offset in Section 2.5.
 Added additional non-normative text in Section 3.1, Current thread.
 Changed "address" to "location" in several places in Section 3.6 and 3.7.
 Updated comment about `DW_ASPACE_default` in Section 3.7.
+
+2026-08-03: [Revised][diff8] after 8/3/26 meeting.
+In Section 3.1, Current thread, removed paragraph "The current
+thread identifies a current thread of execution. By
+extension...".
+In Section 3.7 Memory Locations, removed added text ("A memory
+location represents...").
+Reverted to "address ADDR" in `DW_OP_mem`.
+Added redlined text for `DW_OP_aspace_deref` operations.
 
 [260617.1]: https://dwarfstd.org/issues/260617.1.html
 [dwarf]: https://dwarfstd.org/doc/Issue-260211-1-dwarf6-20260731.pdf
