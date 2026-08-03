@@ -235,7 +235,7 @@ Table 2.2: Attribute names
 
 | Attribute | Usage |
 | :---- | :---- |
-| `DW_AT_address_space` | Architecture specific address space (see 2.12 "Address Spaces") |
+| `DW_AT_address_space` | Architecture specific address space |
 
 In Section 2.5 "Values and Locations" when describing memory locations:
 
@@ -247,10 +247,12 @@ In Section 2.5 "Values and Locations" when describing memory locations:
 > the corresponding address space.  An address is the offset of an
 > addressable unit (byte or word) in a memory address space.
 >
-> [move from below] *The offset can be thought of as a byte or word
+> <span style="background: yellow;">[Move from below]</span>
+> *The offset can be thought of as a byte or word
 > address combined with a bit offset within the byte or word.*
 >
-> [make non-normative] *On some systems, an address may be signed, and
+> <span style="background: yellow;">[Change to non-normative]</span>
+> *On some systems, an address may be signed, and
 > a negative address is converted to a positive byte or word offset
 > formed by biasing it by the size of the address space (for example,
 > in a 232 byte address space, using two’s complement arithmetic, the
@@ -300,7 +302,7 @@ Revise the rest of 2.11 as follows:
 > <ins>*Address spaces are used when the value of the address is not
 > sufficient to unambiguously identify the storage being
 > referenced. They are often used when the memory has some contextual
-> locality.  For example, every compute unit within a GPU may have its
+> locality. For example, every compute unit within a GPU may have its
 > own local storage. A consumer may need to refer the current thread
 > or lane to identify which instance of the address space to refer
 > to.*</ins>
@@ -311,10 +313,11 @@ Revise the rest of 2.11 as follows:
 > necessarily the same size as a pointer into the target's default
 > address space.*</ins>
 >
-> <ins>*The storage referred to by different address spaces are
+> <span style="background: yellow;">[Move from below]</span>
+> *<ins>The storage referred to by different</ins> address spaces are
 > not guaranteed to be independent of one another. For example,
 > one address space might provide an alternate addressing scheme
-> for the same storage as another address space.*</ins>
+> for the same <del>memory</del> <ins>storage</ins> as another address space.*
 >
 > *Examples of alternate address spaces include:*
 >
@@ -327,19 +330,11 @@ Revise the rest of 2.11 as follows:
 > space.*
 >
 > Any debugging information entry representing a pointer or
-> reference type may have a DW_AT_address_class attribute, whose
+> reference type may have a `DW_AT_address_class` attribute, whose
 > value is an integer constant. The set of permissible values is
-> specific to each target architecture. The value <del>DW_ADDR_none</del>
-> <ins>DW_ACLASS_default</ins>, however, is common to all encodings, and means
-> that no address class has been specified (that is, the pointer or
-> reference type uses the standard encoding of an address on the
-> target architecture).
->
-> <ins>Any debugging information entry representing a pointer or reference
-> type may have a `DW_AT_address_class` attribute, whose value is an
-> integer constant. The set of permissible values is specific to each
-> target architecture. The value `DW_ACLASS_default`, however, is common to
-> all encodings, and means that no address class has been specified.</ins>
+> specific to each target architecture. The value <del>`DW_ADDR_none`</del>
+> <ins>`DW_ACLASS_default`</ins>, however, is common to all encodings, and means
+> that no address class has been specified.
 >
 > <ins>Any debugging information entry representing a pointer or
 > reference type may also have a `DW_AT_address_space` attribute,
@@ -348,29 +343,24 @@ Revise the rest of 2.11 as follows:
 > `DW_ASPACE_default` identifies the default address space; other
 > values and their uses are defined by the ABI.</ins>
 >
-> On multi-processor targets that support address spaces that are
+> <span style="background: yellow;">[Move to above]</span>
+> <del>Address spaces are not guaranteed to be independent of one
+> another; for example, one address space might provide an
+> alternate addressing scheme for the same memory as another
+> address space.</del>
+>
+> <ins>On multi-processor targets that support address spaces that are
 > local to a processor or a thread, a current thread may be required
 > to identify the instance of the address space that a memory
 > operation refers to. Likewise on vectorized processors with address
 > spaces that are local to a lane, a current lane may be required to
 > identify the instance of the address space that a memory operation
-> refers to.
+> refers to.</ins>
 >
 > Address space identifiers are <ins>also</ins> used by the
 > <del>DW_OP_xderef* operations</del>
 > <ins>DWARF operations `DW_OP_mem` (see Section 3.7), `DW_OP_aspace_bregx` (see
 > Section 3.7), and `DW_OP_aspace_deref*`</ins> (see Section 3.13).
-
-In Section 3 DWARF Expressions insert the following paragraph after
-the paragraph describing implicit conversion just before Section 3.1.
-
->    *Implicit conversion between a location and a value is provided
->    for backward compatability with previous versions of DWARF where
->    it was common to treat a VALUE as a memory address. Since this
->    conversion between a LOCATION and a VALUE assumes the location is
->    a memory location and strips the memory location of its
->    qualifying address space, this implicit conversion is limited to
->    memory locations in the default address space.*
 
 In Section 3.1 DWARF Expression Evaluation Context,
 change point 5 "Current thread" as follows:
@@ -385,13 +375,23 @@ change point 5 "Current thread" as follows:
 >    user-space or with kernel threads, or by a combination of the
 >    two.*
 >
->    The current thread identifies a current thread of execution. When
->    debugging a multi-threaded program, the current thread may be
->    selected by a user command that focuses on a specific thread, or
->    it may be selected automatically when the running thread stops at
->    a breakpoint.
+>    <span style="background: yellow;">[Change to non-normative]</span>
+>    *The current thread identifies a current thread of execution.*
+>    <ins>*By extension, the current thread is also used by consumers
+>    to identify which processor within a multi-processor target,
+>    a thread is executing on. The processor that a thread is
+>    executing on determines which instance of a register to
+>    refer to, and when a target has address spaces that are
+>    local to a particular processor, it defines which instance
+>    of that address space it should refer to.*</ins>
 >
->    <ins>[Make this normative]</ins>
+>    <span style="background: yellow;">[Move this sentence down]</span>
+>    <del>*When debugging a multi-threaded program, the current thread
+>    may be selected by a user command that focuses on a specific
+>    thread, or it may be selected automatically when the running
+>    thread stops at a breakpoint.*</del>
+>
+>    <span style="background: yellow;">[Change to normative]</span>
 >    If there is no current process (or an image of a process, as
 >    from a core file), there is no current thread.
 >
@@ -404,7 +404,8 @@ change point 5 "Current thread" as follows:
 >    required to identify the instance of the address space that a
 >    memory operation refers to.</ins>
 >
->    <ins>*When debugging a multi-threaded program, the current thread
+>    <span style="background: yellow;">[Move from above and change to non-normative]</span>
+>    *When debugging a multi-threaded program, the current thread
 >    may be selected by a user command that focuses on a specific
 >    thread, or it may be selected automatically when the running
 >    thread stops at a breakpoint. The current thread is then used by
@@ -413,9 +414,9 @@ change point 5 "Current thread" as follows:
 >    processor then determines which instance of a register to refer
 >    to and when a target has address spaces that are local to a
 >    particular processor, it defines which instance of that address
->    space it should refer to.*</ins>
+>    space it should refer to.*
 >
->    A current thread is required for the DW_OP_form_tls_location
+>    A current thread is required for the `DW_OP_form_tls_location`
 >    operation (see Section 3.2 on page 49) which provides access to
 >    thread-local storage.
 
@@ -432,7 +433,7 @@ In point 7, "Current lane", replace the third paragraph as follows:
 >    the instance of the address space that a memory operation refers
 >    to.</ins>
 >
->    <ins>[Change to non-normative]</ins>
+>    <span style="background: yellow;">[Change to non-normative]</span>
 >    *When debugging a SIMD/SIMT program, the current lane is
 >    typically selected by a user command that focuses on a specific
 >    lane.*
@@ -495,8 +496,8 @@ After the definition of `DW_OP_addrx` add:
 >
 >       ![DW_OP_mem](../images/issue-260127-1/op-mem2.png)
 >
->        `DW_OP_mem` pops top two stack entries, an offset A and an
->    address space identifier ASPACE. The address A must be an
+>        `DW_OP_mem` pops top two stack entries, an offset ADDR and an
+>    address space identifier ASPACE. The offset ADDR must be an
 >    integral value that represents a valid offset into the address
 >    space ASPACE. The address space ASPACE must be an integral
 >    value that represents a target architecture specific address
@@ -504,9 +505,6 @@ After the definition of `DW_OP_addrx` add:
 >
 >        *`DW_OP_addr(X)` is a more compact form of `DW_OP_lit0;
 >    DW_OP_constNu(X); DW_OP_mem`.*
->
->        The address space identifier value ASPACE must be one of the
->    values defined by the architecture's ABI.
 
 After the definition of `DW_OP_bregx` add:
 
@@ -517,44 +515,34 @@ After the definition of `DW_OP_bregx` add:
 >        `DW_OP_aspace_bregx` has two immediate operands. The first is
 >    a ULEB integer that represents a register number R. The second is
 >    a SLEB integer that represents a byte displacement B. It pops one
->    stack entry that is required to be an integral type value that
+>    stack entry that is required to be an integral value that
 >    represents a target architecture specific address space
 >    identifier ASPACE.
 >
 >        The action is the same as for `DW_OP_bregx`, except that
 >    ASPACE is used as the address space identifier.
->
->        The address space identifier value ASPACE must be one of the
->    values defined by the architecture's ABI.
->
->        *Target architectures are encouraged to define `DW_ASPACE_*`
->    constants for their address spaces.*
 
 In section 3.13, rename `DW_OP_xderef*` to `DW_OP_aspace_deref*` and
 note that `DW_OP_xderef*` is still available as an alias.
 
-As a minor editorial clarification change "1-byte unsigned integer" in
-`DW_OP_deref_type` to "1-byte unsigned integral operand" to match the
-description of the operand used in `DW_OP_deref_size`.
-
 Change the description of `DW_OP_aspace_deref` to
 
->    `DW_OP_aspace_deref` pops top two stack entries, an address A and
->    an address space identifier ASPACE. The address A must be an
+>    `DW_OP_aspace_deref` pops top two stack entries, an address ADDR and
+>    an address space identifier ASPACE. The address ADDR must be an
 >    integral value that represents the offset into the address space
 >    ASPACE. The address space ASPACE must be an integral type value
 >    that represents a target architecture specific address space
 >    identifier. A data item whose size is the size of the generic
 >    type is retrieved from the memory location L whose address space
->    is ASPACE and whose address is A. The retrieved data is pushed
+>    is ASPACE and whose address is ADDR. The retrieved data is pushed
 >    onto the stack as a value of generic type.
 
 Change the description of `DW_OP_aspace_deref_size` to:
 
 >    `DW_OP_aspace_deref_size` takes a single 1-byte unsigned integral
 >    operand that specifies the size S, in bytes, of the value to be
->    retrieved. It pops the top two stack entries, an address A and an
->    address space identifier ASPACE. The address A must be an
+>    retrieved. It pops the top two stack entries, an address ADDR and an
+>    address space identifier ASPACE. The address ADDR must be an
 >    integral value that represents the offset into the address space
 >    ASPACE. The address space ASPACE must be an integral type value
 >    that represents a target architecture specific address space
@@ -562,7 +550,7 @@ Change the description of `DW_OP_aspace_deref_size` to:
 >    `DW_OP_aspace_deref` except a data item whose size is S rather
 >    than the size of a generic type is retrieved from the memory
 >    location L whose address space is ASPACE and whose address is
->    A. The data retrieved is zero extended to the size of an generic
+>    ADDR. The data retrieved is zero extended to the size of an generic
 >    type, and pushed onto the stack as a value of the generic type.
 
 Change the description of `DW_OP_aspace_deref_type` to:
@@ -572,18 +560,18 @@ Change the description of `DW_OP_aspace_deref_type` to:
 >    size S of the type given by the second operand. The second
 >    operand is an ULEB integer that represents the offset of a
 >    debugging information entry in the current compilation unit,
->    which must be a DW_TAG_base_type entry that provides the type T
+>    which must be a `DW_TAG_base_type` entry that provides the type T
 >    of the value to be retrieved. The size S must be the same as the
 >    byte size of the base type represented by the type T. It pops the
->    top two stack entries, an address A and an address space
->    identifier ASPACE. The address A must be an integral value that
+>    top two stack entries, an address ADDR and an address space
+>    identifier ASPACE. The address ADDR must be an integral value that
 >    represents the offset into the address space ASPACE. The address
 >    space ASPACE must be an integral type value that represents a
 >    target architecture specific address space
 >    identifier. `DW_OP_aspace_deref_type` behaves like
 >    `DW_OP_aspace_deref` except a data item whose size is S rather
 >    than the size of a generic type is retrieved from the memory
->    location L whose address space is ASPACE and whose address is A
+>    location L whose address space is ASPACE and whose address is ADDR
 >    and pushed onto the stack as a value of type T.
 
 In Section 6.3 "Type Modifier Entries", after the paragraph starting
@@ -682,4 +670,21 @@ Shortened new text in Section 6.3 Type Modifier Entries.
 2026-07-15: [Revised][diff5] to address discussion in 7/6/26 meeting
 and subsequent email discussions.
 
+2026-07-20: [Revised][diff6] to address discussion in 7/20/26 meeting.
+Removed extra paragraph about implicit conversion.
+Fixed redline version of Section 3.1, Current thread, where paragraph was repeated.
+Removed duplicate wording about "ASPACE must be one of the values...."
+Change "integral type value" to "integral value" for `DW_OP_aspace_bregx`.
+Removed proposal to change "integer" to "integral operand" for `DW_OP_deref_type`.
+
+2026-07-31: Prepared a provisional [review copy][dwarf] of the DWARF spec,
+showing changes to date from this proposal.
+
+2026-08-02: [Revised][diff7] after 7/20/26 meeting and subsequent email discussion.
+Updated address vs. offset in Section 2.5.
+Added additional non-normative text in Section 3.1, Current thread.
+Changed "address" to "location" in several places in Section 3.6 and 3.7.
+Updated comment about `DW_ASPACE_default` in Section 3.7.
+
 [260617.1]: https://dwarfstd.org/issues/260617.1.html
+[dwarf]: https://dwarfstd.org/doc/Issue-260211-1-dwarf6-20260731.pdf
