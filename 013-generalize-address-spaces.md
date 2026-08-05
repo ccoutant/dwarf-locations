@@ -396,6 +396,10 @@ change point 5 "Current thread" as follows:
 >    required to identify the instance of the address space that a
 >    memory operation refers to.</ins>
 >
+>    A current thread is required for the `DW_OP_form_tls_location`
+>    operation (see Section 3.2 on page 49) which provides access to
+>    thread-local storage.
+>
 >    <span style="background: yellow;">[Move from above and change to non-normative]</span>
 >    *When debugging a multi-threaded program, the current thread
 >    may be selected by a user command that focuses on a specific
@@ -407,30 +411,31 @@ change point 5 "Current thread" as follows:
 >    to and when a target has address spaces that are local to a
 >    particular processor, it defines which instance of that address
 >    space it should refer to.</ins>*
->
->    A current thread is required for the `DW_OP_form_tls_location`
->    operation (see Section 3.2 on page 49) which provides access to
->    thread-local storage.
 
-In point 7, "Current lane", replace the third paragraph as follows:
+In point 7, "Current lane", after the third paragraph:
 
 >    The current lane is a SIMD/SIMT lane identifier. This applies to
 >    source languages with scalar code that is vectorized by the
 >    compiler using a SIMD/SIMT execution model. These implementations
 >    map vectorized operations to SIMD/SIMT lanes of execution (see
 >    Section 4.3.5.4 on page 102).
->
+
+Add the following paragraph:
+
 >    <ins>On SIMD/SIMT targets that support address spaces that are local
 >    to a particular lane, a current lane may be required to identify
 >    the instance of the address space that a memory operation refers
 >    to.</ins>
->
->    <span style="background: yellow;">[Change to non-normative]</span>
+
+Change the following paragraph to non-normative:
+
 >    *When debugging a SIMD/SIMT program, the current lane is
 >    typically selected by a user command that focuses on a specific
 >    lane.*
 
-And add the following paragraph:
+After the paragraph, "If the current program is not using a
+SIMD/SIMT execution model, the current lane is 0,"
+add the following paragraph:
 
 >    <ins>If there is no current process (or an image of a process, as
 >    from a core file), there is no current lane.</ins>
@@ -452,7 +457,8 @@ In the non-normative section of the description of
 
 > *Some implementations of C, C++, Fortran, and other languages,
 > support a thread-local storage class. Variables with this storage
-> class have distinct values and addresses in distinct threads, much
+> class have distinct values and <del>addresses</del>
+> <ins>locations</ins> in distinct threads, much
 > as automatic variables have distinct values and <del>addresses</del>
 > <ins>locations</ins> in each function invocation. Typically, there is
 > a single block of storage containing all thread-local variables
