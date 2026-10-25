@@ -3,7 +3,7 @@
 ## Introduction
 
 Composite storage and pieces are powerful DWARF abstractions that
-describe objects whose parts may reside in different locations.
+describe objects whose components may reside in different locations.
 
 While the terms "composite" and "piece" are often associated with the
 piece operators, it is important to distinguish between the concepts
@@ -435,7 +435,81 @@ example:
 This would leave the offsets between 8 (end of `reg0`) and 15
 (beginning of `reg1`) undefined.
 
+### Composability with DWARF5 piece operators
+
+While overlays are able to replace the DWARF 5 piece operators. They
+both operate on the same kind underlying storage and so they are
+completely composable with each other. Therefore a composite location
+can either be the base or the overlaid location on which an overlay is
+created. For example:
+
+    DW_OP_addr 0x100
+	DW_OP_composite  # embedded composite
+	DW_OP_reg0
+	DW_OP_piece 4
+	DW_OP_reg1
+	DW_OP_piece 4
+	DW_OP_lit 8
+	DW_OP_lit 8
+	DW_OP_overlay
+
+in that case reg0 and reg1 are merged into an 8-byte composite which
+overlays the memory beginning at 0x108.
+
+A schematic of what this looks like is:
+
+                               +-------------+
+                               | reg0 | reg1 |
+              +----------------+=============+---------+
+    memory:   |        |       |/////////////|         |
+              +----------------------------------------+
+              |0       | 0x100                         |end-of-memory
+
+The other way works just as well, a composite can be created with the
+piece operators and then an overlay can replace part of it. For
+example:
+
+    DW_OP_composite # The base is a composite
+    DW_OP_reg0
+	DW_OP_piece 4
+	DW_OP_reg1
+	DW_OP_piece 4
+	DW_OP_reg2
+	DW_OP_piece 4
+	DW_OP_reg3      # The overlay
+	DW_OP_lit4
+	DW_OP_lit4
+	DW_OP_overlay
+
+In this case reg3 overlays reg1 in the base composite.
+
+A schematic of what this may look like is:
+
+                           +------+
+                           | reg3 |
+                    +------+======+------+
+    base composite: | reg0 | //// | reg2 |
+                    +--------------------*
+
+
 ## Proposal
+
+### Section 2.5
+
+Update the bullet point dealing with Composite Storage:
+
+> Composite storage. A hybrid form of storage where different pieces
+> of a program object map to different locations, as when a field of a
+> structure or a slice of an array is promoted to a register while the
+> rest remains in memory.  Composite storage consists of a (possibly
+> empty) series of contiguous pieces <del>and its size is the sum of
+> the sizes of the pieces. The maximum size of a block of composite
+> storage is the size of the largest address space or
+> register.</del><ins>which are mappings to other kinds of
+> storage. These mappings can point to any kind of storage including
+> other composite storage. The size of the composite storage is
+> sufficient to contain the object or register (See Section 3.1
+> Current Object pg. 50) 1that the location refers to.</ins>
 
 ### Section 3.12
 
@@ -446,11 +520,10 @@ Locations, with:
 > that does not exist in a single block of contiguous storage (for
 > example, as the result of compiler optimization where part of the
 > object is promoted to a register). Its storage consists of a
-> (possibly empty) sequence of <del>pieces</del><ins>parts</ins>,
-> where each <del>piece</del><ins>part</ins> maps a <del>fixed</del>
-> range of bits from the object onto a corresponding range of bits at
-> a new (sub-)location. There are two ways to make composite storage
-> overlays and pieces.
+> (possibly empty) sequence of pieces, where each piece maps a
+> <del>fixed</del> range of bits from the object onto a corresponding
+> range of bits at a new (sub-)location. There are two ways to make
+> composite storage overlays and pieces.
 >
 > <ins>Overlay operators first map the entire extent of the base
 > storage into composite storage. An opaque overlay is then applied,
@@ -464,10 +537,10 @@ Locations, with:
 > to concatenate two locations.*</ins>
 >
 > <ins>Instead of mapping the entire base storage into composite
-> storage. The piece operators excerpt parts of storage and
+> storage, the piece operators excerpt segments of storage and
 > concatenate the pieces together.</ins> <del>The pieces of a block of
 > composite storage are contiguous, so that
-> the</del><ins>Therefore,</the> the size of the composite storage is
+> the</del><ins>Therefore,</ins> the size of the composite storage is
 > the sum of the sizes of the individual pieces, and each piece covers
 > a range of bits immediately following the previous piece.
 >
@@ -481,14 +554,14 @@ Locations, with:
 > *In the process of fetching a value from a composite location, the
 > consumer may need to fetch and assemble bits from more than one
 > piece.*
-
-> *<ins>Another way to think of overlays rather than as an opaquie mask
+>
+> *<ins>Another way to think of overlays rather than as an opaque mask
 > over the specified bits of base storage is to think of them as
-> dividing the base storage into parts that are concatenating as if
+> dividing the base storage into pieces that are concatenating as if
 > they were assembled with the piece operators. In most cases, this
-> results in three parts: The part of the base storage before the
-> overlay, the overlay itself, and the part after the extent of the
-> overlayed region.</ins>*
+> results in three pieces: The piece of the base storage before the
+> overlay, the overlay itself, and the piece after the extent of the
+> overlaid region.</ins>*
 
 Move the rest of the existing section into subsection 3.12.1 Piece Operations:
 
@@ -502,16 +575,20 @@ Add a new Section 3.12.2 after "Composite Piece Description Operations",
 called "Overlay Operations".
 
 > *Conceptually, overlay operators create a new composite location
-> which is pushed on the stack with an offset remaining the same as
-> the base location. The resulting composite storage is the same as
-> the base location storage with an opaque range of the overlay
-> storage hiding the corresponding bits from the base storage.  If
-> necessary, composite storage can extend beyond the extent of base
-> storage. adding undefined storage when necessary to bridge a gap.*
+> which is pushed on the stack. From the stack they take a reference
+> to a base location and an overlay location as well as parameters
+> about where to put the overlay and how large it is supposed to be
+> and leaves a new composite storage location on the stack. This new
+> location has the same offset as the base location. The resulting
+> composite storage is the same as the base location storage with an
+> opaque range of the overlay storage hiding the corresponding bits
+> from the base storage.  If necessary, composite storage can extend
+> beyond the extent of base storage. adding undefined storage when
+> necessary to bridge a gap.*
 >
 > 1. `DW_OP_overlay`
 >
->    <[location] base location> <[location] overlay location> <[integral] base offset> <[unsigned] overlay width> → <[location] composite location>
+>    location BASE location OVERLAY generic BASE_OFFSET generic OVERLA_WIDTH → location COMPOSITE
 >
 >   `DW_OP_overlay` pushes a new composite location whose storage is
 >   the result of replacing a selection of bytes in the storage of
@@ -547,7 +624,7 @@ called "Overlay Operations".
 >
 > 2. `DW_OP_bit_overlay`
 >
->    <[location] base location> <[location] overlay location> <[integral] base offset in bits> <[unsigned] overlay width in bits> → <[location] composite location>
+>    location BASE location OVERLAY generic BASE_BITOFFSET generic OVERLA_BITWIDTH → location COMPOSITE
 >
 >   `DW_OP_bit_overlay` pushes a new composite location whose storage
 >   is the result of replacing a selection of bits in the storage of
@@ -690,10 +767,10 @@ After the example below:
     DW_OP_stack_value
     DW_OP_piece (4)
 
-> The object value is found in an anonymous (virtual) location whose value
-> consists of two parts, given in memory address order: the 4 byte value 1
-> followed by the four byte value computed from the sum of the contents of
-> r3 and r4
+> The object value is found in an anonymous (virtual) location whose
+> value consists of two pieces, given in memory address order: the 4
+> byte value 1 followed by the four byte value computed from the sum
+> of the contents of r3 and r4
 
 Add:
 
