@@ -49,6 +49,18 @@ would be described as follows:
          DW_AT_byte_size (4)
          DW_AT_encoding  (DW_ATE_signed)
 
+*Note:* OpenMP has memory spaces that "represent storage resources
+  where variables can be stored and retrieved" (see Section 8.1 in
+  (OpenMP Spec)[openmp]).  These are, however, API level constructs
+  and do not appear in the source language type system.  OpenMP and
+  OpenACC have data-sharing and initialization clauses such as
+  `private` and `firstprivate`, but these are directives
+  (i.e. pragmas) that also don't appear in the source language type
+  system.  Therefore the proposal we make here does not apply to
+  OpenMP or OpenACC.
+
+[openmp]: https://www.openmp.org/wp-content/uploads/OpenMP-API-Specification-6-0.pdf
+
 # PROPOSAL
 
 Add the following after Section 2.11 "Address Classes and Address Spaces":
