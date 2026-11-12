@@ -25,25 +25,24 @@ depends on compiler choices and target properties.
 
 This proposal adds ability to DWARF to describe memory spaces, which
 are type qualifiers, very similar to `const` and `volatile` in C/C++.
-We propose to add a new type modifier entry,
-`DW_TAG_memory_space_type`, that decorates a type with a memory space.
-The example above would be described as follows:
+We propose to add new type modifier entries, similar to the existing
+entries such as `DW_TAG_volatile_type` and `DW_TAG_restrict_type`,
+that decorate a type with a memory space qualifier.  The example above
+would be described as follows:
 
     $1 DW_TAG_variable
          DW_AT_name       ("ptr")
          DW_AT_type       ($2)
          DW_AT_location   (...)
 
-    $2 DW_TAG_memory_space_type
-         DW_AT_type         ($3)
-         DW_AT_memory_space (DW_MSPACE_local)
+    $2 DW_TAG_local_type
+         DW_AT_type       ($3)
 
     $3 DW_TAG_pointer_type
-         DW_AT_type         ($4)
+         DW_AT_type       ($4)
 
-    $4 DW_TAG_memory_space_type
-         DW_AT_type         ($5)
-         DW_AT_memory_space (DW_MSPACE_private)
+    $4 DW_TAG_private_type
+         DW_AT_type       ($5)
 
     $5 DW_TAG_base_type
          DW_AT_name      ("int")
@@ -60,24 +59,28 @@ Add the following after Section 2.11 "Address Classes and Address Spaces":
     In some languages, such as OpenCL, memory spaces can be specified at
     the source level as type qualifiers.  For example, OpenCL defines four
     qualifiers: `global`, `constant`, `local`, `private`.  These qualifiers
-    can be used in the source program for annotating a type.  DWARF can express
-    memory spaces by using the `DW_TAG_memory_space_type` modifier (see 6.3
-    Type Modifier Entries) together with the `DW_AT_memory_space` attribute
-    (see Section 8.15 Memory Space Encodings).  For an example, see D.21
-    Memory Space Example.
+    can be used in the source program for annotating a type.  DWARF can
+    express memory spaces by using `DW_TAG_global_type`,
+    `DW_TAG_constant_type`, `DW_TAG_local_type`, and `DW_TAG_private_type`
+    modifiers (see 6.3 Type Modifier Entries), one for each OpenCL memory
+    space qualifier.  For an example, see D.21 Memory Space Example.
 
-In Table 2.1 "Tag names", add `DW_TAG_memory_space_type`.
+    Note that memory spaces are specified at the source language level,
+    whereas address spaces that are expressed with the `DW_AT_address_space`
+    attribute and DWARF operators like `DW_OP_mem` are a target-level
+    concept (see 2.11 Address Classes and Address Spaces).  If and how a
+    memory space would map to an address space depends on compiler choices
+    and target properties.
 
-In Section 2.2 "Attribute Types", add the following row to Table 2.2 "Attribute
-names":
+In Table 2.1 "Tag names", add `DW_TAG_global_type`, `DW_TAG_constant_type`,
+`DW_TAG_local_type`, and `DW_TAG_private_type`.
 
-    DW_AT_memory_space       | Memory space qualified type entries (see 6.3
-                             | "Type Modifier Entries")
+In Table 6.3 "Type modifier tags", add the following rows:
 
-In Table 6.3 "Type modifier tags", add the following row:
-
-    DW_TAG_memory_space_type | type specified at a memory space (for example,
-                             | in OpenCL)
+    DW_TAG_global_type   | global qualified type (for example, in OpenCL)
+    DW_TAG_constant_type | constant qualified type (for example, in OpenCL)
+    DW_TAG_local_type    | local qualified type (for example, in OpenCL)
+    DW_TAG_private_type  | private qualified type (for example, in OpenCL)
 
 Extend Figure 6.1 "Type modifier examples" with the following:
 
@@ -88,52 +91,35 @@ Extend Figure 6.1 "Type modifier examples" with the following:
     This can be encoded in DWARF as
 
         DW_TAG_variable(ptr) -->
-          DW_TAG_memory_space_type(local) -->
+          DW_TAG_local_type -->
             DW_TAG_pointer_type -->
-              DW_TAG_memory_space_type(private) -->
+              DW_TAG_private_type -->
                 DW_TAG_base_type(int)
 
-In Table 8.3 "Tag encodings", add the following row:
+In Table 8.3 "Tag encodings", add the following rows:
 
-    DW_TAG_memory_space_type | 0x...
-
-**Note to DWARF committee: consider using the reserved value 0x14.**
-
-In Table 8.5 "Attribute encodings", add the following row:
-
-    DW_AT_memory_space(*) | 0x... | constant
-    (*) New in DWARF Version 6
-
-After Section 8.14 "Address Space Encodings", add
-
-    Section 8.15 Memory Space Encodings
-
-    The set of currently defined DWARF memory spaces is given in Table
-    8.x "Source language memory spaces".  Vendor defined source
-    language memory spaces may be defined using codes in the range
-    `DW_MSPACE_lo_user` to `DW_MSPACE_hi_user`.
-
-    Table 8.x: Source language memory spaces
-    ================== ============
-    Memory Space Name  Value
-    ================== ============
-    DW_MSPACE_default  0x00
-    DW_MSPACE_global   0x01
-    DW_MSPACE_constant 0x02
-    DW_MSPACE_local    0x03
-    DW_MSPACE_private  0x04
-    DW_MSPACE_lo_user  0x80
-    DW_MSPACE_hi_user  0xff
-    ================== ============
-
-In Table 8.33 "Attributes used in type signature computation", add
-`DW_AT_memory_space`.
+    DW_TAG_global_type   | 0x...
+    DW_TAG_constant_type | 0x...
+    DW_TAG_local_type    | 0x...
+    DW_TAG_private_type  | 0x...
 
 In Table A.1 "Attributes by tag value", add the following rows:
 
-    DW_TAG_memory_space_type | DECL
-                             | DW_AT_memory_space
-                             | DW_AT_type
+    DW_TAG_global_type   | DECL
+                         | DW_AT_name
+                         | DW_AT_type
+
+    DW_TAG_constant_type | DECL
+                         | DW_AT_name
+                         | DW_AT_type
+
+    DW_TAG_local_type    | DECL
+                         | DW_AT_name
+                         | DW_AT_type
+
+    DW_TAG_private_type  | DECL
+                         | DW_AT_name
+                         | DW_AT_type
 
 Add the following new subsection to Appendix D.
 
@@ -152,16 +138,14 @@ Add the following new subsection to Appendix D.
          DW_AT_type       ($2)
          DW_AT_location   (...)
 
-    $2 DW_TAG_memory_space_type
-         DW_AT_type         ($3)
-         DW_AT_memory_space (DW_MSPACE_local)
+    $2 DW_TAG_local_type
+         DW_AT_type       ($3)
 
     $3 DW_TAG_pointer_type
-         DW_AT_type         ($4)
+         DW_AT_type       ($4)
 
-    $4 DW_TAG_memory_space_type
-         DW_AT_type         ($5)
-         DW_AT_memory_space (DW_MSPACE_private)
+    $4 DW_TAG_private_type
+         DW_AT_type       ($5)
 
     $5 DW_TAG_base_type
          DW_AT_name      ("int")
