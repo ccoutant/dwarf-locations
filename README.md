@@ -27,7 +27,7 @@ Issues in progress:
 * [[015](015-vector-composite-location-descriptions.txt)] DWARF Operations to Create Vector Composite Location Descriptions
 * [[017](017-call-frame-entry-registers.txt)] DWARF Operation to Access Call Frame Entry Registers
 * [[021](021-divergent-control-flow.txt)] Support for Divergent Control Flow of SIMT Hardware
-* [[022](022-memory-spaces.md)] Support for Source Language Memory Spaces ([Original text](022-memory-spaces.txt))
+* [[022](022-memory-spaces.md)] Support for OpenCL Address Space Type Qualifiers ([Original text](022-memory-spaces.txt))
 * [[023](023-dwarf-evalutor.md)] Add a tool and a web playground to evaluate DWARF expressions
 
 Clarifications and editorial reorganization:
