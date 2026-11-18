@@ -11,6 +11,7 @@ Issues approved by the DWARF committee:
 
 * [[001a](001a-context.md)] Expression Evaluation Context (DWARF Issue [241011.1][241011.1])
 * [[005](005-locations-on-stack.md)] Locations on the Stack (DWARF Issue [230524.1][230524.1])
+* [[013](013-generalize-address-spaces.md)] General Support for Address Spaces (DWARF Issue [260211.1][260211.1])
 * Tensor types (DWARF Issue [230413.1][230413.1])
 * Add lane support for SIMD/SIMT machines (DWARF Issue [211206.1][211206.1])
 
@@ -18,7 +19,6 @@ Issues submitted to the DWARF committee:
 
 * [[004](004-clarifications-mem.txt)] Clarifications for Memory Location Descriptions (DWARF Issue [230120.3][230120.3])
 * [[002](002-clarifications-loc.txt)] Clarifications for Location Descriptions (DWARF Issue [230120.2][230120.2])
-* [[013](013-generalize-address-spaces.md)] General Support for Address Spaces ([Original text](013-generalize-address-spaces.orig.txt))
 * [[016](016-overlay-composite-location-descriptions.md)] DWARF Operation to Create Runtime Overlay Composite Location Description (DWARF Issue [251120.1][251120.1])
 
 Issues in progress:
@@ -27,7 +27,7 @@ Issues in progress:
 * [[015](015-vector-composite-location-descriptions.txt)] DWARF Operations to Create Vector Composite Location Descriptions
 * [[017](017-call-frame-entry-registers.txt)] DWARF Operation to Access Call Frame Entry Registers
 * [[021](021-divergent-control-flow.txt)] Support for Divergent Control Flow of SIMT Hardware
-* [[022](022-memory-spaces.txt)] Support for Source Language Memory Spaces
+* [[022](022-memory-spaces.md)] Support for Source Language Memory Spaces ([Original text](022-memory-spaces.txt))
 * [[023](023-dwarf-evalutor.md)] Add a tool and a web playground to evaluate DWARF expressions
 
 Clarifications and editorial reorganization:
@@ -49,10 +49,12 @@ Independent issues not part of this series:
 
 [amd]: https://llvm.org/docs/AMDGPUDwarfExtensionAllowLocationDescriptionOnTheDwarfExpressionStack/AMDGPUDwarfExtensionAllowLocationDescriptionOnTheDwarfExpressionStack.html#a-2-general-description
 [dwarf5]: https://dwarfstd.org/dwarf5std.html
-[230524.1]: https://dwarfstd.org/issues/230524.1.html
+
+[211206.1]: https://dwarfstd.org/issues/211206.1.html
 [230120.2]: https://dwarfstd.org/issues/230120.2.html
 [230120.3]: https://dwarfstd.org/issues/230120.3.html
-[241011.1]: https://dwarfstd.org/issues/241011.1.html
-[211206.1]: https://dwarfstd.org/issues/211206.1.html
 [230413.1]: https://dwarfstd.org/issues/230413.1.html
+[230524.1]: https://dwarfstd.org/issues/230524.1.html
+[241011.1]: https://dwarfstd.org/issues/241011.1.html
 [251120.1]: https://dwarfstd.org/issues/251120.1.html
+[260211.1]: https://dwarfstd.org/issues/260211.1.html
